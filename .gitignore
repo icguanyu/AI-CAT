@@ -1,0 +1,33 @@
+# 機密
+.env
+.env.*
+!.env.example
+
+# 開發過程文件（不進版控）
+/_private/
+/docs-internal/
+AI-CAT_MVP_Architecture.md
+
+# 依賴
+/node_modules
+
+# Next.js
+/.next/
+/out/
+*.tsbuildinfo
+
+# 建置與部署
+/build
+/dist
+.vercel
+
+# 除錯
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 環境／編輯器
+.DS_Store
+*.pem
+/coverage
+/.idea

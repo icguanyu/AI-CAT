@@ -1,0 +1,245 @@
+/*
+ * 檔案：src/app/globals.css
+ * 角色：前端層 — 全域樣式與設計 token
+ * 功能：CSS 變數（淺/深色主題）、基本 reset、著陸頁各區塊樣式
+ *       （hero / metrics grid / steps / highlight / footer）。由 layout.tsx 匯入。
+ */
+
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f5f7fa;
+  --fg: #1a1f2b;
+  --fg-muted: #5b6472;
+  --accent: #3b6ef5;
+  --accent-fg: #ffffff;
+  --border: #e2e6ec;
+  --card: #ffffff;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1116;
+    --bg-alt: #151a21;
+    --fg: #e8ecf1;
+    --fg-muted: #9aa4b2;
+    --accent: #5c86ff;
+    --accent-fg: #0e1116;
+    --border: #262d38;
+    --card: #161c24;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC',
+    'Microsoft JhengHei', 'Noto Sans TC', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+.wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+section {
+  padding: 72px 0;
+}
+
+section + section {
+  border-top: 1px solid var(--border);
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 96px 0 80px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 4px 14px;
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-size: 2.6rem;
+  line-height: 1.25;
+  margin-bottom: 20px;
+}
+
+.hero p {
+  font-size: 1.15rem;
+  color: var(--fg-muted);
+  max-width: 620px;
+  margin: 0 auto 36px;
+}
+
+.cta {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 14px 32px;
+  border-radius: 10px;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.cta:hover {
+  transform: translateY(-2px);
+  opacity: 0.92;
+}
+
+.cta.secondary {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  margin-left: 12px;
+}
+
+h2 {
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+
+.section-sub {
+  color: var(--fg-muted);
+  margin-bottom: 36px;
+}
+
+/* Metrics grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.card .num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+
+.card h3 {
+  font-size: 1.05rem;
+  margin: 8px 0 6px;
+}
+
+.card p {
+  font-size: 0.92rem;
+  color: var(--fg-muted);
+}
+
+/* Steps */
+.steps {
+  counter-reset: step;
+  display: grid;
+  gap: 20px;
+}
+
+.step {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.step h3 {
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.step p {
+  font-size: 0.93rem;
+  color: var(--fg-muted);
+}
+
+.highlight {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px;
+}
+
+.highlight ul {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.highlight li {
+  padding-left: 26px;
+  position: relative;
+  font-size: 0.95rem;
+}
+
+.highlight li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+footer {
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--fg-muted);
+  font-size: 0.88rem;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 560px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+  .cta.secondary {
+    margin-left: 0;
+    margin-top: 12px;
+    display: block;
+  }
+}
