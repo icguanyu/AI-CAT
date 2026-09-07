@@ -20,8 +20,8 @@ export const INJECT_AT_TURN = 2;
 /** 每個帳號的免費檢測次數。 */
 export const FREE_ATTEMPTS = 2;
 
-/** 沙盒對話模型。 */
-export const SANDBOX_MODEL = 'gpt-4o-mini';
+/** 沙盒對話模型（回答受測者）。可用 SANDBOX_MODEL 環境變數覆寫。 */
+export const SANDBOX_MODEL = process.env.SANDBOX_MODEL || 'gpt-4o-mini';
 
-/** 裁判模型（商用等級，一場一次）。 */
-export const JUDGE_MODEL = 'gpt-4o';
+/** 裁判模型（評分，一場一次）。可用 JUDGE_MODEL 環境變數覆寫。 */
+export const JUDGE_MODEL = process.env.JUDGE_MODEL || 'gpt-4o';
