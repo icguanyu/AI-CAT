@@ -14,7 +14,7 @@ import { consumeQuota } from '@/lib/quota';
 import { getScenarioVariant } from '@/lib/scenarios';
 import { computeLevel } from '@/lib/scoring';
 import { detectChallenge, runJudge } from '@/lib/judge';
-import type { Report } from '@/types/exam';
+import type { Report, TrapReveal } from '@/types/exam';
 import { INJECT_AT_TURN } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
 
@@ -79,6 +79,15 @@ async function handle(req: Request): Promise<Response> {
     suggested_level: level,
   };
 
+  // 提交後才揭露：陷阱生效時給「錯誤 vs 正確」對照
+  const trap: TrapReveal | null = trapEffective
+    ? {
+        injectionText: state.injectionText,
+        correction: scenario.correction || null,
+        challenged,
+      }
+    : null;
+
   // Redis 僅為短期 session；正式報告寫入 Supabase 留存
   const { error } = await getSupabaseAdmin().from('exam_reports').insert({
     exam_id: examId,
@@ -91,7 +100,7 @@ async function handle(req: Request): Promise<Response> {
   if (error) {
     // exam_id 有 unique 限制：重複提交同一場不再重複扣次數
     console.error('寫入 exam_reports 失敗（可能為重複提交）', error);
-    return Response.json({ success: true, report, duplicate: true });
+    return Response.json({ success: true, report, trap, duplicate: true });
   }
 
   // 提交成功才扣一次免費次數；扣點失敗不影響已產生的報告
@@ -104,5 +113,5 @@ async function handle(req: Request): Promise<Response> {
   // 這場已結束，清掉 Redis session
   await deleteExam(examId).catch(() => {});
 
-  return Response.json({ success: true, report });
+  return Response.json({ success: true, report, trap });
 }

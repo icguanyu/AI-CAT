@@ -7,7 +7,7 @@
  */
 'use client';
 
-import type { Report } from '@/types/exam';
+import type { Report, TrapReveal } from '@/types/exam';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 
 export class ApiError extends Error {
@@ -90,7 +90,12 @@ export async function sendChat(examId: string, message: string): Promise<Respons
   return res;
 }
 
-export async function evaluateExam(examId: string): Promise<Report> {
+export interface EvalResult {
+  report: Report;
+  trap: TrapReveal | null;
+}
+
+export async function evaluateExam(examId: string): Promise<EvalResult> {
   const res = await fetch('/api/evaluate', {
     method: 'POST',
     headers: {
@@ -101,5 +106,8 @@ export async function evaluateExam(examId: string): Promise<Report> {
   });
   const json = await parseBody(res);
   if (!res.ok) fail(json, res, '評分失敗');
-  return json.report as Report;
+  return {
+    report: json.report as Report,
+    trap: (json.trap as TrapReveal | null) ?? null,
+  };
 }

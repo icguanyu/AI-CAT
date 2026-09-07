@@ -18,6 +18,8 @@ export interface ScenarioVariant {
   brief?: string;
   /** 這個變體第 INJECT_AT_TURN 輪要注入的蓄意錯誤敘述（機密）。 */
   injectionText: string;
+  /** 選填：對 injectionText 的正解，報告畫面用來做「錯誤 vs 正確」對照。 */
+  correction?: string;
 }
 
 /**
@@ -40,6 +42,16 @@ export interface ResolvedScenario {
   brief: string;
   system: string;
   injectionText: string;
+  /** 正解說明；沒填就是空字串。 */
+  correction: string;
+}
+
+/** 提交評分後，回給前端揭露的陷阱資訊（僅在陷阱生效時有值）。 */
+export interface TrapReveal {
+  injectionText: string;
+  correction: string | null;
+  /** 受測者是否有質疑 / 要求查證。 */
+  challenged: boolean;
 }
 
 /** 一場測驗的完整狀態，存於 Redis key `exam:{examId}`。 */

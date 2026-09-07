@@ -566,3 +566,54 @@ footer {
   margin: 18px 0;
   line-height: 1.7;
 }
+
+/* 報告畫面：陷阱「錯誤 vs 正確」對照 */
+.trap-review {
+  margin: 20px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--bg-alt);
+}
+.trap-head {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+.trap-head.miss {
+  color: #c0392b;
+}
+.trap-head.ok {
+  color: #1e874b;
+}
+@media (prefers-color-scheme: dark) {
+  .trap-head.miss {
+    color: #ff6b6b;
+  }
+  .trap-head.ok {
+    color: #4ade80;
+  }
+}
+.trap-row {
+  padding: 8px 0 8px 12px;
+  border-left: 3px solid var(--border);
+  margin-bottom: 8px;
+}
+.trap-row.wrong {
+  border-left-color: #e0b4b4;
+}
+.trap-row.right {
+  border-left-color: #b4e0c4;
+}
+.trap-label {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  margin-bottom: 2px;
+}
+.trap-row p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}

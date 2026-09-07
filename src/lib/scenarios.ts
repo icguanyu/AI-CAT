@@ -28,17 +28,31 @@ function normalize(id: string, raw: RawScenario): Scenario {
   let variants: Scenario['variants'];
   if (Array.isArray(raw.variants) && raw.variants.length > 0) {
     variants = raw.variants.map((v, i) => {
-      const vv = v as { injectionText?: unknown; brief?: unknown };
+      const vv = v as {
+        injectionText?: unknown;
+        brief?: unknown;
+        correction?: unknown;
+      };
       if (typeof vv.injectionText !== 'string') {
         throw new Error(`情境題 ${id} 變體 #${i} 缺少 injectionText`);
       }
       return {
         injectionText: vv.injectionText,
         ...(typeof vv.brief === 'string' ? { brief: vv.brief } : {}),
+        ...(typeof vv.correction === 'string'
+          ? { correction: vv.correction }
+          : {}),
       };
     });
   } else if (typeof raw.injectionText === 'string') {
-    variants = [{ injectionText: raw.injectionText }];
+    variants = [
+      {
+        injectionText: raw.injectionText,
+        ...(typeof (raw as { correction?: unknown }).correction === 'string'
+          ? { correction: (raw as { correction: string }).correction }
+          : {}),
+      },
+    ];
   } else {
     throw new Error(`情境題 ${id} 需要 injectionText 或非空的 variants`);
   }
@@ -82,6 +96,7 @@ function flatten(
     brief: variant.brief ?? scenario.brief,
     system: scenario.system,
     injectionText: variant.injectionText,
+    correction: variant.correction ?? '',
   };
 }
 

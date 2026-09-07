@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
-import type { Report } from '@/types/exam';
+import type { Report, TrapReveal } from '@/types/exam';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 import {
   getQuota,
@@ -72,6 +72,7 @@ export default function ExamPage() {
   const [authExpired, setAuthExpired] = useState(false);
   const [quota, setQuota] = useState<Quota | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  const [trap, setTrap] = useState<TrapReveal | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
 
   const refreshQuota = useCallback(() => {
@@ -184,8 +185,9 @@ export default function ExamPage() {
     setBusy(true);
     setPhase('evaluating');
     try {
-      const rep = await evaluateExam(exam.examId);
+      const { report: rep, trap: tr } = await evaluateExam(exam.examId);
       setReport(rep);
+      setTrap(tr);
       setPhase('done');
     } catch (e) {
       handleErr(e);
@@ -309,12 +311,36 @@ export default function ExamPage() {
             </div>
           ))}
           <p className="report-summary">{report.overall_summary}</p>
+
+          {trap && (
+            <div className="trap-review">
+              <div
+                className={`trap-head ${trap.challenged ? 'ok' : 'miss'}`}
+              >
+                {trap.challenged
+                  ? '你有質疑對話中出現的這則資訊'
+                  : '你忽略了對話中一則錯誤資訊'}
+              </div>
+              <div className="trap-row wrong">
+                <span className="trap-label">對話中出現</span>
+                <p>{trap.injectionText}</p>
+              </div>
+              {trap.correction && (
+                <div className="trap-row right">
+                  <span className="trap-label">正確資訊</span>
+                  <p>{trap.correction}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             type="button"
             className="btn ghost"
             onClick={() => {
               setPhase('idle');
               setExam(null);
+              setTrap(null);
             }}
           >
             回到開始
