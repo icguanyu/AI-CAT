@@ -5,6 +5,7 @@
  *       純靜態 Server Component；CTA 連到 /exam（登入與測驗流程都在那）。
  */
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const METRICS = [
   {
@@ -56,24 +57,56 @@ const STEPS = [
 export default function HomePage() {
   return (
     <>
+      <div className="site-top">
+        <div className="brand">
+          <span className="wordmark">AI-CAT</span>
+          <span className="mono-label">AI 能力檢測工具</span>
+        </div>
+        <div className="right">
+          <span className="mono-label">AI COMPETENCY ASSESSMENT · MVP</span>
+          <ThemeToggle />
+        </div>
+      </div>
+
       <header className="hero">
         <div className="wrap">
-          <span className="badge">AI COMPETENCY ASSESSMENT TOOL · MVP</span>
+          <span className="eyebrow">
+            <span className="dot" />
+            <span>ASSESSMENT · NOT A QUIZ</span>
+          </span>
           <h1>
-            AI-CAT
+            你會<span className="hl">「用 AI」</span>嗎？
             <br />
-            你會「用 AI」嗎？來實測一次。
+            <span className="sub">來實測一次。</span>
           </h1>
           <p>
-            捨棄選擇題。透過「動態沙盒實作」與「AI 自動盲審」，
-            在真實任務情境中量化你與 AI 協作的效率與思辨能力。
+            不是測你知不知道 AI，而是測你能不能駕馭 AI。
+            三個真實職場情境、動態沙盒實作、AI 自動盲審。
           </p>
-          <Link className="cta" href="/exam">
-            開始檢測
-          </Link>
-          <a className="cta secondary" href="#how">
-            了解運作方式
-          </a>
+          <div className="hero-cta">
+            <Link className="cta" href="/exam">
+              開始檢測 →
+            </Link>
+            <a className="cta-link" href="#how">
+              先看運作方式
+            </a>
+          </div>
+          <div className="hero-stats">
+            <div>
+              <div className="n">
+                5–10 <span>MIN</span>
+              </div>
+              <div className="k">單次檢測</div>
+            </div>
+            <div>
+              <div className="n">3</div>
+              <div className="k">職場情境</div>
+            </div>
+            <div>
+              <div className="n">L1–L5</div>
+              <div className="k">能力分級</div>
+            </div>
+          </div>
         </div>
       </header>
 

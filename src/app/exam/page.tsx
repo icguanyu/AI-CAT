@@ -25,6 +25,7 @@ import {
 } from '@/lib/client-api';
 import { readTextStream } from '@/lib/data-stream';
 import { Markdown } from '@/components/Markdown';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type Phase = 'idle' | 'chatting' | 'evaluating' | 'done';
@@ -287,6 +288,7 @@ export default function ExamPage() {
       <button type="button" className="linkbtn" onClick={signOut}>
         登出
       </button>
+      <ThemeToggle />
     </div>
   );
 

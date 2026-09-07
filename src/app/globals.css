@@ -1,33 +1,70 @@
 /*
  * 檔案：src/app/globals.css
  * 角色：前端層 — 全域樣式與設計 token
- * 功能：CSS 變數（淺/深色主題）、基本 reset、著陸頁各區塊樣式
- *       （hero / metrics grid / steps / highlight / footer）。由 layout.tsx 匯入。
+ * 功能：主色 #d8ff4f + mono 標籤語彙的雙主題 token（淺=檢測報告 / 深=控制台），
+ *       由 <html data-theme> 切換（layout.tsx 內的免閃爍 script + ThemeToggle）；
+ *       基本 reset、著陸頁 / 測驗 / 報告各區塊樣式。
  */
 
 :root {
-  --bg: #ffffff;
-  --bg-alt: #f5f7fa;
-  --fg: #1a1f2b;
-  --fg-muted: #5b6472;
-  --accent: #3b6ef5;
-  --accent-fg: #ffffff;
-  --border: #e2e6ec;
+  color-scheme: light;
+
+  --font-sans: var(--font-sans-loaded), 'Noto Sans TC', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei',
+    sans-serif;
+  --font-mono: var(--font-mono-loaded), 'IBM Plex Mono', ui-monospace,
+    SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: var(--font-sans);
+
+  --accent: #d8ff4f;
+  --accent-fg: #0b0c0d;
+
+  --radius: 12px;
+
+  /* 淺色：檢測報告（暖白 + 墨黑，螢光綠當螢光筆） */
+  --bg: #f4f3ee;
   --card: #ffffff;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.05);
+  --bg-alt: #eceae3;
+  --fg: #16181a;
+  --fg-muted: #514d44;
+  --fg-faint: #726e63;
+  --border: #d9d6cc;
+  --accent-ink: #16181a;
+  --danger: #b23b3b;
+  --ok: #1e874b;
+  --shadow: 0 1px 2px rgba(22, 24, 26, 0.05), 0 8px 24px rgba(22, 24, 26, 0.06);
+}
+
+/* 深色：控制台（工程感、專注） */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0b0c0d;
+  --card: #101214;
+  --bg-alt: #16181a;
+  --fg: #f4f4f1;
+  --fg-muted: #a9aeb1;
+  --fg-faint: #6b6f73;
+  --border: #26292c;
+  --accent-ink: #d8ff4f;
+  --danger: #ff6b6b;
+  --ok: #4ade80;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0e1116;
-    --bg-alt: #151a21;
-    --fg: #e8ecf1;
-    --fg-muted: #9aa4b2;
-    --accent: #5c86ff;
-    --accent-fg: #0e1116;
-    --border: #262d38;
-    --card: #161c24;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    color-scheme: dark;
+    --bg: #0b0c0d;
+    --card: #101214;
+    --bg-alt: #16181a;
+    --fg: #f4f4f1;
+    --fg-muted: #a9aeb1;
+    --fg-faint: #6b6f73;
+    --border: #26292c;
+    --accent-ink: #d8ff4f;
+    --danger: #ff6b6b;
+    --ok: #4ade80;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -38,8 +75,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC',
-    'Microsoft JhengHei', 'Noto Sans TC', sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--fg);
   line-height: 1.7;
@@ -48,6 +84,47 @@ body {
 
 a {
   color: inherit;
+}
+
+/* mono 小標籤：AI COMPETENCY ASSESSMENT … */
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+/* 螢光筆highlight */
+.hl {
+  background: var(--accent);
+  color: var(--accent-fg);
+  padding: 0 0.14em;
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* 亮暗切換鈕 */
+.theme-toggle {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg-muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.theme-toggle:hover {
+  border-color: var(--fg-faint);
+  color: var(--fg);
 }
 
 .wrap {
@@ -72,19 +149,81 @@ section + section {
 
 .badge {
   display: inline-block;
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  padding: 4px 14px;
-  margin-bottom: 24px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-bottom: 22px;
 }
 
 .hero h1 {
-  font-size: 2.6rem;
-  line-height: 1.25;
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 6vw, 3.1rem);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
   margin-bottom: 20px;
+}
+.hero h1 .sub {
+  color: var(--fg-muted);
+}
+
+/* eyebrow：脈動點 + mono 標籤 */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.eyebrow .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+  animation: acPulse 2.4s ease-in-out infinite;
+}
+.eyebrow span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+@keyframes acPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* LIGHT | DARK 藥丸切換 */
+.pill-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  background: var(--card);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+}
+.pill-toggle span {
+  padding: 5px 11px;
+  border-radius: 999px;
+  color: var(--fg-faint);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pill-toggle span[data-on='true'] {
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 
 .hero p {
@@ -119,13 +258,97 @@ section + section {
 }
 
 h2 {
+  font-family: var(--font-display);
   font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   margin-bottom: 8px;
 }
 
 .section-sub {
   color: var(--fg-muted);
   margin-bottom: 36px;
+}
+
+/* 著陸頁頂列 + hero 統計 */
+.site-top {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 20px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.site-top .brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.site-top .wordmark {
+  font-weight: 900;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+.site-top .right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.hero-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.cta-link {
+  font-size: 0.95rem;
+  color: var(--fg);
+  border-bottom: 1px solid var(--fg);
+  padding-bottom: 2px;
+  text-decoration: none;
+}
+.cta-link:hover {
+  color: var(--fg-muted);
+  border-color: var(--fg-muted);
+}
+
+.hero-stats {
+  display: inline-flex;
+  gap: 0;
+  justify-content: center;
+  margin-top: 34px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  font-family: var(--font-mono);
+}
+.hero-stats > div {
+  padding: 0 24px;
+  border-right: 1px solid var(--border);
+  text-align: left;
+}
+.hero-stats > div:first-child {
+  padding-left: 0;
+}
+.hero-stats > div:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+.hero-stats .n {
+  font-size: 19px;
+  color: var(--fg);
+}
+.hero-stats .n span {
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+.hero-stats .k {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-top: 6px;
 }
 
 /* Metrics grid */
@@ -146,7 +369,7 @@ h2 {
 .card .num {
   font-size: 13px;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--accent-ink);
   letter-spacing: 0.08em;
 }
 
@@ -185,7 +408,7 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 50%;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .step h3 {
@@ -221,7 +444,7 @@ h2 {
   content: '✓';
   position: absolute;
   left: 0;
-  color: var(--accent);
+  color: var(--accent-ink);
   font-weight: 700;
 }
 
@@ -498,7 +721,7 @@ footer {
 }
 
 .md a {
-  color: var(--accent);
+  color: var(--accent-ink);
   text-decoration: underline;
   text-underline-offset: 2px;
   word-break: break-word;
@@ -546,7 +769,7 @@ footer {
 
 .composer textarea:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-ink);
 }
 
 .composer textarea:disabled {
@@ -564,13 +787,7 @@ footer {
 }
 
 .char-count.warn {
-  color: #c0392b;
-}
-
-@media (prefers-color-scheme: dark) {
-  .char-count.warn {
-    color: #ff6b6b;
-  }
+  color: var(--danger);
 }
 
 .btn.send {
@@ -652,7 +869,7 @@ footer {
   border: 0;
   padding: 0;
   font: inherit;
-  color: var(--accent);
+  color: var(--accent-ink);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -673,8 +890,14 @@ footer {
   color: var(--fg-muted);
 }
 
-.topbar > :last-child {
+.topbar .linkbtn {
   margin-left: auto;
+}
+.topbar .pill-toggle {
+  font-size: 9px;
+}
+.topbar .pill-toggle span {
+  padding: 4px 9px;
 }
 
 .topbar .who {
@@ -697,15 +920,9 @@ footer {
 }
 
 .err {
-  color: #c0392b;
+  color: var(--danger);
   font-size: 0.9rem;
   margin-top: 10px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .err {
-    color: #ff6b6b;
-  }
 }
 
 .notice {
@@ -726,22 +943,12 @@ footer {
 }
 
 .notice-error {
-  border-color: #e0b4b4;
-  background: rgba(192, 57, 43, 0.06);
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
 }
 
 .notice-error strong {
-  color: #c0392b;
-}
-
-@media (prefers-color-scheme: dark) {
-  .notice-error {
-    border-color: #5a2a2a;
-    background: rgba(255, 107, 107, 0.08);
-  }
-  .notice-error strong {
-    color: #ff6b6b;
-  }
+  color: var(--danger);
 }
 
 .report-card {
@@ -779,7 +986,7 @@ footer {
 .level-badge {
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .report-summary {
@@ -806,15 +1013,10 @@ footer {
   font-size: 0.92rem;
 }
 .fb-block li::marker {
-  color: #1e874b;
+  color: var(--ok);
 }
 .fb-block.improve li::marker {
-  color: var(--accent);
-}
-@media (prefers-color-scheme: dark) {
-  .fb-block li::marker {
-    color: #4ade80;
-  }
+  color: var(--accent-ink);
 }
 
 /* 報告畫面：陷阱「錯誤 vs 正確」對照 */
@@ -831,18 +1033,10 @@ footer {
   margin-bottom: 12px;
 }
 .trap-head.miss {
-  color: #c0392b;
+  color: var(--danger);
 }
 .trap-head.ok {
-  color: #1e874b;
-}
-@media (prefers-color-scheme: dark) {
-  .trap-head.miss {
-    color: #ff6b6b;
-  }
-  .trap-head.ok {
-    color: #4ade80;
-  }
+  color: var(--ok);
 }
 .trap-row {
   padding: 8px 0 8px 12px;
@@ -850,10 +1044,10 @@ footer {
   margin-bottom: 8px;
 }
 .trap-row.wrong {
-  border-left-color: #e0b4b4;
+  border-left-color: color-mix(in srgb, var(--danger) 45%, var(--border));
 }
 .trap-row.right {
-  border-left-color: #b4e0c4;
+  border-left-color: color-mix(in srgb, var(--ok) 45%, var(--border));
 }
 .trap-label {
   display: block;
@@ -880,6 +1074,6 @@ footer {
 .exemplar-head {
   font-weight: 700;
   font-size: 0.95rem;
-  color: var(--accent);
+  color: var(--accent-ink);
   margin-bottom: 10px;
 }
