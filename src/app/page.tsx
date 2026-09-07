@@ -6,12 +6,13 @@
  */
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { HeroRadar } from '@/components/HeroRadar';
 
 const METRICS = [
   { i: '01', t: '提示詞結構', d: '角色、脈絡與輸出格式限制' },
   { i: '02', t: '問題拆解力', d: '分階段引導而非一次全丟' },
   { i: '03', t: '對話效率', d: '產出品質 ÷ 有效輪次' },
-  { i: '04', t: '批判思考', d: '刻意注入錯誤，測你是否識破' },
+  { i: '04', t: '批判思考', d: '不輕信 AI 所言，拒絕照單全收' },
   { i: '05', t: '任務達成率', d: '字數、格式、必含內容' },
 ];
 
@@ -33,83 +34,6 @@ const STEPS = [
     desc: '五角雷達圖 + 綜合分級（L1–L5）+ 做得好／可以更好 + L5 示範。',
   },
 ];
-
-/** Hero 右側的能力模型示意雷達圖（sample：L4 / 82）。 */
-type Anchor = 'start' | 'middle' | 'end';
-const AXES: [string, number, number, Anchor][] = [
-  ['提示詞結構', 200, 32, 'middle'],
-  ['問題拆解', 356, 150, 'start'],
-  ['對話效率', 300, 347, 'middle'],
-  ['任務達成', 100, 347, 'middle'],
-  ['批判思考', 44, 150, 'end'],
-];
-const RING_POINTS = [
-  '200,50 342.7,153.6 288.2,321.4 111.8,321.4 57.3,153.6',
-  '200,100 295.1,169.1 258.8,281 141.2,281 104.9,169.1',
-  '200,150 247.6,184.5 229.4,240.5 170.6,240.5 152.4,184.5',
-];
-const OUTER = ['200,50', '342.7,153.6', '288.2,321.4', '111.8,321.4', '57.3,153.6'];
-const SAMPLE = ['200,71', '311.3,163.8', '280.3,310.5', '134.7,289.8', '81.6,161.5'];
-
-function SampleRadar() {
-  const grid = { stroke: 'var(--grid)' };
-  return (
-    <svg viewBox="0 0 400 400">
-      {RING_POINTS.map((pts, i) => (
-        <polygon
-          key={pts}
-          points={pts}
-          style={{
-            fill: i === 0 ? 'var(--radar-base)' : 'none',
-            stroke: 'var(--grid)',
-          }}
-        />
-      ))}
-      {OUTER.map((p) => (
-        <line
-          key={p}
-          x1="200"
-          y1="200"
-          x2={p.split(',')[0]}
-          y2={p.split(',')[1]}
-          style={grid}
-        />
-      ))}
-      <polygon
-        points={SAMPLE.join(' ')}
-        style={{
-          fill: 'var(--radar-fill)',
-          stroke: 'var(--radar-stroke)',
-          strokeWidth: 2,
-        }}
-      />
-      {SAMPLE.map((p) => (
-        <circle
-          key={p}
-          cx={p.split(',')[0]}
-          cy={p.split(',')[1]}
-          r="4.5"
-          style={{ fill: 'var(--radar-stroke)' }}
-        />
-      ))}
-      {AXES.map(([label, x, y, anchor]) => (
-        <text
-          key={label}
-          x={x}
-          y={y}
-          textAnchor={anchor}
-          fontSize="13"
-          style={{
-            fill: 'var(--fg-muted)',
-            fontFamily: "'IBM Plex Mono', monospace",
-          }}
-        >
-          {label}
-        </text>
-      ))}
-    </svg>
-  );
-}
 
 export default function HomePage() {
   return (
@@ -174,20 +98,7 @@ export default function HomePage() {
               <span>CAPABILITY MODEL</span>
               <span>SAMPLE REPORT</span>
             </div>
-            <SampleRadar />
-            <div className="lp-level">
-              <div>
-                <div className="lvl">
-                  <b>L4</b>
-                  <span>AI COLLABORATOR</span>
-                </div>
-                <p>能駕馭 AI 完成複雜任務，並主動檢查與修正 AI 的輸出。</p>
-              </div>
-              <div className="score">
-                <div className="s">82</div>
-                <div className="k">AI SCORE</div>
-              </div>
-            </div>
+            <HeroRadar />
           </section>
         </main>
 

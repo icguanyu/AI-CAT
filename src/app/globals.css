@@ -428,6 +428,18 @@ h2 {
   flex-wrap: wrap;
   border-top: 1px solid var(--border);
   padding-top: 18px;
+  animation: lpLevelIn 0.5s ease;
+}
+@keyframes lpLevelIn {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.lp-level .s {
+  font-variant-numeric: tabular-nums;
 }
 .lp-level .lvl {
   display: flex;
