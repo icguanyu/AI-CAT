@@ -31,3 +31,6 @@ yarn-error.log*
 *.pem
 /coverage
 /.idea
+
+# 殘留：Cloudflare 嘗試留下的本機快取
+.wrangler/
