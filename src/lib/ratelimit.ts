@@ -9,7 +9,9 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-const PER_HOUR = Number(process.env.RATE_LIMIT_PER_HOUR) || 20;
+// 一場測驗最多 1 + MAX_USER_TURNS(=10) 次請求；預設放寬到約 5 場/小時/IP，
+// 或同一 IP 幾個人同時測。真正的防濫用靠：需登入、每帳號 2 次、OpenAI 用量上限。
+const PER_HOUR = Number(process.env.RATE_LIMIT_PER_HOUR) || 60;
 const DISABLED = process.env.RATE_LIMIT_DISABLED === '1';
 
 let limiter: Ratelimit | null = null;
