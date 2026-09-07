@@ -9,7 +9,7 @@
  */
 import { requireAuth } from '@/lib/supabase';
 import { setExam } from '@/lib/redis';
-import { getRatelimit, clientIp } from '@/lib/ratelimit';
+import { rateLimitOk } from '@/lib/ratelimit';
 import { listScenarioIds, resolveScenario } from '@/lib/scenarios';
 import { checkQuota } from '@/lib/quota';
 import { MAX_USER_TURNS, MAX_INPUT_CHARS } from '@/config/constants';
@@ -28,8 +28,7 @@ async function handle(req: Request): Promise<Response> {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
 
-  const { success } = await getRatelimit().limit(`ip:${clientIp(req)}`);
-  if (!success) {
+  if (!(await rateLimitOk(req))) {
     return Response.json({ error: '請求過於頻繁，請稍後再試' }, { status: 429 });
   }
 

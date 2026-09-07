@@ -15,7 +15,7 @@ import { streamText } from 'ai';
 import { openai } from '@/lib/openai';
 import { getExam, setExam } from '@/lib/redis';
 import { requireAuth } from '@/lib/supabase';
-import { getRatelimit, clientIp } from '@/lib/ratelimit';
+import { rateLimitOk } from '@/lib/ratelimit';
 import { getScenarioVariant } from '@/lib/scenarios';
 import {
   MAX_INPUT_CHARS,
@@ -61,8 +61,7 @@ async function handle(req: Request): Promise<Response> {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
 
-  const { success } = await getRatelimit().limit(`ip:${clientIp(req)}`);
-  if (!success) {
+  if (!(await rateLimitOk(req))) {
     return Response.json({ error: '請求過於頻繁，請稍後再試' }, { status: 429 });
   }
 
