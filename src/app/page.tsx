@@ -1,38 +1,18 @@
 /**
  * 檔案：src/app/page.tsx  →  路由 /
- * 角色：前端層 — 產品歡迎頁 / 著陸頁
- * 功能：介紹 AI-CAT：Hero、五大評估維度、運作方式四步驟、CTA、著作權頁尾。
- *       純靜態 Server Component；CTA 連到 /exam（登入與測驗流程都在那）。
+ * 角色：前端層 — 產品著陸頁（對齊 AI-CAT Hero.dc）
+ * 功能：Hero 一屏（header / 左文案 + 右能力模型 sample panel / 底部五大維度），
+ *       其後接運作方式、最終 CTA、頁尾。純靜態 Server Component，CTA 連 /exam。
  */
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const METRICS = [
-  {
-    num: '01',
-    title: '提示詞結構',
-    desc: '是否具備角色設定、背景脈絡與清楚的輸出格式限制。',
-  },
-  {
-    num: '02',
-    title: '問題拆解力',
-    desc: '面對複雜任務，能否分階段引導、逐步確認，而非一次全丟。',
-  },
-  {
-    num: '03',
-    title: '對話效率',
-    desc: '以「產出品質 ÷ 有效輪次」衡量；空轉與重複發問會扣分。',
-  },
-  {
-    num: '04',
-    title: '批判思考 / 幻覺辨識',
-    desc: '系統會故意注入錯誤資訊，測你能否識破並主動糾正。',
-  },
-  {
-    num: '05',
-    title: '任務達成率',
-    desc: '最終產出是否滿足所有限制條件：字數、格式、必含內容。',
-  },
+  { i: '01', t: '提示詞結構', d: '角色、脈絡與輸出格式限制' },
+  { i: '02', t: '問題拆解力', d: '分階段引導而非一次全丟' },
+  { i: '03', t: '對話效率', d: '產出品質 ÷ 有效輪次' },
+  { i: '04', t: '批判思考', d: '刻意注入錯誤，測你是否識破' },
+  { i: '05', t: '任務達成率', d: '字數、格式、必含內容' },
 ];
 
 const STEPS = [
@@ -50,83 +30,177 @@ const STEPS = [
   },
   {
     title: '取得能力報告',
-    desc: '五角雷達圖 + 綜合分級（L1–L5）+ 一句話總評與改進建議。',
+    desc: '五角雷達圖 + 綜合分級（L1–L5）+ 做得好／可以更好 + L5 示範。',
   },
 ];
+
+/** Hero 右側的能力模型示意雷達圖（sample：L4 / 82）。 */
+type Anchor = 'start' | 'middle' | 'end';
+const AXES: [string, number, number, Anchor][] = [
+  ['提示詞結構', 200, 32, 'middle'],
+  ['問題拆解', 356, 150, 'start'],
+  ['對話效率', 300, 347, 'middle'],
+  ['任務達成', 100, 347, 'middle'],
+  ['批判思考', 44, 150, 'end'],
+];
+const RING_POINTS = [
+  '200,50 342.7,153.6 288.2,321.4 111.8,321.4 57.3,153.6',
+  '200,100 295.1,169.1 258.8,281 141.2,281 104.9,169.1',
+  '200,150 247.6,184.5 229.4,240.5 170.6,240.5 152.4,184.5',
+];
+const OUTER = ['200,50', '342.7,153.6', '288.2,321.4', '111.8,321.4', '57.3,153.6'];
+const SAMPLE = ['200,71', '311.3,163.8', '280.3,310.5', '134.7,289.8', '81.6,161.5'];
+
+function SampleRadar() {
+  const grid = { stroke: 'var(--grid)' };
+  return (
+    <svg viewBox="0 0 400 400">
+      {RING_POINTS.map((pts, i) => (
+        <polygon
+          key={pts}
+          points={pts}
+          style={{
+            fill: i === 0 ? 'var(--radar-base)' : 'none',
+            stroke: 'var(--grid)',
+          }}
+        />
+      ))}
+      {OUTER.map((p) => (
+        <line
+          key={p}
+          x1="200"
+          y1="200"
+          x2={p.split(',')[0]}
+          y2={p.split(',')[1]}
+          style={grid}
+        />
+      ))}
+      <polygon
+        points={SAMPLE.join(' ')}
+        style={{
+          fill: 'var(--radar-fill)',
+          stroke: 'var(--radar-stroke)',
+          strokeWidth: 2,
+        }}
+      />
+      {SAMPLE.map((p) => (
+        <circle
+          key={p}
+          cx={p.split(',')[0]}
+          cy={p.split(',')[1]}
+          r="4.5"
+          style={{ fill: 'var(--radar-stroke)' }}
+        />
+      ))}
+      {AXES.map(([label, x, y, anchor]) => (
+        <text
+          key={label}
+          x={x}
+          y={y}
+          textAnchor={anchor}
+          fontSize="13"
+          style={{
+            fill: 'var(--fg-muted)',
+            fontFamily: "'IBM Plex Mono', monospace",
+          }}
+        >
+          {label}
+        </text>
+      ))}
+    </svg>
+  );
+}
 
 export default function HomePage() {
   return (
     <>
-      <div className="site-top">
-        <div className="brand">
-          <span className="wordmark">AI-CAT</span>
-          <span className="mono-label">AI 能力檢測工具</span>
-        </div>
-        <div className="right">
-          <span className="mono-label">AI COMPETENCY ASSESSMENT · MVP</span>
-          <ThemeToggle />
+      <div className="lp">
+        <header className="lp-header">
+          <div className="lp-brand">
+            <span className="wordmark">AI-CAT</span>
+            <span className="mono-label">AI 能力檢測工具</span>
+          </div>
+          <div className="right">
+            <span className="mono-label">AI COMPETENCY ASSESSMENT · MVP</span>
+            <ThemeToggle />
+          </div>
+        </header>
+
+        <main className="lp-main">
+          <section className="lp-hero">
+            <span className="eyebrow">
+              <span className="dot" />
+              <span>ASSESSMENT · NOT A QUIZ</span>
+            </span>
+            <h1>
+              你會<span className="hl">「用 AI」</span>嗎？
+              <br />
+              <span className="sub">來實測一次。</span>
+            </h1>
+            <p>
+              不是測你知不知道 AI，而是測你能不能駕馭 AI。
+              三個真實職場情境、動態沙盒實作、AI 自動盲審。
+            </p>
+            <div className="lp-cta">
+              <Link className="cta" href="/exam">
+                開始檢測 →
+              </Link>
+              <a className="cta-link" href="#how">
+                先看評分方法
+              </a>
+            </div>
+            <div className="lp-metrics">
+              <div>
+                <div className="n">
+                  5–10 <span>MIN</span>
+                </div>
+                <div className="k">單次檢測</div>
+              </div>
+              <div>
+                <div className="n">
+                  3 <span>SCENARIOS</span>
+                </div>
+                <div className="k">職場情境</div>
+              </div>
+              <div>
+                <div className="n">L1 – L5</div>
+                <div className="k">能力分級</div>
+              </div>
+            </div>
+          </section>
+
+          <section className="lp-panel">
+            <div className="lp-panel-head">
+              <span>CAPABILITY MODEL</span>
+              <span>SAMPLE REPORT</span>
+            </div>
+            <SampleRadar />
+            <div className="lp-level">
+              <div>
+                <div className="lvl">
+                  <b>L4</b>
+                  <span>AI COLLABORATOR</span>
+                </div>
+                <p>能駕馭 AI 完成複雜任務，並主動檢查與修正 AI 的輸出。</p>
+              </div>
+              <div className="score">
+                <div className="s">82</div>
+                <div className="k">AI SCORE</div>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <div className="lp-foot">
+          {METRICS.map((m) => (
+            <div key={m.i}>
+              <span className="i">{m.i}</span>
+              <span className="t">{m.t}</span>
+              <span className="d">{m.d}</span>
+            </div>
+          ))}
         </div>
       </div>
-
-      <header className="hero">
-        <div className="wrap">
-          <span className="eyebrow">
-            <span className="dot" />
-            <span>ASSESSMENT · NOT A QUIZ</span>
-          </span>
-          <h1>
-            你會<span className="hl">「用 AI」</span>嗎？
-            <br />
-            <span className="sub">來實測一次。</span>
-          </h1>
-          <p>
-            不是測你知不知道 AI，而是測你能不能駕馭 AI。
-            三個真實職場情境、動態沙盒實作、AI 自動盲審。
-          </p>
-          <div className="hero-cta">
-            <Link className="cta" href="/exam">
-              開始檢測 →
-            </Link>
-            <a className="cta-link" href="#how">
-              先看運作方式
-            </a>
-          </div>
-          <div className="hero-stats">
-            <div>
-              <div className="n">
-                5–10 <span>MIN</span>
-              </div>
-              <div className="k">單次檢測</div>
-            </div>
-            <div>
-              <div className="n">3</div>
-              <div className="k">職場情境</div>
-            </div>
-            <div>
-              <div className="n">L1–L5</div>
-              <div className="k">能力分級</div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <section id="metrics">
-        <div className="wrap">
-          <h2>五大評估維度</h2>
-          <p className="section-sub">
-            系統從你的輸入、互動與產出，換算出 0–100 分的能力雷達圖。
-          </p>
-          <div className="grid">
-            {METRICS.map((m) => (
-              <div className="card" key={m.num}>
-                <span className="num">{m.num}</span>
-                <h3>{m.title}</h3>
-                <p>{m.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <section id="how">
         <div className="wrap">
@@ -155,7 +229,7 @@ export default function HomePage() {
             <ul>
               <li>3 種職場情境題：行銷文案、行政數據、工程除錯</li>
               <li>真實沙盒對話，非題庫選擇題</li>
-              <li>檢測結果即時產生，可下載分享</li>
+              <li>檢測結果即時產生，附 L5 示範</li>
               <li>對話資料僅供評分使用，可隨時刪除</li>
             </ul>
             <p style={{ marginTop: 24 }}>
