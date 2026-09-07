@@ -594,6 +594,19 @@ footer {
   margin-left: auto;
 }
 
+.topbar .who {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.topbar .avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .quota-line {
   font-size: 0.9rem;
   color: var(--fg-muted);
