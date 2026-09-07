@@ -7,8 +7,9 @@
  */
 import { generateObject } from 'ai';
 import { openai } from '@/lib/openai';
-import { getExam } from '@/lib/redis';
+import { getExam, deleteExam } from '@/lib/redis';
 import { requireAuth, getSupabaseAdmin } from '@/lib/supabase';
+import { consumeQuota } from '@/lib/quota';
 import { ReportSchema, type ChatMessage } from '@/types/exam';
 import { INJECT_AT_TURN, JUDGE_MODEL } from '@/config/constants';
 
@@ -98,8 +99,20 @@ export async function POST(req: Request) {
     injected: state.injected,
   });
   if (error) {
-    console.error('寫入 exam_reports 失敗', error);
+    // exam_id 有 unique 限制：重複提交同一場不再重複扣次數
+    console.error('寫入 exam_reports 失敗（可能為重複提交）', error);
+    return Response.json({ success: true, report, duplicate: true });
   }
+
+  // 提交成功才扣一次免費次數；扣點失敗不影響已產生的報告
+  try {
+    await consumeQuota(auth.userId);
+  } catch (e) {
+    console.error('扣減 user_quota 失敗', e);
+  }
+
+  // 這場已結束，清掉 Redis session
+  await deleteExam(examId).catch(() => {});
 
   return Response.json({ success: true, report });
 }

@@ -1,9 +1,10 @@
 /**
  * 檔案：src/app/page.tsx  →  路由 /
  * 角色：前端層 — 產品歡迎頁 / 著陸頁
- * 功能：介紹 AI-CAT：Hero、五大評估維度、運作方式四步驟、登入 CTA、著作權頁尾。
- *       純靜態 Server Component；「使用 Google 登入」按鈕待 Phase 4 接 Supabase OAuth。
+ * 功能：介紹 AI-CAT：Hero、五大評估維度、運作方式四步驟、CTA、著作權頁尾。
+ *       純靜態 Server Component；CTA 連到 /exam（登入與測驗流程都在那）。
  */
+import Link from 'next/link';
 
 const METRICS = [
   {
@@ -67,9 +68,9 @@ export default function HomePage() {
             捨棄選擇題。透過「動態沙盒實作」與「AI 自動盲審」，
             在真實任務情境中量化你與 AI 協作的效率與思辨能力。
           </p>
-          <a className="cta" href="#start">
+          <Link className="cta" href="/exam">
             開始檢測
-          </a>
+          </Link>
           <a className="cta secondary" href="#how">
             了解運作方式
           </a>
@@ -125,10 +126,9 @@ export default function HomePage() {
               <li>對話資料僅供評分使用，可隨時刪除</li>
             </ul>
             <p style={{ marginTop: 24 }}>
-              {/* TODO(Phase 4): 接 Supabase Google OAuth，導向 /exam */}
-              <a className="cta" href="#">
+              <Link className="cta" href="/exam">
                 使用 Google 登入並開始
-              </a>
+              </Link>
             </p>
           </div>
         </div>

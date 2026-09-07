@@ -1,0 +1,316 @@
+/**
+ * 檔案：src/app/exam/page.tsx  →  路由 /exam
+ * 角色：前端層 — 測驗主流程（Client Component）
+ * 功能：Google 登入 → 開始檢測（/api/exam/start）→ 雙欄沙盒（左任務、右對話，
+ *       串流 /api/chat）→ 提交評分（/api/evaluate）→ 顯示能力報告。
+ *       雷達圖等視覺化留給 Phase 5。
+ *
+ * Supabase client 只在瀏覽器端（useEffect / 事件處理，透過 getSb()）建立，
+ * 避免 SSR 靜態外殼渲染時因缺少 NEXT_PUBLIC_ 環境變數而失敗。
+ */
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { SupabaseClient, Session } from '@supabase/supabase-js';
+import type { Report } from '@/types/exam';
+import { createSupabaseBrowser } from '@/lib/supabase-browser';
+import {
+  startExam,
+  sendChat,
+  evaluateExam,
+  type StartResult,
+} from '@/lib/client-api';
+import { readTextStream } from '@/lib/data-stream';
+
+type Msg = { role: 'user' | 'assistant'; content: string };
+type Phase = 'idle' | 'chatting' | 'evaluating' | 'done';
+
+const METRIC_LABELS: Record<keyof Report['scores'], string> = {
+  prompt_structure: '提示詞結構',
+  decomposition: '問題拆解力',
+  efficiency: '對話效率',
+  critical_thinking: '批判思考',
+  task_completion: '任務達成率',
+};
+
+export default function ExamPage() {
+  const sbRef = useRef<SupabaseClient | null>(null);
+  const getSb = useCallback(() => {
+    if (!sbRef.current) sbRef.current = createSupabaseBrowser();
+    return sbRef.current;
+  }, []);
+
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+
+  useEffect(() => {
+    const supabase = getSb();
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) =>
+      setSession(s),
+    );
+    return () => sub.subscription.unsubscribe();
+  }, [getSb]);
+
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [exam, setExam] = useState<StartResult | null>(null);
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [input, setInput] = useState('');
+  const [userTurns, setUserTurns] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [report, setReport] = useState<Report | null>(null);
+  const logRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
+  }, [messages]);
+
+  const signIn = useCallback(() => {
+    void getSb().auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  }, [getSb]);
+
+  const begin = useCallback(async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      const r = await startExam();
+      setExam(r);
+      setMessages([]);
+      setUserTurns(0);
+      setReport(null);
+      setPhase('chatting');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
+  const send = useCallback(async () => {
+    if (!exam || busy) return;
+    const text = input.trim();
+    if (!text) return;
+    if (text.length > exam.limits.maxInputChars) {
+      setError(`超過 ${exam.limits.maxInputChars} 字上限`);
+      return;
+    }
+    setError(null);
+    setBusy(true);
+    setInput('');
+    setMessages((m) => [
+      ...m,
+      { role: 'user', content: text },
+      { role: 'assistant', content: '' },
+    ]);
+    try {
+      const res = await sendChat(exam.examId, text);
+      for await (const chunk of readTextStream(res)) {
+        setMessages((m) => {
+          const copy = m.slice();
+          const last = copy[copy.length - 1];
+          copy[copy.length - 1] = {
+            role: 'assistant',
+            content: last.content + chunk,
+          };
+          return copy;
+        });
+      }
+      setUserTurns((n) => n + 1);
+    } catch (e) {
+      setError((e as Error).message);
+      setMessages((m) =>
+        m[m.length - 1]?.content === '' ? m.slice(0, -1) : m,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }, [exam, input, busy]);
+
+  const submit = useCallback(async () => {
+    if (!exam) return;
+    setError(null);
+    setBusy(true);
+    setPhase('evaluating');
+    try {
+      const rep = await evaluateExam(exam.examId);
+      setReport(rep);
+      setPhase('done');
+    } catch (e) {
+      setError((e as Error).message);
+      setPhase('chatting');
+    } finally {
+      setBusy(false);
+    }
+  }, [exam]);
+
+  // ── 載入中 / 未登入 ──
+  if (session === undefined) {
+    return (
+      <main className="exam-wrap">
+        <div className="center-card">
+          <p>載入中…</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (session === null) {
+    return (
+      <main className="exam-wrap">
+        <div className="center-card panel">
+          <h2>開始檢測前請先登入</h2>
+          <p className="section-sub">
+            使用 Google 登入，每個帳號提供 2 次免費檢測。
+          </p>
+          <button type="button" className="btn" onClick={signIn}>
+            使用 Google 登入
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // ── 開始畫面 ──
+  if (phase === 'idle') {
+    return (
+      <main className="exam-wrap">
+        <div className="center-card panel">
+          <h2>AI 能力檢測</h2>
+          <p className="section-sub">
+            一場約 5 分鐘，5 輪對話內完成。準備好就開始。
+          </p>
+          <button
+            type="button"
+            className="btn"
+            onClick={begin}
+            disabled={busy}
+          >
+            {busy ? '準備中…' : '開始檢測'}
+          </button>
+          {error && <p className="err">{error}</p>}
+          <p className="signed-in">
+            {session.user.email}
+            {' ・ '}
+            <button
+              type="button"
+              className="linkbtn"
+              onClick={() => void getSb().auth.signOut()}
+            >
+              登出
+            </button>
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  // ── 報告畫面 ──
+  if (phase === 'done' && report) {
+    const keys = Object.keys(METRIC_LABELS) as (keyof Report['scores'])[];
+    return (
+      <main className="exam-wrap">
+        <div className="panel report-card">
+          <div className="meta-row">
+            <strong>能力報告</strong>
+            <span className="level-badge">{report.suggested_level}</span>
+          </div>
+          {keys.map((k) => (
+            <div className="score-row" key={k}>
+              <span>{METRIC_LABELS[k]}</span>
+              <span className="score-bar">
+                <span style={{ width: `${report.scores[k]}%` }} />
+              </span>
+              <span className="score-num">{report.scores[k]}</span>
+            </div>
+          ))}
+          <p className="report-summary">{report.overall_summary}</p>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => {
+              setPhase('idle');
+              setExam(null);
+            }}
+          >
+            回到開始
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // ── 對話畫面（chatting / evaluating）──
+  const maxTurns = exam?.limits.maxUserTurns ?? 5;
+  const turnsLeft = maxTurns - userTurns;
+  const canChat = phase === 'chatting' && !busy && turnsLeft > 0;
+
+  return (
+    <main className="exam-wrap">
+      <div className="exam-grid">
+        <aside className="panel">
+          <div className="meta-row">
+            <strong>任務說明</strong>
+          </div>
+          <div className="brief">{exam?.brief}</div>
+        </aside>
+
+        <section className="panel chat">
+          <div className="meta-row">
+            <span>
+              第 {Math.min(userTurns + 1, maxTurns)} / {maxTurns} 輪
+            </span>
+            <button
+              type="button"
+              className="btn"
+              onClick={submit}
+              disabled={busy || messages.length === 0}
+            >
+              {phase === 'evaluating' ? '評分中…' : '提交評分'}
+            </button>
+          </div>
+
+          <div className="chat-log" ref={logRef}>
+            {messages.map((m, i) => (
+              <div key={i} className={`bubble ${m.role}`}>
+                {m.content || (m.role === 'assistant' && busy ? '…' : '')}
+              </div>
+            ))}
+          </div>
+
+          <div className="chat-input">
+            <textarea
+              rows={2}
+              value={input}
+              maxLength={exam?.limits.maxInputChars}
+              placeholder={
+                turnsLeft > 0
+                  ? `還可發言 ${turnsLeft} 次…（Enter 送出，Shift+Enter 換行）`
+                  : '已達輪次上限，請提交評分'
+              }
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (canChat && input.trim()) void send();
+                }
+              }}
+              disabled={!canChat}
+            />
+            <button
+              type="button"
+              className="btn"
+              onClick={() => void send()}
+              disabled={!canChat || !input.trim()}
+            >
+              送出
+            </button>
+          </div>
+          {error && <p className="err">{error}</p>}
+        </section>
+      </div>
+    </main>
+  );
+}

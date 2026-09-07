@@ -1,19 +1,29 @@
 /**
  * 檔案：src/lib/supabase-browser.ts
- * 角色：前端層 — 瀏覽器端 Supabase client
- * 功能：給 Client Component 用來做 Google 登入（signInWithOAuth）與取得 session。
- *       前端呼叫 /api/* 時，要帶 `Authorization: Bearer <access_token>`，
- *       token 來自這裡的 session。UI 於 Phase 4 建立。
- *
- * 只用 anon key（瀏覽器可見）；service_role 僅存在於伺服器端 src/lib/supabase.ts。
+ * 角色：前端層 — 瀏覽器端 Supabase client（單例）
+ * 功能：給 Client Component 做 Google 登入（signInWithOAuth，PKCE）、
+ *       取得 session。呼叫 /api/* 時帶 `Authorization: Bearer <access_token>`。
+ *       只用 anon key；service_role 僅存在伺服器端 src/lib/supabase.ts。
  */
 'use client';
 
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-export function createSupabaseBrowser() {
-  return createBrowserClient(
+let client: SupabaseClient | null = null;
+
+export function createSupabaseBrowser(): SupabaseClient {
+  if (client) return client;
+  client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+      },
+    },
   );
+  return client;
 }
