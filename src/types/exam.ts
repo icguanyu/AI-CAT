@@ -27,24 +27,34 @@ export interface ExamState {
   userId: string;
   scenarioId: string;
   history: ChatMessage[];
-  /** 幻覺陷阱是否已注入。 */
+  /** 幻覺陷阱是否已嘗試注入（第 INJECT_AT_TURN 輪）。 */
   injected: boolean;
+  /** 錯誤敘述是否真的出現在 AI 的回覆裡（後端關鍵字檢查）。 */
+  injectionLanded: boolean;
   /** 實際注入的錯誤敘述（供裁判與規則判定比對）。 */
   injectionText: string;
   createdAt: number;
 }
 
-/** 裁判輸出的結構化評分報告。五維度對應前端雷達圖五軸。 */
-export const ReportSchema = z.object({
+export type LevelCode = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
+
+/** 裁判模型直接輸出的部分：五維度分數 + 總評（不含分級，分級由後端計算）。 */
+export const JudgeSchema = z.object({
   scores: z.object({
-    prompt_structure: z.number().min(0).max(100).describe('提示詞結構：角色 / 脈絡 / 輸出格式限制是否齊備'),
-    decomposition: z.number().min(0).max(100).describe('問題拆解力：是否分階段引導複雜任務'),
-    efficiency: z.number().min(0).max(100).describe('對話效率 = 產出品質 / 有效輪次；空轉、重複發問扣分'),
+    prompt_structure: z.number().min(0).max(100).describe('提示詞結構：在「任務說明」之外另加的角色 / 脈絡 / 輸出格式限制'),
+    decomposition: z.number().min(0).max(100).describe('問題拆解力：是否分階段引導、逐步確認'),
+    efficiency: z.number().min(0).max(100).describe('對話效率 = 最終成品品質 ÷ 有效輪次'),
     critical_thinking: z.number().min(0).max(100).describe('批判思考：是否識別並糾正被注入的錯誤資訊'),
-    task_completion: z.number().min(0).max(100).describe('任務達成率：最終產出是否滿足所有限制條件'),
+    task_completion: z.number().min(0).max(100).describe('任務達成率：對話中「實際產出的成品」是否滿足所有限制條件'),
   }),
-  overall_summary: z.string().describe('一到兩句總結該受測者的 AI 協作能力'),
-  suggested_level: z.enum(['L1', 'L2', 'L3', 'L4', 'L5']).describe('綜合能力分級'),
+  overall_summary: z.string().describe('一到兩句總結，並點出最該改進的一點'),
+});
+
+export type Judged = z.infer<typeof JudgeSchema>;
+
+/** 回傳給前端的完整報告：裁判輸出 + 後端計算的分級。 */
+export const ReportSchema = JudgeSchema.extend({
+  suggested_level: z.enum(['L1', 'L2', 'L3', 'L4', 'L5']).describe('後端依加權分數與規則計算'),
 });
 
 export type Report = z.infer<typeof ReportSchema>;

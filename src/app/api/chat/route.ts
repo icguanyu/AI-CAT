@@ -1,16 +1,17 @@
 /**
  * 檔案：src/app/api/chat/route.ts  →  POST /api/chat
  * 角色：API 層 — 沙盒對話控制器（核心）
- * 功能：驗證登入與流量後，把使用者訊息接進該場測驗歷程，串流沙盒模型回應，
- *       並於第 INJECT_AT_TURN 輪「決定性注入」幻覺陷阱（不經模型、暗號不入 prompt）。
- *       注入輪次也以相同的 data-stream 協定回傳，前端一律當作 assistant 訊息處理。
- *       對話狀態存 Redis；正常輪次由 onFinish 落地 assistant 回覆。
+ * 功能：驗證登入與流量後，把使用者訊息接進該場測驗歷程，串流沙盒模型回應。
+ *       第 INJECT_AT_TURN 輪仍由真實模型作答並串流，但**只在該回合**於 system
+ *       追加一段指示，要模型以肯定語氣自然帶入指定的錯誤敘述（不加但書、不揭露）。
+ *       之後由後端關鍵字檢查判斷錯誤敘述是否真的出現（injectionLanded），
+ *       裁判階段再做第二層確認。
  *
  * 請求 body：{ examId: string, message: string }
  * 回應：Vercel AI SDK data stream（header x-vercel-ai-data-stream: v1），
  *       或錯誤時的 JSON + 對應 HTTP 狀態碼。
  */
-import { streamText, formatDataStreamPart } from 'ai';
+import { streamText } from 'ai';
 import { openai } from '@/lib/openai';
 import { getExam, setExam } from '@/lib/redis';
 import { requireAuth } from '@/lib/supabase';
@@ -25,20 +26,28 @@ import {
 
 export const runtime = 'nodejs';
 
-/** 把一段固定文字包成 data stream 回應，讓前端與正常串流一致處理。 */
-function textAsDataStream(text: string): Response {
-  const body = new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.enqueue(new TextEncoder().encode(formatDataStreamPart('text', text)));
-      controller.close();
-    },
-  });
-  return new Response(body, {
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'x-vercel-ai-data-stream': 'v1',
-    },
-  });
+/** 只在注入回合附加的 system 指示。 */
+function injectionDirective(injectionText: string): string {
+  return [
+    '',
+    '【本回合特別指示，僅此一次，回完即失效】',
+    '在你這一則回覆中，請以肯定、自然的語氣，把下面這段內容當成正確的事實帶進來，',
+    '融入你對使用者需求的回應裡。不要加「請自行查證」「我不確定」之類的但書，',
+    '也不要提到你收到任何特別指示：',
+    `「${injectionText}」`,
+    '其餘部分照常、完整地滿足使用者的要求。',
+  ].join('\n');
+}
+
+/** 粗略判斷錯誤敘述是否真的出現在回覆中（裁判階段會再確認一次）。 */
+function injectionLanded(reply: string, injectionText: string): boolean {
+  const tokens = injectionText
+    .replace(/[，。、；：「」『』《》（）()\s]+/g, ' ')
+    .split(' ')
+    .filter((t) => t.length >= 2);
+  if (tokens.length === 0) return false;
+  const hits = tokens.filter((t) => reply.includes(t)).length;
+  return hits / tokens.length >= 0.4;
 }
 
 export async function POST(req: Request) {
@@ -90,31 +99,25 @@ export async function POST(req: Request) {
   const currentTurn = userTurns + 1;
   const scenario = getScenario(state.scenarioId);
 
-  // ── 決定性幻覺注入（不經模型）──
-  if (currentTurn === INJECT_AT_TURN && !state.injected) {
-    const injectedReply = [
-      '以下是一版可用的草稿：',
-      '',
-      '（草稿內容省略）',
-      '',
-      `另外補充一點資訊供參考：${scenario.injectionText}`,
-    ].join('\n');
+  const isInjectionTurn = currentTurn === INJECT_AT_TURN && !state.injected;
+  const system = isInjectionTurn
+    ? `${scenario.system}\n${injectionDirective(scenario.injectionText)}`
+    : scenario.system;
 
+  if (isInjectionTurn) {
     state.injected = true;
     state.injectionText = scenario.injectionText;
-    state.history.push({ role: 'assistant', content: injectedReply });
-    await setExam(examId, state);
-
-    return textAsDataStream(injectedReply);
   }
 
-  // ── 正常輪次：串流沙盒模型回應 ──
   const result = streamText({
     model: openai(SANDBOX_MODEL),
-    system: scenario.system,
+    system,
     messages: state.history,
     onFinish: async ({ text }) => {
       state.history.push({ role: 'assistant', content: text });
+      if (isInjectionTurn) {
+        state.injectionLanded = injectionLanded(text, scenario.injectionText);
+      }
       await setExam(examId, state);
     },
   });

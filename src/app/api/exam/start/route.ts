@@ -49,6 +49,7 @@ export async function POST(req: Request) {
     scenarioId,
     history: [],
     injected: false,
+    injectionLanded: false,
     injectionText: '',
     createdAt: Date.now(),
   };
