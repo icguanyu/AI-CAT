@@ -74,6 +74,15 @@ export default function ExamPage() {
   const [report, setReport] = useState<Report | null>(null);
   const [trap, setTrap] = useState<TrapReveal | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // textarea 隨內容自動增高（上限 180px 後改捲動）
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
+  }, [input, phase]);
 
   const refreshQuota = useCallback(() => {
     getQuota()
@@ -398,31 +407,44 @@ export default function ExamPage() {
           </div>
 
           <div className="chat-input">
-            <textarea
-              rows={2}
-              value={input}
-              maxLength={exam?.limits.maxInputChars}
-              placeholder={
-                turnsLeft > 0
-                  ? `還可發言 ${turnsLeft} 次…（Enter 送出，Shift+Enter 換行）`
-                  : '已達輪次上限，請提交評分'
-              }
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  if (canChat && input.trim()) void send();
+            <div className="composer">
+              <textarea
+                ref={inputRef}
+                rows={1}
+                value={input}
+                maxLength={exam?.limits.maxInputChars}
+                placeholder={
+                  turnsLeft > 0
+                    ? `還可發言 ${turnsLeft} 次…（Enter 送出，Shift+Enter 換行）`
+                    : '已達輪次上限，請提交評分'
                 }
-              }}
-              disabled={!canChat}
-            />
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (canChat && input.trim()) void send();
+                  }
+                }}
+                disabled={!canChat}
+              />
+              {exam && input.length > 0 && (
+                <span
+                  className={`char-count ${
+                    input.length > exam.limits.maxInputChars * 0.9 ? 'warn' : ''
+                  }`}
+                >
+                  {input.length} / {exam.limits.maxInputChars}
+                </span>
+              )}
+            </div>
             <button
               type="button"
-              className="btn"
+              className="btn send"
               onClick={() => void send()}
               disabled={!canChat || !input.trim()}
+              aria-label="送出"
             >
-              送出
+              {busy && phase === 'chatting' ? '…' : '送出'}
             </button>
           </div>
           {error && <p className="err">{error}</p>}

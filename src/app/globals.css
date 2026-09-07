@@ -434,23 +434,111 @@ footer {
 
 .chat-input {
   display: flex;
+  align-items: flex-end;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
-.chat-input textarea {
+.composer {
   flex: 1;
+  position: relative;
+}
+
+.composer textarea {
+  display: block;
+  width: 100%;
   resize: none;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 12px;
+  padding: 11px 14px;
   font: inherit;
+  line-height: 1.5;
+  min-height: 44px;
+  max-height: 180px;
+  overflow-y: auto;
   background: var(--bg);
   color: var(--fg);
+  transition: border-color 0.15s ease;
 }
 
-.chat-input textarea:disabled {
-  opacity: 0.6;
+.composer textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.composer textarea:disabled {
+  opacity: 0.55;
+}
+
+.char-count {
+  position: absolute;
+  top: -17px;
+  right: 2px;
+  font-size: 0.72rem;
+  color: var(--fg-muted);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.char-count.warn {
+  color: #c0392b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .char-count.warn {
+    color: #ff6b6b;
+  }
+}
+
+.btn.send {
+  height: 44px;
+  padding: 0 20px;
+  flex: 0 0 auto;
+}
+
+/* 捲軸樣式 */
+.chat-log,
+.composer textarea,
+.brief,
+.md pre,
+.md table {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.chat-log::-webkit-scrollbar,
+.composer textarea::-webkit-scrollbar,
+.brief::-webkit-scrollbar,
+.md pre::-webkit-scrollbar,
+.md table::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.chat-log::-webkit-scrollbar-track,
+.composer textarea::-webkit-scrollbar-track,
+.brief::-webkit-scrollbar-track,
+.md pre::-webkit-scrollbar-track,
+.md table::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-log::-webkit-scrollbar-thumb,
+.composer textarea::-webkit-scrollbar-thumb,
+.brief::-webkit-scrollbar-thumb,
+.md pre::-webkit-scrollbar-thumb,
+.md table::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.chat-log::-webkit-scrollbar-thumb:hover,
+.composer textarea::-webkit-scrollbar-thumb:hover,
+.md pre::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-muted);
+  background-clip: padding-box;
 }
 
 .btn {
