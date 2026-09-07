@@ -2,17 +2,31 @@
  * 檔案：src/lib/client-api.ts
  * 角色：前端層 — 呼叫本站 /api/* 的封裝
  * 功能：自動帶入 Supabase session 的 Bearer token，統一錯誤處理。
- *       startExam / sendChat（回傳串流 Response）/ evaluateExam。
+ *       失敗一律丟 ApiError（帶 HTTP status，401 代表登入失效）。
+ *       getQuota / startExam / sendChat（回傳串流 Response）/ evaluateExam。
  */
 'use client';
 
 import type { Report } from '@/types/exam';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+  /** 登入憑證問題，UI 應引導重新登入。 */
+  get isAuth(): boolean {
+    return this.status === 401;
+  }
+}
+
 async function bearer(): Promise<string> {
   const { data } = await createSupabaseBrowser().auth.getSession();
   const token = data.session?.access_token;
-  if (!token) throw new Error('尚未登入，請重新登入');
+  if (!token) throw new ApiError('登入狀態已失效，請重新登入', 401);
   return token;
 }
 
@@ -27,11 +41,29 @@ async function parseBody(res: Response): Promise<Record<string, unknown>> {
   }
 }
 
+function fail(json: Record<string, unknown>, res: Response, fallback: string): never {
+  throw new ApiError((json.error as string) ?? fallback, res.status);
+}
+
+export interface Quota {
+  used: number;
+  limit: number;
+}
+
 export interface StartResult {
   examId: string;
   brief: string;
   limits: { maxUserTurns: number; maxInputChars: number };
-  quota: { used: number; limit: number };
+  quota: Quota;
+}
+
+export async function getQuota(): Promise<Quota> {
+  const res = await fetch('/api/quota', {
+    headers: { Authorization: `Bearer ${await bearer()}` },
+  });
+  const json = await parseBody(res);
+  if (!res.ok) fail(json, res, '讀取次數失敗');
+  return json as unknown as Quota;
 }
 
 export async function startExam(): Promise<StartResult> {
@@ -40,7 +72,7 @@ export async function startExam(): Promise<StartResult> {
     headers: { Authorization: `Bearer ${await bearer()}` },
   });
   const json = await parseBody(res);
-  if (!res.ok) throw new Error((json.error as string) ?? '開始測驗失敗');
+  if (!res.ok) fail(json, res, '開始測驗失敗');
   return json as unknown as StartResult;
 }
 
@@ -54,10 +86,7 @@ export async function sendChat(examId: string, message: string): Promise<Respons
     },
     body: JSON.stringify({ examId, message }),
   });
-  if (!res.ok) {
-    const json = await parseBody(res);
-    throw new Error((json.error as string) ?? '對話失敗');
-  }
+  if (!res.ok) fail(await parseBody(res), res, '對話失敗');
   return res;
 }
 
@@ -71,6 +100,6 @@ export async function evaluateExam(examId: string): Promise<Report> {
     body: JSON.stringify({ examId }),
   });
   const json = await parseBody(res);
-  if (!res.ok) throw new Error((json.error as string) ?? '評分失敗');
+  if (!res.ok) fail(json, res, '評分失敗');
   return json.report as Report;
 }

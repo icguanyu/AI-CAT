@@ -400,6 +400,26 @@ footer {
   color: var(--fg-muted);
 }
 
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+  color: var(--fg-muted);
+}
+
+.topbar > :last-child {
+  margin-left: auto;
+}
+
+.quota-line {
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+  margin-bottom: 16px;
+}
+
 .err {
   color: #c0392b;
   font-size: 0.9rem;

@@ -3,7 +3,7 @@
  * 角色：前端層 — 測驗主流程（Client Component）
  * 功能：Google 登入 → 開始檢測（/api/exam/start）→ 雙欄沙盒（左任務、右對話，
  *       串流 /api/chat）→ 提交評分（/api/evaluate）→ 顯示能力報告。
- *       雷達圖等視覺化留給 Phase 5。
+ *       另：開始畫面顯示已完成次數；API 回 401 時引導重新登入。
  *
  * Supabase client 只在瀏覽器端（useEffect / 事件處理，透過 getSb()）建立，
  * 避免 SSR 靜態外殼渲染時因缺少 NEXT_PUBLIC_ 環境變數而失敗。
@@ -15,9 +15,12 @@ import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import type { Report } from '@/types/exam';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 import {
+  getQuota,
   startExam,
   sendChat,
   evaluateExam,
+  ApiError,
+  type Quota,
   type StartResult,
 } from '@/lib/client-api';
 import { readTextStream } from '@/lib/data-stream';
@@ -65,12 +68,36 @@ export default function ExamPage() {
   const [userTurns, setUserTurns] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authExpired, setAuthExpired] = useState(false);
+  const [quota, setQuota] = useState<Quota | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+
+  const refreshQuota = useCallback(() => {
+    getQuota()
+      .then(setQuota)
+      .catch(() => {
+        /* 次數顯示失敗不擋流程 */
+      });
+  }, []);
+
+  // 登入後、以及每次回到開始/報告畫面，更新次數顯示
+  useEffect(() => {
+    if (session) refreshQuota();
+  }, [session, refreshQuota]);
+  useEffect(() => {
+    if (session && (phase === 'idle' || phase === 'done')) refreshQuota();
+  }, [phase, session, refreshQuota]);
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [messages]);
+
+  const handleErr = useCallback((e: unknown) => {
+    const message = e instanceof Error ? e.message : '發生未預期錯誤';
+    setError(message);
+    if (e instanceof ApiError && e.isAuth) setAuthExpired(true);
+  }, []);
 
   const signIn = useCallback(() => {
     void getSb().auth.signInWithOAuth({
@@ -79,22 +106,36 @@ export default function ExamPage() {
     });
   }, [getSb]);
 
+  const signOut = useCallback(async () => {
+    await getSb().auth.signOut();
+    setAuthExpired(false);
+    setError(null);
+    setPhase('idle');
+    setExam(null);
+  }, [getSb]);
+
+  const reLogin = useCallback(async () => {
+    await getSb().auth.signOut();
+    signIn();
+  }, [getSb, signIn]);
+
   const begin = useCallback(async () => {
     setError(null);
     setBusy(true);
     try {
       const r = await startExam();
       setExam(r);
+      setQuota(r.quota);
       setMessages([]);
       setUserTurns(0);
       setReport(null);
       setPhase('chatting');
     } catch (e) {
-      setError((e as Error).message);
+      handleErr(e);
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [handleErr]);
 
   const send = useCallback(async () => {
     if (!exam || busy) return;
@@ -127,14 +168,14 @@ export default function ExamPage() {
       }
       setUserTurns((n) => n + 1);
     } catch (e) {
-      setError((e as Error).message);
+      handleErr(e);
       setMessages((m) =>
         m[m.length - 1]?.content === '' ? m.slice(0, -1) : m,
       );
     } finally {
       setBusy(false);
     }
-  }, [exam, input, busy]);
+  }, [exam, input, busy, handleErr]);
 
   const submit = useCallback(async () => {
     if (!exam) return;
@@ -146,12 +187,12 @@ export default function ExamPage() {
       setReport(rep);
       setPhase('done');
     } catch (e) {
-      setError((e as Error).message);
+      handleErr(e);
       setPhase('chatting');
     } finally {
       setBusy(false);
     }
-  }, [exam]);
+  }, [exam, handleErr]);
 
   // ── 設定未完成 ──
   if (configError) {
@@ -165,7 +206,7 @@ export default function ExamPage() {
     );
   }
 
-  // ── 載入中 / 未登入 ──
+  // ── 載入中 ──
   if (session === undefined) {
     return (
       <main className="exam-wrap">
@@ -176,51 +217,71 @@ export default function ExamPage() {
     );
   }
 
-  if (session === null) {
+  // ── 未登入 / 登入失效 ──
+  if (session === null || authExpired) {
     return (
       <main className="exam-wrap">
         <div className="center-card panel">
-          <h2>開始檢測前請先登入</h2>
+          <h2>{authExpired ? '登入已失效' : '開始檢測前請先登入'}</h2>
           <p className="section-sub">
-            使用 Google 登入，每個帳號提供 2 次免費檢測。
+            {authExpired
+              ? '你的登入狀態已過期或無效，請重新登入。'
+              : '使用 Google 登入，每個帳號提供 2 次免費檢測。'}
           </p>
-          <button type="button" className="btn" onClick={signIn}>
-            使用 Google 登入
+          <button
+            type="button"
+            className="btn"
+            onClick={authExpired ? reLogin : signIn}
+          >
+            {authExpired ? '重新登入' : '使用 Google 登入'}
           </button>
+          {authExpired && (
+            <p className="signed-in">
+              <button type="button" className="linkbtn" onClick={signOut}>
+                只登出
+              </button>
+            </p>
+          )}
         </div>
       </main>
     );
   }
 
+  const email = session.user.email;
+  const outOfQuota = quota != null && quota.used >= quota.limit;
+  const quotaText =
+    quota != null ? `本帳號已完成 ${quota.used} / ${quota.limit} 次檢測` : null;
+
+  const TopBar = (
+    <div className="topbar">
+      <span>{email}</span>
+      {quotaText && <span>{quotaText}</span>}
+      <button type="button" className="linkbtn" onClick={signOut}>
+        登出
+      </button>
+    </div>
+  );
+
   // ── 開始畫面 ──
   if (phase === 'idle') {
     return (
       <main className="exam-wrap">
+        {TopBar}
         <div className="center-card panel">
           <h2>AI 能力檢測</h2>
           <p className="section-sub">
             一場約 5 分鐘，5 輪對話內完成。準備好就開始。
           </p>
+          {quotaText && <p className="quota-line">{quotaText}</p>}
           <button
             type="button"
             className="btn"
             onClick={begin}
-            disabled={busy}
+            disabled={busy || outOfQuota}
           >
-            {busy ? '準備中…' : '開始檢測'}
+            {outOfQuota ? '免費次數已用完' : busy ? '準備中…' : '開始檢測'}
           </button>
           {error && <p className="err">{error}</p>}
-          <p className="signed-in">
-            {session.user.email}
-            {' ・ '}
-            <button
-              type="button"
-              className="linkbtn"
-              onClick={() => void getSb().auth.signOut()}
-            >
-              登出
-            </button>
-          </p>
         </div>
       </main>
     );
@@ -231,6 +292,7 @@ export default function ExamPage() {
     const keys = Object.keys(METRIC_LABELS) as (keyof Report['scores'])[];
     return (
       <main className="exam-wrap">
+        {TopBar}
         <div className="panel report-card">
           <div className="meta-row">
             <strong>能力報告</strong>
@@ -268,6 +330,7 @@ export default function ExamPage() {
 
   return (
     <main className="exam-wrap">
+      {TopBar}
       <div className="exam-grid">
         <aside className="panel">
           <div className="meta-row">
