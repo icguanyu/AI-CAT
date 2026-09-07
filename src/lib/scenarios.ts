@@ -9,6 +9,8 @@
  *   { brief, system, variants: [ { injectionText, correction?, brief? }, ... ] }
  * 舊形狀 { brief, system, injectionText } 仍相容（自動轉成單一 variant）。
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import type { Scenario, ResolvedScenario } from '@/types/exam';
 
@@ -63,7 +65,36 @@ function normalize(id: string, raw: RawScenario): Scenario {
 /** 題庫載入失敗（可與「題庫為空」區分）。 */
 export class ScenarioLoadError extends Error {}
 
+/**
+ * 本機開發覆寫：專案根目錄有 scenarios.local.json（已 gitignore）時，
+ * 開發模式下「只用這個檔」，完全不碰 Supabase。形狀同 { [id]: Scenario }。
+ */
+function loadLocalOverride(): Record<string, Scenario> | null {
+  if (process.env.NODE_ENV === 'production') return null;
+  let raw: string;
+  try {
+    raw = readFileSync(join(process.cwd(), 'scenarios.local.json'), 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw new ScenarioLoadError(
+      `讀取 scenarios.local.json 失敗：${(e as Error).message}`,
+    );
+  }
+  let parsed: Record<string, RawScenario>;
+  try {
+    parsed = JSON.parse(raw) as Record<string, RawScenario>;
+  } catch {
+    throw new ScenarioLoadError('scenarios.local.json 不是合法的 JSON');
+  }
+  return Object.fromEntries(
+    Object.entries(parsed).map(([id, r]) => [id, normalize(id, r)]),
+  );
+}
+
 async function load(): Promise<Record<string, Scenario>> {
+  const local = loadLocalOverride();
+  if (local) return local;
+
   let rows: unknown;
   try {
     const { data, error } = await getSupabaseAdmin()

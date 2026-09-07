@@ -11,6 +11,9 @@ AI-CAT_MVP_Architecture.md
 # 裁判信度測試用的真實 fixture（含真實題庫內容）
 /scripts/fixtures/
 
+# 本機題庫覆寫（開發模式下取代 Supabase scenarios 表）
+/scenarios.local.json
+
 # 依賴
 /node_modules
 
