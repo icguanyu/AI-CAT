@@ -3,9 +3,14 @@
  * 角色：API 層 — 沙盒對話控制器（核心）
  * 功能：驗證登入與流量後，把使用者訊息接進該場測驗歷程，串流沙盒模型回應，
  *       並於第 INJECT_AT_TURN 輪「決定性注入」幻覺陷阱（不經模型、暗號不入 prompt）。
- *       對話狀態存 Redis；onFinish 落地 assistant 回覆。
+ *       注入輪次也以相同的 data-stream 協定回傳，前端一律當作 assistant 訊息處理。
+ *       對話狀態存 Redis；正常輪次由 onFinish 落地 assistant 回覆。
+ *
+ * 請求 body：{ examId: string, message: string }
+ * 回應：Vercel AI SDK data stream（header x-vercel-ai-data-stream: v1），
+ *       或錯誤時的 JSON + 對應 HTTP 狀態碼。
  */
-import { streamText } from 'ai';
+import { streamText, formatDataStreamPart } from 'ai';
 import { openai } from '@/lib/openai';
 import { getExam, setExam } from '@/lib/redis';
 import { requireAuth } from '@/lib/supabase';
@@ -20,17 +25,22 @@ import {
 
 export const runtime = 'nodejs';
 
-/**
- * 沙盒對話 API（Phase 2）
- *
- * - streamText + onFinish 落地對話歷史到 Redis
- * - 第 INJECT_AT_TURN 個使用者輪次「決定性注入」幻覺陷阱：
- *   直接回傳腳本化的錯誤敘述，不呼叫模型、不把暗號寫進 system prompt。
- *
- * TODO(Phase 2):
- *   - 建立 examId 的端點（POST /api/exam/start）：驗證免費次數、隨機選題、寫入初始 ExamState
- *   - 前端串接 useChat 的 data stream 與「注入輪次的 JSON 回應」兩種格式
- */
+/** 把一段固定文字包成 data stream 回應，讓前端與正常串流一致處理。 */
+function textAsDataStream(text: string): Response {
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode(formatDataStreamPart('text', text)));
+      controller.close();
+    },
+  });
+  return new Response(body, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'x-vercel-ai-data-stream': 'v1',
+    },
+  });
+}
+
 export async function POST(req: Request) {
   const auth = await requireAuth(req);
   if ('error' in auth) {
@@ -95,11 +105,7 @@ export async function POST(req: Request) {
     state.history.push({ role: 'assistant', content: injectedReply });
     await setExam(examId, state);
 
-    return Response.json({
-      role: 'assistant',
-      content: injectedReply,
-      injected: true,
-    });
+    return textAsDataStream(injectedReply);
   }
 
   // ── 正常輪次：串流沙盒模型回應 ──
