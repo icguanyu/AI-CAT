@@ -37,7 +37,21 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
   if (!token) return { error: '未登入', status: 401 };
 
   const { data, error } = await getSupabaseAdmin().auth.getUser(token);
-  if (error || !data.user) return { error: '登入憑證無效', status: 401 };
+  if (error || !data.user) {
+    // 常見原因：前端 NEXT_PUBLIC_SUPABASE_URL 與後端 SUPABASE_URL 指到不同專案，
+    // 導致 token 簽章驗不過。把真正的訊息印進 function log 方便排查。
+    console.error('[requireAuth] getUser 失敗', {
+      supabaseHost: (() => {
+        try {
+          return new URL(getEnv().SUPABASE_URL).host;
+        } catch {
+          return '(SUPABASE_URL 無效)';
+        }
+      })(),
+      reason: error?.message ?? 'no user in token',
+    });
+    return { error: '登入憑證無效', status: 401 };
+  }
 
   return { userId: data.user.id };
 }
