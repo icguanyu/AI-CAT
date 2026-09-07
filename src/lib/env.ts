@@ -28,8 +28,6 @@ const serverSchema = z.object({
     (v) => (v === '' ? undefined : v),
     z.string().min(1).optional(),
   ),
-
-  SCENARIOS_JSON: z.string().default('{}'),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;

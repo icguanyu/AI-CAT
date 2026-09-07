@@ -23,7 +23,7 @@ export interface ScenarioVariant {
 }
 
 /**
- * 情境題定義（system / injectionText 為機密，由 SCENARIOS_JSON 注入）。
+ * 情境題定義（system / injectionText 為機密，存 Supabase scenarios 表）。
  * 舊格式 `{ brief, system, injectionText }` 由載入器自動轉為單一 variant。
  */
 export interface Scenario {

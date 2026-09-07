@@ -42,7 +42,10 @@ async function handle(req: Request): Promise<Response> {
 
   const ids = await listScenarioIds();
   if (ids.length === 0) {
-    return Response.json({ error: '目前沒有可用的題目' }, { status: 503 });
+    return Response.json(
+      { error: '題庫目前沒有可用的題目，請稍後再試或聯絡管理員。' },
+      { status: 503 },
+    );
   }
   const scenarioId = ids[Math.floor(Math.random() * ids.length)];
   const scenario = await resolveScenario(scenarioId); // 隨機挑一個變體

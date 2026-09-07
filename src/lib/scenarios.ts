@@ -1,15 +1,14 @@
 /**
  * 檔案：src/lib/scenarios.ts
  * 角色：領域層 — 情境題庫載入器
- * 功能：優先從 Supabase `scenarios` 表載入（active=true），記憶體快取 60 秒
- *       → 改題不用 redeploy。表為空 / 讀取失敗時，回退到環境變數 SCENARIOS_JSON。
- *       支援每題多個隨機變體。題目內容機密，不進版控。
+ * 功能：從 Supabase `scenarios` 表載入（active=true），記憶體快取 60 秒
+ *       → 改題不用 redeploy。**沒有 env fallback**：載入失敗或無題目一律丟錯，
+ *       由呼叫端回明確錯誤給前端。支援每題多個隨機變體。題目內容機密，不進版控。
  *
- * scenario 形狀（DB 欄位 / SCENARIOS_JSON value 相同）：
+ * scenario 形狀（DB 欄位）：
  *   { brief, system, variants: [ { injectionText, correction?, brief? }, ... ] }
- * 舊形狀 { brief, system, injectionText } 自動轉成單一 variant。
+ * 舊形狀 { brief, system, injectionText } 仍相容（自動轉成單一 variant）。
  */
-import { getEnv } from '@/lib/env';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import type { Scenario, ResolvedScenario } from '@/types/exam';
 
@@ -61,42 +60,44 @@ function normalize(id: string, raw: RawScenario): Scenario {
   return { brief: raw.brief, system: raw.system, variants };
 }
 
-function fromEnv(): Record<string, Scenario> {
-  let parsed: Record<string, RawScenario>;
-  try {
-    parsed = JSON.parse(getEnv().SCENARIOS_JSON) as Record<string, RawScenario>;
-  } catch {
-    throw new Error('SCENARIOS_JSON 不是合法的 JSON，且 Supabase scenarios 表無資料');
-  }
-  return Object.fromEntries(
-    Object.entries(parsed).map(([id, raw]) => [id, normalize(id, raw)]),
-  );
-}
+/** 題庫載入失敗（可與「題庫為空」區分）。 */
+export class ScenarioLoadError extends Error {}
 
 async function load(): Promise<Record<string, Scenario>> {
+  let rows: unknown;
   try {
     const { data, error } = await getSupabaseAdmin()
       .from('scenarios')
       .select('id, brief, system, variants')
       .eq('active', true);
-    if (!error && Array.isArray(data) && data.length > 0) {
-      return Object.fromEntries(
-        data.map((row) => {
-          const r = row as { id: string } & RawScenario;
-          return [r.id, normalize(r.id, r)];
-        }),
-      );
+    if (error) {
+      throw new ScenarioLoadError(`題庫載入失敗：${error.message}`);
     }
-  } catch {
-    /* DB 不可用 → 回退到 env */
+    rows = data;
+  } catch (e) {
+    if (e instanceof ScenarioLoadError) throw e;
+    throw new ScenarioLoadError(
+      `題庫載入失敗：無法連線 Supabase（${(e as Error).message}）`,
+    );
   }
-  return fromEnv();
+
+  if (!Array.isArray(rows)) {
+    throw new ScenarioLoadError('題庫載入失敗：回應格式異常');
+  }
+
+  return Object.fromEntries(
+    rows.map((row) => {
+      const r = row as { id: string } & RawScenario;
+      return [r.id, normalize(r.id, r)];
+    }),
+  );
 }
 
 export async function getScenarios(): Promise<Record<string, Scenario>> {
   if (cache && Date.now() - cache.at < TTL_MS) return cache.data;
   const data = await load();
-  cache = { at: Date.now(), data };
+  // 空題庫不快取，讓下一次請求重試（剛建好還沒灌資料的情況）
+  if (Object.keys(data).length > 0) cache = { at: Date.now(), data };
   return data;
 }
 

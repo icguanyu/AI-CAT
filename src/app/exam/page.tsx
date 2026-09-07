@@ -285,6 +285,12 @@ export default function ExamPage() {
             一場約 5–10 分鐘，最多 10 輪對話。準備好就開始。
           </p>
           {quotaText && <p className="quota-line">{quotaText}</p>}
+          {error && (
+            <div className="notice notice-error" role="alert">
+              <strong>無法開始檢測</strong>
+              <span>{error}</span>
+            </div>
+          )}
           <button
             type="button"
             className="btn"
@@ -293,7 +299,6 @@ export default function ExamPage() {
           >
             {outOfQuota ? '免費次數已用完' : busy ? '準備中…' : '開始檢測'}
           </button>
-          {error && <p className="err">{error}</p>}
         </div>
       </main>
     );
