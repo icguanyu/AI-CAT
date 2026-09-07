@@ -16,7 +16,7 @@ import { openai } from '@/lib/openai';
 import { getExam, setExam } from '@/lib/redis';
 import { requireAuth } from '@/lib/supabase';
 import { getRatelimit, clientIp } from '@/lib/ratelimit';
-import { getScenario } from '@/lib/scenarios';
+import { getScenarioVariant } from '@/lib/scenarios';
 import {
   MAX_INPUT_CHARS,
   MAX_USER_TURNS,
@@ -102,7 +102,7 @@ async function handle(req: Request): Promise<Response> {
 
   state.history.push({ role: 'user', content: message });
   const currentTurn = userTurns + 1;
-  const scenario = getScenario(state.scenarioId);
+  const scenario = getScenarioVariant(state.scenarioId, state.variantIndex);
 
   const isInjectionTurn = currentTurn === INJECT_AT_TURN && !state.injected;
   const system = isInjectionTurn

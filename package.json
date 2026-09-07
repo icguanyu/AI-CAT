@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "judge:reliability": "tsx --env-file=.env.local scripts/judge-reliability.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.0.11",
@@ -29,6 +30,7 @@
     "@types/react-dom": "^19.0.2",
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.3",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
 }

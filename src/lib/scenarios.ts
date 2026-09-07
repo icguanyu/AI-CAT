@@ -1,28 +1,61 @@
 /**
  * 檔案：src/lib/scenarios.ts
  * 角色：領域層 — 情境題庫載入器
- * 功能：從環境變數 SCENARIOS_JSON 解析出「考題」（brief / system / injectionText）。
- *       題目內容為機密，不進版控；此檔只有載入與查詢邏輯（getScenario / listScenarioIds）。
+ * 功能：從環境變數 SCENARIOS_JSON 解析出「考題」，並支援每題多個隨機變體。
+ *       題目內容為機密，不進版控；此檔只有載入 / 挑選 / 攤平邏輯。
+ *
+ * SCENARIOS_JSON 形狀（新）：
+ *   { "<id>": { "brief": "...", "system": "...",
+ *               "variants": [ { "injectionText": "...", "brief"?: "..." }, ... ] } }
+ * 舊形狀 `{ brief, system, injectionText }` 會自動轉成單一 variant。
  */
 import { getEnv } from '@/lib/env';
-import type { Scenario } from '@/types/exam';
+import type { Scenario, ResolvedScenario } from '@/types/exam';
 
-/**
- * 情境題庫。內容為機密「考題」，不進版控：
- * 由環境變數 SCENARIOS_JSON（一段 JSON 字串）注入。
- *
- * 形狀：{ [scenarioId]: { brief, system, injectionText } }
- */
 let cache: Record<string, Scenario> | null = null;
+
+type RawScenario = {
+  brief?: unknown;
+  system?: unknown;
+  injectionText?: unknown;
+  variants?: unknown;
+};
+
+function normalize(id: string, raw: RawScenario): Scenario {
+  if (typeof raw.brief !== 'string' || typeof raw.system !== 'string') {
+    throw new Error(`情境題 ${id} 缺少 brief 或 system`);
+  }
+  let variants: Scenario['variants'];
+  if (Array.isArray(raw.variants) && raw.variants.length > 0) {
+    variants = raw.variants.map((v, i) => {
+      const vv = v as { injectionText?: unknown; brief?: unknown };
+      if (typeof vv.injectionText !== 'string') {
+        throw new Error(`情境題 ${id} 變體 #${i} 缺少 injectionText`);
+      }
+      return {
+        injectionText: vv.injectionText,
+        ...(typeof vv.brief === 'string' ? { brief: vv.brief } : {}),
+      };
+    });
+  } else if (typeof raw.injectionText === 'string') {
+    variants = [{ injectionText: raw.injectionText }];
+  } else {
+    throw new Error(`情境題 ${id} 需要 injectionText 或非空的 variants`);
+  }
+  return { brief: raw.brief, system: raw.system, variants };
+}
 
 export function getScenarios(): Record<string, Scenario> {
   if (cache) return cache;
-  const raw = getEnv().SCENARIOS_JSON;
+  let parsed: Record<string, RawScenario>;
   try {
-    cache = JSON.parse(raw) as Record<string, Scenario>;
+    parsed = JSON.parse(getEnv().SCENARIOS_JSON) as Record<string, RawScenario>;
   } catch {
     throw new Error('SCENARIOS_JSON 不是合法的 JSON');
   }
+  cache = Object.fromEntries(
+    Object.entries(parsed).map(([id, raw]) => [id, normalize(id, raw)]),
+  );
   return cache;
 }
 
@@ -34,4 +67,35 @@ export function getScenario(id: string): Scenario {
 
 export function listScenarioIds(): string[] {
   return Object.keys(getScenarios());
+}
+
+function flatten(
+  id: string,
+  scenario: Scenario,
+  variantIndex: number,
+): ResolvedScenario {
+  const idx = scenario.variants[variantIndex] ? variantIndex : 0;
+  const variant = scenario.variants[idx];
+  return {
+    scenarioId: id,
+    variantIndex: idx,
+    brief: variant.brief ?? scenario.brief,
+    system: scenario.system,
+    injectionText: variant.injectionText,
+  };
+}
+
+/** 開始測驗時呼叫：隨機挑一個變體。 */
+export function resolveScenario(id: string): ResolvedScenario {
+  const scenario = getScenario(id);
+  const variantIndex = Math.floor(Math.random() * scenario.variants.length);
+  return flatten(id, scenario, variantIndex);
+}
+
+/** 後續回合 / 評分時呼叫：用 ExamState 存的 variantIndex 還原同一個變體。 */
+export function getScenarioVariant(
+  id: string,
+  variantIndex: number,
+): ResolvedScenario {
+  return flatten(id, getScenario(id), variantIndex);
 }

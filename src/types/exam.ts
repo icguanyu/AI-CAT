@@ -12,13 +12,33 @@ export interface ChatMessage {
   content: string;
 }
 
-/** 情境題定義（system / injectionText 為機密，由 SCENARIOS_JSON 注入）。 */
+/** 情境題的一個隨機變體。 */
+export interface ScenarioVariant {
+  /** 選填：覆寫該場的任務說明（用來變動限制條件）。 */
+  brief?: string;
+  /** 這個變體第 INJECT_AT_TURN 輪要注入的蓄意錯誤敘述（機密）。 */
+  injectionText: string;
+}
+
+/**
+ * 情境題定義（system / injectionText 為機密，由 SCENARIOS_JSON 注入）。
+ * 舊格式 `{ brief, system, injectionText }` 由載入器自動轉為單一 variant。
+ */
 export interface Scenario {
-  /** 給受測者看的任務說明與限制條件。 */
+  /** 給受測者看的任務說明與限制條件（變體可覆寫）。 */
   brief: string;
   /** 沙盒模型的 system 指令（機密）。 */
   system: string;
-  /** 第 INJECT_AT_TURN 輪注入的蓄意錯誤敘述（機密）。 */
+  /** 至少一個變體；開始測驗時隨機挑一個。 */
+  variants: ScenarioVariant[];
+}
+
+/** 一場測驗實際採用的情境題 + 變體，攤平後的樣子。 */
+export interface ResolvedScenario {
+  scenarioId: string;
+  variantIndex: number;
+  brief: string;
+  system: string;
   injectionText: string;
 }
 
@@ -26,6 +46,8 @@ export interface Scenario {
 export interface ExamState {
   userId: string;
   scenarioId: string;
+  /** 開始測驗時隨機挑中的變體索引。 */
+  variantIndex: number;
   history: ChatMessage[];
   /** 幻覺陷阱是否已嘗試注入（第 INJECT_AT_TURN 輪）。 */
   injected: boolean;

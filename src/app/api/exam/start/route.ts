@@ -10,7 +10,7 @@
 import { requireAuth } from '@/lib/supabase';
 import { setExam } from '@/lib/redis';
 import { getRatelimit, clientIp } from '@/lib/ratelimit';
-import { listScenarioIds, getScenario } from '@/lib/scenarios';
+import { listScenarioIds, resolveScenario } from '@/lib/scenarios';
 import { checkQuota } from '@/lib/quota';
 import { MAX_USER_TURNS, MAX_INPUT_CHARS } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
@@ -46,12 +46,13 @@ async function handle(req: Request): Promise<Response> {
     return Response.json({ error: '目前沒有可用的題目' }, { status: 503 });
   }
   const scenarioId = ids[Math.floor(Math.random() * ids.length)];
-  const scenario = getScenario(scenarioId);
+  const scenario = resolveScenario(scenarioId); // 隨機挑一個變體
 
   const examId = crypto.randomUUID();
   const state: ExamState = {
     userId: auth.userId,
     scenarioId,
+    variantIndex: scenario.variantIndex,
     history: [],
     injected: false,
     injectionLanded: false,

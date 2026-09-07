@@ -6,7 +6,7 @@
  */
 import { requireAuth } from '@/lib/supabase';
 import { getExam } from '@/lib/redis';
-import { getScenario } from '@/lib/scenarios';
+import { getScenarioVariant } from '@/lib/scenarios';
 import { MAX_USER_TURNS } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
 
@@ -37,7 +37,7 @@ async function handle(
     return Response.json({ error: '無權存取此場次' }, { status: 403 });
   }
 
-  const scenario = getScenario(state.scenarioId);
+  const scenario = getScenarioVariant(state.scenarioId, state.variantIndex);
   const userTurns = state.history.filter((m) => m.role === 'user').length;
 
   return Response.json({

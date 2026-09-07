@@ -8,6 +8,9 @@
 /docs-internal/
 AI-CAT_MVP_Architecture.md
 
+# 裁判信度測試用的真實 fixture（含真實題庫內容）
+/scripts/fixtures/
+
 # 依賴
 /node_modules
 
