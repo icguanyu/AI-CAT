@@ -16,6 +16,17 @@ async function bearer(): Promise<string> {
   return token;
 }
 
+/** 容錯解析：空 body / 非 JSON（例如 Next 的 500 HTML）不會炸，改回可讀訊息。 */
+async function parseBody(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return { error: `伺服器錯誤（${res.status}）` };
+  }
+}
+
 export interface StartResult {
   examId: string;
   brief: string;
@@ -28,9 +39,9 @@ export async function startExam(): Promise<StartResult> {
     method: 'POST',
     headers: { Authorization: `Bearer ${await bearer()}` },
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? '開始測驗失敗');
-  return json as StartResult;
+  const json = await parseBody(res);
+  if (!res.ok) throw new Error((json.error as string) ?? '開始測驗失敗');
+  return json as unknown as StartResult;
 }
 
 /** 回傳串流 Response，交給 readTextStream 逐段讀取。 */
@@ -44,8 +55,8 @@ export async function sendChat(examId: string, message: string): Promise<Respons
     body: JSON.stringify({ examId, message }),
   });
   if (!res.ok) {
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(json.error ?? '對話失敗');
+    const json = await parseBody(res);
+    throw new Error((json.error as string) ?? '對話失敗');
   }
   return res;
 }
@@ -59,7 +70,7 @@ export async function evaluateExam(examId: string): Promise<Report> {
     },
     body: JSON.stringify({ examId }),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? '評分失敗');
+  const json = await parseBody(res);
+  if (!res.ok) throw new Error((json.error as string) ?? '評分失敗');
   return json.report as Report;
 }

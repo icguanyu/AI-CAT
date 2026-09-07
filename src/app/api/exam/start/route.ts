@@ -13,11 +13,16 @@ import { getRatelimit, clientIp } from '@/lib/ratelimit';
 import { listScenarioIds, getScenario } from '@/lib/scenarios';
 import { checkQuota } from '@/lib/quota';
 import { MAX_USER_TURNS, MAX_INPUT_CHARS } from '@/config/constants';
+import { errJson } from '@/lib/api-error';
 import type { ExamState } from '@/types/exam';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
+  return handle(req).catch(errJson);
+}
+
+async function handle(req: Request): Promise<Response> {
   const auth = await requireAuth(req);
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });

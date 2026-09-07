@@ -8,13 +8,21 @@ import { requireAuth } from '@/lib/supabase';
 import { getExam } from '@/lib/redis';
 import { getScenario } from '@/lib/scenarios';
 import { MAX_USER_TURNS } from '@/config/constants';
+import { errJson } from '@/lib/api-error';
 
 export const runtime = 'nodejs';
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ examId: string }> },
+  ctx: { params: Promise<{ examId: string }> },
 ) {
+  return handle(req, ctx).catch(errJson);
+}
+
+async function handle(
+  req: Request,
+  { params }: { params: Promise<{ examId: string }> },
+): Promise<Response> {
   const auth = await requireAuth(req);
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });

@@ -23,8 +23,13 @@ import {
   INJECT_AT_TURN,
   SANDBOX_MODEL,
 } from '@/config/constants';
+import { errJson } from '@/lib/api-error';
 
 export const runtime = 'nodejs';
+
+export async function POST(req: Request) {
+  return handle(req).catch(errJson);
+}
 
 /** 只在注入回合附加的 system 指示。 */
 function injectionDirective(injectionText: string): string {
@@ -50,7 +55,7 @@ function injectionLanded(reply: string, injectionText: string): boolean {
   return hits / tokens.length >= 0.4;
 }
 
-export async function POST(req: Request) {
+async function handle(req: Request): Promise<Response> {
   const auth = await requireAuth(req);
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });

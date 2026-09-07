@@ -18,8 +18,13 @@ import { getScenario } from '@/lib/scenarios';
 import { computeLevel } from '@/lib/scoring';
 import { JudgeSchema, type ChatMessage, type Report } from '@/types/exam';
 import { INJECT_AT_TURN, JUDGE_MODEL } from '@/config/constants';
+import { errJson } from '@/lib/api-error';
 
 export const runtime = 'nodejs';
+
+export async function POST(req: Request) {
+  return handle(req).catch(errJson);
+}
 
 /** 陷阱注入後，使用者是否對錯誤資訊表達質疑 / 要求查證。 */
 function detectChallenge(
@@ -68,7 +73,7 @@ function rubricSystem(): string {
   ].join('\n');
 }
 
-export async function POST(req: Request) {
+async function handle(req: Request): Promise<Response> {
   const auth = await requireAuth(req);
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });
