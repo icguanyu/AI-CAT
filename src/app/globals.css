@@ -323,10 +323,11 @@ footer {
   padding: 10px 14px;
   border-radius: 12px;
   font-size: 0.95rem;
-  line-height: 1.6;
+  line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
 }
+
 
 .bubble.user {
   align-self: flex-end;
@@ -345,91 +346,173 @@ footer {
   color: var(--fg-muted);
 }
 
-/* Markdown 內容（助手訊息）*/
+/* ── 助手訊息的 Markdown 排版（統一節奏，單位用 em 隨氣泡字級縮放）── */
+.md {
+  white-space: normal;
+}
+
+/* 每個區塊元素統一下緣間距；首尾不留多餘空白 */
+.md > * {
+  margin: 0 0 0.7em;
+}
 .md > :first-child {
   margin-top: 0;
 }
 .md > :last-child {
   margin-bottom: 0;
 }
+
 .md p {
-  margin: 0 0 10px;
+  margin: 0 0 0.7em;
 }
+
+/* 標題 */
 .md h1,
 .md h2,
 .md h3,
-.md h4 {
-  margin: 14px 0 8px;
+.md h4,
+.md h5 {
+  margin: 1.1em 0 0.4em;
   line-height: 1.3;
+  font-weight: 700;
+}
+.md > :first-child:is(h1, h2, h3, h4, h5) {
+  margin-top: 0;
 }
 .md h1 {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
 }
 .md h2 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
-.md h3 {
+.md h3,
+.md h4,
+.md h5 {
   font-size: 1rem;
 }
+.md h4,
+.md h5 {
+  color: var(--fg-muted);
+}
+
+/* 清單 */
 .md ul,
 .md ol {
-  margin: 0 0 10px;
-  padding-left: 1.4em;
+  margin: 0 0 0.7em;
+  padding-left: 1.35em;
 }
 .md li {
-  margin: 3px 0;
+  margin: 0.25em 0;
 }
+.md li::marker {
+  color: var(--fg-muted);
+}
+/* 巢狀清單收緊、不再留下緣 */
+.md li > ul,
+.md li > ol {
+  margin: 0.25em 0 0;
+}
+.md ul ul,
+.md ul ol,
+.md ol ul,
+.md ol ol {
+  margin-bottom: 0;
+}
+/* loose list：項目內容被包成 <p> */
 .md li > p {
   margin: 0;
 }
-.md code {
-  background: rgba(127, 127, 127, 0.15);
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 0.88em;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+.md li > p + p {
+  margin-top: 0.35em;
 }
+/* 段落後緊接清單時稍微拉近，讀起來像同一組 */
+.md p + ul,
+.md p + ol {
+  margin-top: -0.35em;
+}
+
+.md strong {
+  font-weight: 700;
+}
+.md em {
+  font-style: italic;
+}
+
+/* 行內程式碼 */
+.md :not(pre) > code {
+  background: rgba(127, 127, 127, 0.16);
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  font-size: 0.86em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  word-break: break-word;
+}
+
+/* 程式碼區塊 */
 .md pre {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px 12px;
+  margin: 0 0 0.7em;
   overflow-x: auto;
-  margin: 0 0 10px;
+  line-height: 1.5;
 }
 .md pre code {
   background: none;
   padding: 0;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+
+/* 引用 */
 .md blockquote {
-  margin: 0 0 10px;
-  padding-left: 12px;
+  margin: 0 0 0.7em;
+  padding: 0.15em 0 0.15em 0.9em;
   border-left: 3px solid var(--border);
   color: var(--fg-muted);
 }
+.md blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* 表格 */
 .md table {
   border-collapse: collapse;
-  margin: 0 0 10px;
-  font-size: 0.88rem;
+  margin: 0 0 0.7em;
+  font-size: 0.86rem;
   display: block;
   overflow-x: auto;
   max-width: 100%;
 }
+.md thead th {
+  background: var(--bg-alt);
+  font-weight: 600;
+}
 .md th,
 .md td {
   border: 1px solid var(--border);
-  padding: 5px 9px;
+  padding: 6px 10px;
   text-align: left;
+  vertical-align: top;
 }
+
 .md a {
   color: var(--accent);
   text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-word;
 }
+
 .md hr {
   border: 0;
   border-top: 1px solid var(--border);
-  margin: 12px 0;
+  margin: 1em 0;
+}
+
+.md img {
+  max-width: 100%;
+  border-radius: 6px;
 }
 
 .chat-input {
