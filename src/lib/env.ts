@@ -18,8 +18,10 @@ const serverSchema = z.object({
   SUPABASE_ANON_KEY: z.string().min(1, '未設定'),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, '未設定'),
 
-  UPSTASH_REDIS_REST_URL: z.string().url(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(1, '未設定'),
+  // Redis 連線由 src/lib/redis.ts 自行驗證（相容 UPSTASH_* 與 Vercel 整合的 KV_REST_API_*），
+  // 這裡不強制，避免只設了 KV_ 名稱時 getEnv() 誤報缺項。
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 
   SCENARIOS_JSON: z.string().default('{}'),
 });

@@ -6,15 +6,15 @@
  *       是防止個人 OpenAI Key 被刷爆的第一道閘門。
  */
 import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+import { getRedis } from '@/lib/redis';
 
 let limiter: Ratelimit | null = null;
 
-/** 單一 IP 每小時 20 次；狀態存 Redis，適用無狀態部署。 */
+/** 單一 IP 每小時 20 次；狀態存 Redis（與 session 儲存共用同一連線）。 */
 export function getRatelimit(): Ratelimit {
   if (!limiter) {
     limiter = new Ratelimit({
-      redis: Redis.fromEnv(),
+      redis: getRedis(),
       limiter: Ratelimit.slidingWindow(20, '1 h'),
       prefix: 'rl',
       analytics: false,
