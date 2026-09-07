@@ -19,11 +19,17 @@ let client: Redis | null = null;
  *   - Vercel「Upstash for Redis」整合自動帶入：KV_REST_API_URL / KV_REST_API_TOKEN
  *     （注意不是 KV_URL，那是 rediss:// 的 TCP 連線字串，非 REST 端點）
  */
+const clean = (v: string | undefined) =>
+  v?.trim().replace(/^(['"])([\s\S]*)\1$/, '$2').trim() || undefined;
+
 export function getRedis(): Redis {
   if (client) return client;
 
-  const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+  const url =
+    clean(process.env.UPSTASH_REDIS_REST_URL) ?? clean(process.env.KV_REST_API_URL);
+  const token =
+    clean(process.env.UPSTASH_REDIS_REST_TOKEN) ??
+    clean(process.env.KV_REST_API_TOKEN);
 
   if (!url || !token) {
     throw new Error(

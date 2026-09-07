@@ -36,9 +36,18 @@ export type ServerEnv = z.infer<typeof serverSchema>;
 
 let cached: ServerEnv | null = null;
 
+/** 去頭尾空白 + 拔掉整段被包起來的引號（貼 .env 進 Vercel 時常見的污染）。 */
+function clean(v: unknown): unknown {
+  if (typeof v !== 'string') return v;
+  return v.trim().replace(/^(['"])([\s\S]*)\1$/, '$2').trim();
+}
+
 export function getEnv(): ServerEnv {
   if (cached) return cached;
-  const parsed = serverSchema.safeParse(process.env);
+  const source = Object.fromEntries(
+    Object.entries(process.env).map(([k, v]) => [k, clean(v)]),
+  );
+  const parsed = serverSchema.safeParse(source);
   if (!parsed.success) {
     const detail = parsed.error.issues
       .map((i) => ` - ${i.path.join('.')}: ${i.message}`)
