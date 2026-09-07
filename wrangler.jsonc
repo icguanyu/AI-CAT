@@ -1,0 +1,20 @@
+/**
+ * 檔案：wrangler.jsonc
+ * 角色：部署設定 — Cloudflare Workers（透過 OpenNext 轉譯 Next.js）
+ * 功能：定義 Worker 名稱（= *.workers.dev 子網域）、進入點、Node 相容旗標、
+ *       以及靜態資產綁定。實際金鑰用 `wrangler secret put` 設定，不寫在這裡。
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-cat",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

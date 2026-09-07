@@ -16,6 +16,12 @@ AI-CAT_MVP_Architecture.md
 /out/
 *.tsbuildinfo
 
+# Cloudflare / OpenNext
+/.open-next/
+/.wrangler/
+.dev.vars
+cloudflare-env.d.ts
+
 # 建置與部署
 /build
 /dist
