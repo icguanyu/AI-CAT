@@ -15,7 +15,7 @@ import { streamText } from 'ai';
 import { openai } from '@/lib/openai';
 import { getExam, setExam } from '@/lib/redis';
 import { requireAuth } from '@/lib/supabase';
-import { rateLimitOk } from '@/lib/ratelimit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit';
 import { getScenarioVariant } from '@/lib/scenarios';
 import {
   MAX_INPUT_CHARS,
@@ -61,9 +61,8 @@ async function handle(req: Request): Promise<Response> {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
 
-  if (!(await rateLimitOk(req))) {
-    return Response.json({ error: '請求過於頻繁，請稍後再試' }, { status: 429 });
-  }
+  const rl = await checkRateLimit(req);
+  if (!rl.ok) return rateLimitResponse(rl);
 
   const { examId, message } = (await req.json()) as {
     examId?: string;
