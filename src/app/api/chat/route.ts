@@ -101,7 +101,10 @@ async function handle(req: Request): Promise<Response> {
 
   state.history.push({ role: 'user', content: message });
   const currentTurn = userTurns + 1;
-  const scenario = getScenarioVariant(state.scenarioId, state.variantIndex);
+  const scenario = await getScenarioVariant(
+    state.scenarioId,
+    state.variantIndex,
+  );
 
   const isInjectionTurn = currentTurn === INJECT_AT_TURN && !state.injected;
   const system = isInjectionTurn

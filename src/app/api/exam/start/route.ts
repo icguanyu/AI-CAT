@@ -40,12 +40,12 @@ async function handle(req: Request): Promise<Response> {
     );
   }
 
-  const ids = listScenarioIds();
+  const ids = await listScenarioIds();
   if (ids.length === 0) {
     return Response.json({ error: '目前沒有可用的題目' }, { status: 503 });
   }
   const scenarioId = ids[Math.floor(Math.random() * ids.length)];
-  const scenario = resolveScenario(scenarioId); // 隨機挑一個變體
+  const scenario = await resolveScenario(scenarioId); // 隨機挑一個變體
 
   const examId = crypto.randomUUID();
   const state: ExamState = {

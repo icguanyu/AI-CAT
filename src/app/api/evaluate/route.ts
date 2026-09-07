@@ -51,7 +51,10 @@ async function handle(req: Request): Promise<Response> {
     );
   }
 
-  const scenario = getScenarioVariant(state.scenarioId, state.variantIndex);
+  const scenario = await getScenarioVariant(
+    state.scenarioId,
+    state.variantIndex,
+  );
   const challenged = state.injected
     ? detectChallenge(state.history, INJECT_AT_TURN)
     : false;

@@ -37,7 +37,10 @@ async function handle(
     return Response.json({ error: '無權存取此場次' }, { status: 403 });
   }
 
-  const scenario = getScenarioVariant(state.scenarioId, state.variantIndex);
+  const scenario = await getScenarioVariant(
+    state.scenarioId,
+    state.variantIndex,
+  );
   const userTurns = state.history.filter((m) => m.role === 'user').length;
 
   return Response.json({

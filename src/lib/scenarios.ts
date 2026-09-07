@@ -1,18 +1,20 @@
 /**
  * 檔案：src/lib/scenarios.ts
  * 角色：領域層 — 情境題庫載入器
- * 功能：從環境變數 SCENARIOS_JSON 解析出「考題」，並支援每題多個隨機變體。
- *       題目內容為機密，不進版控；此檔只有載入 / 挑選 / 攤平邏輯。
+ * 功能：優先從 Supabase `scenarios` 表載入（active=true），記憶體快取 60 秒
+ *       → 改題不用 redeploy。表為空 / 讀取失敗時，回退到環境變數 SCENARIOS_JSON。
+ *       支援每題多個隨機變體。題目內容機密，不進版控。
  *
- * SCENARIOS_JSON 形狀（新）：
- *   { "<id>": { "brief": "...", "system": "...",
- *               "variants": [ { "injectionText": "...", "brief"?: "..." }, ... ] } }
- * 舊形狀 `{ brief, system, injectionText }` 會自動轉成單一 variant。
+ * scenario 形狀（DB 欄位 / SCENARIOS_JSON value 相同）：
+ *   { brief, system, variants: [ { injectionText, correction?, brief? }, ... ] }
+ * 舊形狀 { brief, system, injectionText } 自動轉成單一 variant。
  */
 import { getEnv } from '@/lib/env';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import type { Scenario, ResolvedScenario } from '@/types/exam';
 
-let cache: Record<string, Scenario> | null = null;
+const TTL_MS = 60_000;
+let cache: { at: number; data: Record<string, Scenario> } | null = null;
 
 type RawScenario = {
   brief?: unknown;
@@ -59,28 +61,53 @@ function normalize(id: string, raw: RawScenario): Scenario {
   return { brief: raw.brief, system: raw.system, variants };
 }
 
-export function getScenarios(): Record<string, Scenario> {
-  if (cache) return cache;
+function fromEnv(): Record<string, Scenario> {
   let parsed: Record<string, RawScenario>;
   try {
     parsed = JSON.parse(getEnv().SCENARIOS_JSON) as Record<string, RawScenario>;
   } catch {
-    throw new Error('SCENARIOS_JSON 不是合法的 JSON');
+    throw new Error('SCENARIOS_JSON 不是合法的 JSON，且 Supabase scenarios 表無資料');
   }
-  cache = Object.fromEntries(
+  return Object.fromEntries(
     Object.entries(parsed).map(([id, raw]) => [id, normalize(id, raw)]),
   );
-  return cache;
 }
 
-export function getScenario(id: string): Scenario {
-  const scenario = getScenarios()[id];
+async function load(): Promise<Record<string, Scenario>> {
+  try {
+    const { data, error } = await getSupabaseAdmin()
+      .from('scenarios')
+      .select('id, brief, system, variants')
+      .eq('active', true);
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return Object.fromEntries(
+        data.map((row) => {
+          const r = row as { id: string } & RawScenario;
+          return [r.id, normalize(r.id, r)];
+        }),
+      );
+    }
+  } catch {
+    /* DB 不可用 → 回退到 env */
+  }
+  return fromEnv();
+}
+
+export async function getScenarios(): Promise<Record<string, Scenario>> {
+  if (cache && Date.now() - cache.at < TTL_MS) return cache.data;
+  const data = await load();
+  cache = { at: Date.now(), data };
+  return data;
+}
+
+export async function getScenario(id: string): Promise<Scenario> {
+  const scenario = (await getScenarios())[id];
   if (!scenario) throw new Error(`未知情境題：${id}`);
   return scenario;
 }
 
-export function listScenarioIds(): string[] {
-  return Object.keys(getScenarios());
+export async function listScenarioIds(): Promise<string[]> {
+  return Object.keys(await getScenarios());
 }
 
 function flatten(
@@ -101,16 +128,16 @@ function flatten(
 }
 
 /** 開始測驗時呼叫：隨機挑一個變體。 */
-export function resolveScenario(id: string): ResolvedScenario {
-  const scenario = getScenario(id);
+export async function resolveScenario(id: string): Promise<ResolvedScenario> {
+  const scenario = await getScenario(id);
   const variantIndex = Math.floor(Math.random() * scenario.variants.length);
   return flatten(id, scenario, variantIndex);
 }
 
 /** 後續回合 / 評分時呼叫：用 ExamState 存的 variantIndex 還原同一個變體。 */
-export function getScenarioVariant(
+export async function getScenarioVariant(
   id: string,
   variantIndex: number,
-): ResolvedScenario {
-  return flatten(id, getScenario(id), variantIndex);
+): Promise<ResolvedScenario> {
+  return flatten(id, await getScenario(id), variantIndex);
 }
