@@ -24,6 +24,7 @@ import {
   type StartResult,
 } from '@/lib/client-api';
 import { readTextStream } from '@/lib/data-stream';
+import { Markdown } from '@/components/Markdown';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type Phase = 'idle' | 'chatting' | 'evaluating' | 'done';
@@ -357,7 +358,15 @@ export default function ExamPage() {
           <div className="chat-log" ref={logRef}>
             {messages.map((m, i) => (
               <div key={i} className={`bubble ${m.role}`}>
-                {m.content || (m.role === 'assistant' && busy ? '…' : '')}
+                {m.role === 'assistant' ? (
+                  m.content ? (
+                    <Markdown>{m.content}</Markdown>
+                  ) : busy ? (
+                    <span className="typing">思考中…</span>
+                  ) : null
+                ) : (
+                  m.content
+                )}
               </div>
             ))}
           </div>
