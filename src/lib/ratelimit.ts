@@ -1,17 +1,16 @@
 /**
  * 檔案：src/lib/ratelimit.ts
- * 角色：基礎設施層 — 流量限制
- * 功能：以 Upstash Ratelimit（滑動視窗）保護 /api/exam/start 與 /api/chat，
- *       單一 IP 每小時上限預設 20，可用 RATE_LIMIT_PER_HOUR 調整；
- *       RATE_LIMIT_DISABLED=1 則完全略過（本機/壓測用）。
- *       checkRateLimit() 回完整用量；rateLimitResponse() 產帶細節的 429。
+ * 角色：基礎設施層 — 流量限制（純粹的迴圈防呆斷路器）
+ * 功能：以 Upstash Ratelimit（滑動視窗）保護 /api/exam/start 與 /api/chat。
+ *       **以帳號為單位**（有 userId 時），不是 IP —— 同一 IP 的多個正常使用者
+ *       不會互相拖累。上限預設 120/小時（正常一人 2 場約 22 次，碰不到；
+ *       迴圈腳本會被擋）。可用 RATE_LIMIT_PER_HOUR 調整、RATE_LIMIT_DISABLED=1 關閉。
+ *       真正的防濫用靠：需登入、每帳號 free_limit 次、OpenAI 用量上限。
  */
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-// 一場測驗最多 1 + MAX_USER_TURNS(=10) 次請求；預設放寬到約 5 場/小時/IP，
-// 或同一 IP 幾個人同時測。真正的防濫用靠：需登入、每帳號 2 次、OpenAI 用量上限。
-const PER_HOUR = Number(process.env.RATE_LIMIT_PER_HOUR) || 60;
+const PER_HOUR = Number(process.env.RATE_LIMIT_PER_HOUR) || 120;
 const DISABLED = process.env.RATE_LIMIT_DISABLED === '1';
 
 let limiter: Ratelimit | null = null;
@@ -43,11 +42,18 @@ export interface RateLimitResult {
   reset: number;
 }
 
-export async function checkRateLimit(req: Request): Promise<RateLimitResult> {
+/**
+ * @param userId 有值時以帳號為 key（建議）；沒有時退回以 IP 為 key。
+ */
+export async function checkRateLimit(
+  req: Request,
+  userId?: string,
+): Promise<RateLimitResult> {
   if (DISABLED) {
     return { ok: true, limit: PER_HOUR, remaining: PER_HOUR, reset: Date.now() };
   }
-  const r = await getRatelimit().limit(`ip:${clientIp(req)}`);
+  const key = userId ? `user:${userId}` : `ip:${clientIp(req)}`;
+  const r = await getRatelimit().limit(key);
   return {
     ok: r.success,
     limit: r.limit,

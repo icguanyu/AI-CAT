@@ -28,7 +28,7 @@ async function handle(req: Request): Promise<Response> {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
 
-  const rl = await checkRateLimit(req);
+  const rl = await checkRateLimit(req, auth.userId);
   if (!rl.ok) return rateLimitResponse(rl);
 
   const quota = await checkQuota(auth.userId);
