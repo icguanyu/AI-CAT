@@ -12,7 +12,11 @@ import { JUDGE_MODEL } from '@/config/constants';
 
 const EXEMPLAR_MODEL = process.env.EXEMPLAR_MODEL || JUDGE_MODEL;
 
-/** 陷阱注入後，使用者是否對錯誤資訊表達質疑 / 要求查證。 */
+/**
+ * 陷阱注入後，使用者是否對錯誤資訊表達質疑 / 要求查證 / 自己驗算。
+ * 只是「提示」——關鍵字清單一定會有漏（例如「驗算」曾漏），
+ * 最終以裁判輸出的 user_challenged 為準（見 runJudge）。
+ */
 export function detectChallenge(
   history: ChatMessage[],
   injectAtUserTurn: number,
@@ -24,6 +28,8 @@ export function detectChallenge(
     '確定嗎', '確定', '來源', '出處', '查證', '不正確', '有誤', '錯',
     '法條', '依據', '真的嗎', '存疑', '求證', '引用', '根據哪', '正確嗎',
     '對嗎', '是否正確', '查一下', '再確認',
+    '驗算', '算一下', '重算', '再算', '核對', '核算', '加總', '算錯',
+    '這樣對嗎', '幫我確認', '一步一步', '列出算式', '你算',
   ];
   return afterInjection.some((m) => cues.some((c) => m.content.includes(c)));
 }
@@ -35,12 +41,18 @@ export function rubricSystem(): string {
     '',
     '== 關於植入的陷阱（最重要）==',
     '對話中 AI 在第 2 則回覆講的某項資訊，是系統「刻意植入」的錯誤陷阱，不是受測者造成的。',
-    '- 評分與總評「都不得」把這個植入錯誤當成受測者的失誤或扣分理由。',
-    '  絕對不要寫「初始回應數據錯誤」「一開始算錯」這類把陷阱歸咎於受測者的句子。',
-    '- 對這個陷阱，你唯一要評估的是：受測者有沒有發現、有沒有要求更正（見下方「規則判定」）。',
-    '- 若受測者有質疑並促成更正 → 這是「加分項」：critical_thinking 依糾正品質給 60–100，',
-    '  且 did_well 必須明確列出這一點（例：「主動要求 AI 複核，抓出加總 720→755 的錯誤」）。',
-    '- 若受測者完全沒發現、照單全收 → critical_thinking ≤ 40，to_improve 要點出「未驗證 AI 給的關鍵數字/事實」。',
+    'AI 之後即使被質疑也可能「堅持原答案、繼續算錯」——那是模型的問題，同樣不算在受測者頭上。',
+    '- 評分與總評「都不得」把這個植入錯誤、或 AI 事後不肯改，當成受測者的失誤或扣分理由。',
+    '  絕對不要寫「初始回應數據錯誤」「一開始算錯」這類句子。',
+    '- critical_thinking 看的是「受測者面對這則錯誤時，主動求證的程度」，',
+    '  **不是** AI 最後有沒有改對。分級：',
+    '  · 完全沒察覺、直接採用 → ≤ 30',
+    '  · 只丟一句「你確定嗎 / 幫我查一下」，AI 重申錯誤後就接受 → 40–55',
+    '  · 要求 AI 一步一步列算式 / 換方式重算，或自己算一次、自己講出正確值、',
+    '    在 AI 仍錯時明確指出 → 70–100',
+    '- 有任何求證行為時，did_well 必須列出（例：「要求 AI 逐步列出加總算式來驗證」）。',
+    '  完全沒有時，to_improve 要點出「未驗證 AI 給的關鍵數字/事實」，並提醒「光叫 AI 自己檢查通常沒用，要獨立驗算」。',
+    '- 另外輸出 user_challenged：對話裡受測者是否有對這則錯誤表達懷疑 / 要求查證 / 自己驗算（不論 AI 後來有沒有改對）。',
     '',
     '== 核心原則 ==',
     '1. 受測者看得到「任務說明」（下方會附上）。如果他的提示詞主要是把任務說明整段複製或輕微改寫，',
@@ -82,8 +94,8 @@ export interface JudgeInput {
   trapEffective: boolean;
   /** 實際注入的錯誤敘述（trapEffective 時才有意義）。 */
   injectionText: string;
-  /** 規則判定：使用者是否質疑該錯誤。 */
-  challenged: boolean;
+  /** 關鍵字規則的初判（僅提示，最終看裁判的 user_challenged）。 */
+  ruleChallenged: boolean;
 }
 
 function criticalThinkingRule(i: JudgeInput): string {
@@ -93,9 +105,10 @@ function criticalThinkingRule(i: JudgeInput): string {
   if (!i.trapEffective) {
     return '陷阱已嘗試注入，但錯誤敘述沒有清楚出現在 AI 回覆裡：critical_thinking 給 50，總評註明「批判測試未生效」。';
   }
-  return i.challenged
-    ? '陷阱已生效，且系統判定使用者有質疑/要求查證：依糾正的清楚與正確程度給 60–100。'
-    : '陷阱已生效，但使用者未質疑也未糾正：critical_thinking ≤ 40。';
+  return (
+    '陷阱已生效。依「受測者主動求證的程度」給分（見上方分級），並輸出 user_challenged。' +
+    `關鍵字規則初判：${i.ruleChallenged ? '有求證跡象' : '未偵測到（可能漏字，請以對話實況為準）'}。`
+  );
 }
 
 export async function runJudge(input: JudgeInput): Promise<Judged> {
@@ -109,7 +122,6 @@ export async function runJudge(input: JudgeInput): Promise<Judged> {
       '',
       `【注入結果】已嘗試注入：${input.injected ? '是' : '否'}；錯誤敘述實際出現在 AI 回覆：${input.trapEffective ? '是' : '否'}`,
       input.trapEffective ? `被注入的錯誤敘述：「${input.injectionText}」` : '',
-      `【規則判定】注入後使用者是否質疑/要求查證：${input.challenged ? '有' : '無'}`,
       `→ critical_thinking 給分規則：${criticalThinkingRule(input)}`,
       '',
       '【對話歷程】',
@@ -148,7 +160,8 @@ export async function runExemplar(input: ExemplarInput): Promise<string> {
       '3–5 個要點：怎麼把任務拆成可驗證的小步、怎麼要求 AI 自我檢查關鍵數字/事實、怎麼逐步收斂到成品。',
       '',
       input.trapEffective
-        ? '## 這題的陷阱\n對話中 AI 會講一項聽起來合理但錯誤的資訊。說明高手會怎麼察覺、怎麼要求 AI 查證或自己驗算，並寫出正確版本。'
+        ? '## 這題的陷阱\n對話中 AI 會講一項聽起來合理但錯誤的資訊。說明高手會怎麼察覺（例如自己心算/列式驗一次），' +
+          '並提醒：光叫 AI「自己檢查」通常沒用，它會堅持原答案——要嘛請它逐步列出算式一步步核對、要嘛自己算完直接告訴它正確值。最後寫出正確版本。'
         : '## 最容易踩的坑\n這類任務最容易被 AI 誤導、或自己忽略的一點，以及怎麼防。',
       '',
       '整體精簡，約 250–400 字（code block 不計）。',

@@ -82,6 +82,11 @@ export const JudgeSchema = z.object({
     task_completion: z.number().min(0).max(100).describe('任務達成率：對話中「實際產出的成品」是否滿足所有限制條件'),
   }),
   overall_summary: z.string().describe('一句話總評，聚焦受測者自己的表現，不得把系統植入的陷阱算成他的失誤'),
+  user_challenged: z
+    .boolean()
+    .describe(
+      '受測者是否對被注入的錯誤資訊表達懷疑 / 要求查證 / 自己驗算（不論 AI 後來有沒有改對）',
+    ),
   did_well: z
     .array(z.string())
     .max(3)

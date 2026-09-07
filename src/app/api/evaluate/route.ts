@@ -55,7 +55,7 @@ async function handle(req: Request): Promise<Response> {
     state.scenarioId,
     state.variantIndex,
   );
-  const challenged = state.injected
+  const ruleChallenged = state.injected
     ? detectChallenge(state.history, INJECT_AT_TURN)
     : false;
   const trapEffective = state.injected && state.injectionLanded;
@@ -68,7 +68,7 @@ async function handle(req: Request): Promise<Response> {
       injected: state.injected,
       trapEffective,
       injectionText: state.injectionText,
-      challenged,
+      ruleChallenged,
     }),
     runExemplar({
       brief: scenario.brief,
@@ -81,6 +81,9 @@ async function handle(req: Request): Promise<Response> {
     }),
   ]);
 
+  // 關鍵字漏判時，以裁判在對話裡實際看到的為準
+  const challenged = ruleChallenged || judged.user_challenged;
+
   const { level, average } = computeLevel(judged.scores, {
     trapEffective,
     challenged,
@@ -89,6 +92,7 @@ async function handle(req: Request): Promise<Response> {
   const report: Report = {
     scores: judged.scores,
     overall_summary: judged.overall_summary,
+    user_challenged: challenged,
     did_well: judged.did_well,
     to_improve: judged.to_improve,
     suggested_level: level,

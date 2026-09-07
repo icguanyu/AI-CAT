@@ -77,12 +77,13 @@ async function main() {
   const runs = Number(runsArg ?? 8);
   const fx = JSON.parse(readFileSync(fixturePath, 'utf8')) as Fixture;
 
-  const challenged = fx.injected
+  const ruleChallenged = fx.injected
     ? detectChallenge(fx.history, INJECT_AT_TURN)
     : false;
   const trapEffective = fx.injected && fx.injectionLanded;
 
   const scoreRows: Judged['scores'][] = [];
+  const challengedRows: boolean[] = [];
   const levels: string[] = [];
   const averages: number[] = [];
 
@@ -94,9 +95,11 @@ async function main() {
       injected: fx.injected,
       trapEffective,
       injectionText: fx.injectionText,
-      challenged,
+      ruleChallenged,
     });
     scoreRows.push(judged.scores);
+    const challenged = ruleChallenged || judged.user_challenged;
+    challengedRows.push(challenged);
     const { level, average } = computeLevel(judged.scores, {
       trapEffective,
       challenged,
@@ -107,9 +110,10 @@ async function main() {
   }
   process.stdout.write('\n\n');
 
+  const challengedYes = challengedRows.filter(Boolean).length;
   console.log(`fixture: ${fx.label ?? fixturePath}`);
   console.log(
-    `challenged=${challenged}  trapEffective=${trapEffective}  runs=${runs}\n`,
+    `ruleChallenged=${ruleChallenged}  user_challenged(判):${challengedYes}/${runs}  trapEffective=${trapEffective}  runs=${runs}\n`,
   );
   console.log(
     pad('dimension', 20),
