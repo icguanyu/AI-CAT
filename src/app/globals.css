@@ -867,3 +867,19 @@ footer {
   font-size: 0.92rem;
   line-height: 1.6;
 }
+
+/* 報告畫面：L5 示範 */
+.exemplar {
+  margin: 20px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: var(--card);
+  font-size: 0.92rem;
+}
+.exemplar-head {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--accent);
+  margin-bottom: 10px;
+}

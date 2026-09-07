@@ -93,6 +93,8 @@ export async function sendChat(examId: string, message: string): Promise<Respons
 export interface EvalResult {
   report: Report;
   trap: TrapReveal | null;
+  /** 「L5 高手會怎麼做」的教學示範（Markdown）；產生失敗時為空字串。 */
+  exemplar: string;
 }
 
 export async function evaluateExam(examId: string): Promise<EvalResult> {
@@ -109,5 +111,6 @@ export async function evaluateExam(examId: string): Promise<EvalResult> {
   return {
     report: json.report as Report,
     trap: (json.trap as TrapReveal | null) ?? null,
+    exemplar: (json.exemplar as string) ?? '',
   };
 }

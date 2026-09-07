@@ -13,7 +13,7 @@ import { requireAuth, getSupabaseAdmin } from '@/lib/supabase';
 import { consumeQuota } from '@/lib/quota';
 import { getScenarioVariant } from '@/lib/scenarios';
 import { computeLevel } from '@/lib/scoring';
-import { detectChallenge, runJudge } from '@/lib/judge';
+import { detectChallenge, runJudge, runExemplar } from '@/lib/judge';
 import type { Report, TrapReveal } from '@/types/exam';
 import { INJECT_AT_TURN } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
@@ -60,14 +60,26 @@ async function handle(req: Request): Promise<Response> {
     : false;
   const trapEffective = state.injected && state.injectionLanded;
 
-  const judged = await runJudge({
-    brief: scenario.brief,
-    history: state.history,
-    injected: state.injected,
-    trapEffective,
-    injectionText: state.injectionText,
-    challenged,
-  });
+  // 裁判評分與「L5 示範」平行跑，省來回時間
+  const [judged, exemplar] = await Promise.all([
+    runJudge({
+      brief: scenario.brief,
+      history: state.history,
+      injected: state.injected,
+      trapEffective,
+      injectionText: state.injectionText,
+      challenged,
+    }),
+    runExemplar({
+      brief: scenario.brief,
+      trapEffective,
+      injectionText: state.injectionText,
+      correction: scenario.correction,
+    }).catch((e) => {
+      console.error('runExemplar 失敗', e);
+      return '';
+    }),
+  ]);
 
   const { level, average } = computeLevel(judged.scores, {
     trapEffective,
@@ -96,14 +108,19 @@ async function handle(req: Request): Promise<Response> {
     exam_id: examId,
     user_id: auth.userId,
     scenario_id: state.scenarioId,
-    report: { ...report, weighted_average: average, variant_index: state.variantIndex },
+    report: {
+      ...report,
+      weighted_average: average,
+      variant_index: state.variantIndex,
+      exemplar,
+    },
     rule_challenged: challenged,
     injected: state.injected,
   });
   if (error) {
     // exam_id 有 unique 限制：重複提交同一場不再重複扣次數
     console.error('寫入 exam_reports 失敗（可能為重複提交）', error);
-    return Response.json({ success: true, report, trap, duplicate: true });
+    return Response.json({ success: true, report, trap, exemplar, duplicate: true });
   }
 
   // 提交成功才扣一次免費次數；扣點失敗不影響已產生的報告
@@ -116,5 +133,5 @@ async function handle(req: Request): Promise<Response> {
   // 這場已結束，清掉 Redis session
   await deleteExam(examId).catch(() => {});
 
-  return Response.json({ success: true, report, trap });
+  return Response.json({ success: true, report, trap, exemplar });
 }

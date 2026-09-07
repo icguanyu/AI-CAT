@@ -73,6 +73,7 @@ export default function ExamPage() {
   const [quota, setQuota] = useState<Quota | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [trap, setTrap] = useState<TrapReveal | null>(null);
+  const [exemplar, setExemplar] = useState('');
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -194,9 +195,12 @@ export default function ExamPage() {
     setBusy(true);
     setPhase('evaluating');
     try {
-      const { report: rep, trap: tr } = await evaluateExam(exam.examId);
+      const { report: rep, trap: tr, exemplar: ex } = await evaluateExam(
+        exam.examId,
+      );
       setReport(rep);
       setTrap(tr);
+      setExemplar(ex);
       setPhase('done');
     } catch (e) {
       handleErr(e);
@@ -381,6 +385,13 @@ export default function ExamPage() {
             </div>
           )}
 
+          {exemplar && (
+            <div className="exemplar">
+              <div className="exemplar-head">L5 高手會怎麼用 AI 完成這題</div>
+              <Markdown>{exemplar}</Markdown>
+            </div>
+          )}
+
           <button
             type="button"
             className="btn ghost"
@@ -388,6 +399,7 @@ export default function ExamPage() {
               setPhase('idle');
               setExam(null);
               setTrap(null);
+              setExemplar('');
             }}
           >
             回到開始

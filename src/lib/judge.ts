@@ -2,12 +2,15 @@
  * 檔案：src/lib/judge.ts
  * 角色：領域層 — 裁判評分核心（給 /api/evaluate 與信度測試腳本共用）
  * 功能：detectChallenge() 規則判定；rubricSystem() 評分準則；
- *       runJudge() 呼叫裁判模型輸出五維度分數 + 總評（JudgeSchema，不含分級）。
+ *       runJudge() 輸出五維度分數 + 總評（JudgeSchema，不含分級）；
+ *       runExemplar() 產一段「L5 高手會怎麼用 AI 完成這題」的示範（Markdown）。
  */
-import { generateObject } from 'ai';
+import { generateObject, generateText } from 'ai';
 import { openai } from '@/lib/openai';
 import { JudgeSchema, type Judged, type ChatMessage } from '@/types/exam';
 import { JUDGE_MODEL } from '@/config/constants';
+
+const EXEMPLAR_MODEL = process.env.EXEMPLAR_MODEL || JUDGE_MODEL;
 
 /** 陷阱注入後，使用者是否對錯誤資訊表達質疑 / 要求查證。 */
 export function detectChallenge(
@@ -116,4 +119,50 @@ export async function runJudge(input: JudgeInput): Promise<Judged> {
       .join('\n'),
   });
   return object;
+}
+
+export interface ExemplarInput {
+  brief: string;
+  trapEffective: boolean;
+  injectionText: string;
+  correction: string;
+}
+
+/**
+ * 產一段「L5 高手會怎麼用 AI 完成這題」的教學示範（Markdown）。
+ * 不評論任何受測者，只講「應該怎麼做」，並點出這題的陷阱在哪、正確版本為何。
+ */
+export async function runExemplar(input: ExemplarInput): Promise<string> {
+  const { text } = await generateText({
+    model: openai(EXEMPLAR_MODEL),
+    system: [
+      '你是一位「AI 協作教練」。針對下面這個任務，示範「一個高手（能力分級 L5）會怎麼用 AI 完成」，',
+      '讓看的人學得到方法。用繁體中文、Markdown。**不要評論任何受測者**，只講「應該怎麼做」。',
+      '結構固定為三段（用 `##` 標題）：',
+      '',
+      '## 理想的開場提示詞',
+      '給一段可以直接複製使用的提示詞範例，放在 ```` ``` ```` 圍起的 code block 裡。',
+      '要展示任務說明「沒寫、但高手會自己補上」的東西：角色設定、背景脈絡、輸出格式與字數、驗收標準。',
+      '',
+      '## 協作方式',
+      '3–5 個要點：怎麼把任務拆成可驗證的小步、怎麼要求 AI 自我檢查關鍵數字/事實、怎麼逐步收斂到成品。',
+      '',
+      input.trapEffective
+        ? '## 這題的陷阱\n對話中 AI 會講一項聽起來合理但錯誤的資訊。說明高手會怎麼察覺、怎麼要求 AI 查證或自己驗算，並寫出正確版本。'
+        : '## 最容易踩的坑\n這類任務最容易被 AI 誤導、或自己忽略的一點，以及怎麼防。',
+      '',
+      '整體精簡，約 250–400 字（code block 不計）。',
+    ].join('\n'),
+    prompt: [
+      '【任務說明】',
+      input.brief,
+      input.trapEffective
+        ? `\n【對話中 AI 會講的錯誤資訊】：「${input.injectionText}」` +
+          `\n【正確版本】：${input.correction || '（未提供，請自行說明為何前者有誤、正確應為何）'}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
+  });
+  return text.trim();
 }
