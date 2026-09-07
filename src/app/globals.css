@@ -121,6 +121,7 @@ a {
 .mono-label {
   font-family: var(--font-mono);
   font-size: 11px;
+  line-height: 1;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--fg-faint);
@@ -306,10 +307,8 @@ h2 {
 .lp-brand .wordmark {
   font-size: 21px;
   font-weight: 900;
+  line-height: 1;
   letter-spacing: -0.02em;
-}
-.lp-brand .mono-label {
-  align-self: baseline;
 }
 .lp-header .right {
   display: flex;
