@@ -72,7 +72,7 @@ export interface ExamState {
 
 export type LevelCode = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
 
-/** 裁判模型直接輸出的部分：五維度分數 + 總評（不含分級，分級由後端計算）。 */
+/** 裁判模型直接輸出的部分：五維度分數 + 總評 + 條列回饋（不含分級，分級由後端計算）。 */
 export const JudgeSchema = z.object({
   scores: z.object({
     prompt_structure: z.number().min(0).max(100).describe('提示詞結構：在「任務說明」之外另加的角色 / 脈絡 / 輸出格式限制'),
@@ -81,7 +81,15 @@ export const JudgeSchema = z.object({
     critical_thinking: z.number().min(0).max(100).describe('批判思考：是否識別並糾正被注入的錯誤資訊'),
     task_completion: z.number().min(0).max(100).describe('任務達成率：對話中「實際產出的成品」是否滿足所有限制條件'),
   }),
-  overall_summary: z.string().describe('一到兩句總結，並點出最該改進的一點'),
+  overall_summary: z.string().describe('一句話總評，聚焦受測者自己的表現，不得把系統植入的陷阱算成他的失誤'),
+  did_well: z
+    .array(z.string())
+    .max(3)
+    .describe('受測者實際做得好的 1–3 點（具體）。若有抓到植入的錯誤，必須列出。沒有就給空陣列'),
+  to_improve: z
+    .array(z.string())
+    .max(3)
+    .describe('最該改進的 1–3 點，要具體、可操作，例：「開場就指定字數與段落結構，不要只說『幫我整理』」'),
 });
 
 export type Judged = z.infer<typeof JudgeSchema>;

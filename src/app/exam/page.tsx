@@ -321,6 +321,27 @@ export default function ExamPage() {
           ))}
           <p className="report-summary">{report.overall_summary}</p>
 
+          {report.did_well.length > 0 && (
+            <div className="fb-block">
+              <h4>做得好</h4>
+              <ul>
+                {report.did_well.map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {report.to_improve.length > 0 && (
+            <div className="fb-block improve">
+              <h4>可以更好</h4>
+              <ul>
+                {report.to_improve.map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {trap && (
             <div className="trap-review">
               <div

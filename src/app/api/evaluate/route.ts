@@ -74,6 +74,8 @@ async function handle(req: Request): Promise<Response> {
   const report: Report = {
     scores: judged.scores,
     overall_summary: judged.overall_summary,
+    did_well: judged.did_well,
+    to_improve: judged.to_improve,
     suggested_level: level,
   };
 

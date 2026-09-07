@@ -44,7 +44,29 @@ function stats(nums: number[]) {
 
 const pad = (s: string | number, n: number) => String(s).padStart(n);
 
+/** 自己讀 .env.local，不依賴 tsx --env-file 的解析行為。 */
+function loadEnvLocal() {
+  try {
+    for (const line of readFileSync('.env.local', 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
+      if (!m || process.env[m[1]]) continue;
+      let v = m[2].trim();
+      if (
+        (v.startsWith('"') && v.endsWith('"')) ||
+        (v.startsWith("'") && v.endsWith("'"))
+      ) {
+        v = v.slice(1, -1);
+      }
+      process.env[m[1]] = v;
+    }
+  } catch {
+    /* 沒有 .env.local 就靠既有環境變數 */
+  }
+}
+
 async function main() {
+  loadEnvLocal();
+
   const [fixturePath, runsArg] = process.argv.slice(2);
   if (!fixturePath) {
     console.error(

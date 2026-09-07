@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "judge:reliability": "tsx --env-file=.env.local scripts/judge-reliability.ts"
+    "judge:reliability": "tsx scripts/judge-reliability.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.0.11",
