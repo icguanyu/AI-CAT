@@ -9,7 +9,7 @@
 export const EXAM_TTL_SEC = 60 * 60;
 
 /** 單場測驗最高使用者發話輪次（後端硬鎖）。 */
-export const MAX_USER_TURNS = 5;
+export const MAX_USER_TURNS = 10;
 
 /** 單次輸入字數上限（放寬到能寫完整提示詞：角色 + 脈絡 + 格式要求）。 */
 export const MAX_INPUT_CHARS = 1000;

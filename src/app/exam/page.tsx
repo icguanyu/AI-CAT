@@ -282,7 +282,7 @@ export default function ExamPage() {
         <div className="center-card panel">
           <h2>AI 能力檢測</h2>
           <p className="section-sub">
-            一場約 5 分鐘，5 輪對話內完成。準備好就開始。
+            一場約 5–10 分鐘，最多 10 輪對話。準備好就開始。
           </p>
           {quotaText && <p className="quota-line">{quotaText}</p>}
           <button

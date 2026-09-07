@@ -98,7 +98,7 @@ export default function HomePage() {
       <section id="how">
         <div className="wrap">
           <h2>運作方式</h2>
-          <p className="section-sub">一場檢測約 5 分鐘，5 輪對話內完成。</p>
+          <p className="section-sub">一場檢測約 5–10 分鐘，最多 10 輪對話。</p>
           <div className="steps">
             {STEPS.map((s) => (
               <div className="step" key={s.title}>

@@ -44,11 +44,9 @@ async function handle(req: Request): Promise<Response> {
   }
 
   const userTurns = state.history.filter((m) => m.role === 'user').length;
-  if (userTurns < INJECT_AT_TURN) {
+  if (userTurns < 1) {
     return Response.json(
-      {
-        error: `對話太短，無法評估。請至少完成 ${INJECT_AT_TURN} 輪對話再提交（目前 ${userTurns} 輪）。`,
-      },
+      { error: '尚未開始對話，無法評估。' },
       { status: 400 },
     );
   }
