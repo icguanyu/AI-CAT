@@ -243,7 +243,9 @@ section + section {
 }
 
 .cta {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   background: var(--cta-bg);
   color: var(--cta-fg);
   font-size: 1rem;
@@ -298,13 +300,16 @@ h2 {
 }
 .lp-brand {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
 }
 .lp-brand .wordmark {
   font-size: 21px;
   font-weight: 900;
   letter-spacing: -0.02em;
+}
+.lp-brand .mono-label {
+  align-self: baseline;
 }
 .lp-header .right {
   display: flex;
@@ -1007,6 +1012,10 @@ footer {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: var(--cta-bg);
   color: var(--cta-fg);
   border: 0;
@@ -1055,6 +1064,14 @@ footer {
   color: var(--fg-muted);
 }
 
+.topbar-brand {
+  display: inline-flex;
+  color: var(--fg);
+  flex: 0 0 auto;
+}
+.topbar-brand:hover {
+  color: var(--accent-ink);
+}
 .topbar .linkbtn {
   margin-left: auto;
 }

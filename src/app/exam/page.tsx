@@ -11,6 +11,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import type { Report, TrapReveal } from '@/types/exam';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
@@ -26,6 +27,8 @@ import {
 import { readTextStream } from '@/lib/data-stream';
 import { Markdown } from '@/components/Markdown';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { GoogleIcon } from '@/components/GoogleIcon';
+import { AiCatMark } from '@/components/AiCatMark';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type Phase = 'idle' | 'chatting' | 'evaluating' | 'done';
@@ -250,6 +253,7 @@ export default function ExamPage() {
             className="btn"
             onClick={authExpired ? reLogin : signIn}
           >
+            {!authExpired && <GoogleIcon />}
             {authExpired ? '重新登入' : '使用 Google 登入'}
           </button>
           {authExpired && (
@@ -277,6 +281,9 @@ export default function ExamPage() {
 
   const TopBar = (
     <div className="topbar">
+      <Link href="/" className="topbar-brand" aria-label="AI-CAT 首頁">
+        <AiCatMark size={18} />
+      </Link>
       <span className="who">
         {avatarUrl && (
           // eslint-disable-next-line @next/next/no-img-element

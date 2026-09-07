@@ -7,6 +7,8 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { HeroRadar } from '@/components/HeroRadar';
+import { AiCatMark } from '@/components/AiCatMark';
+import { GoogleIcon } from '@/components/GoogleIcon';
 
 const METRICS = [
   { i: '01', t: '提示詞結構', d: '角色、脈絡與輸出格式限制' },
@@ -41,6 +43,7 @@ export default function HomePage() {
       <div className="lp">
         <header className="lp-header">
           <div className="lp-brand">
+            <AiCatMark size={24} />
             <span className="wordmark">AI-CAT</span>
             <span className="mono-label">AI 能力檢測工具</span>
           </div>
@@ -145,6 +148,7 @@ export default function HomePage() {
             </ul>
             <p style={{ marginTop: 24 }}>
               <Link className="cta" href="/exam">
+                <GoogleIcon />
                 使用 Google 登入並開始
               </Link>
             </p>
