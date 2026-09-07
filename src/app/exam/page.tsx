@@ -41,9 +41,16 @@ export default function ExamPage() {
   }, []);
 
   const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = getSb();
+    let supabase: SupabaseClient;
+    try {
+      supabase = getSb();
+    } catch (e) {
+      setConfigError((e as Error).message);
+      return;
+    }
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) =>
       setSession(s),
@@ -145,6 +152,18 @@ export default function ExamPage() {
       setBusy(false);
     }
   }, [exam]);
+
+  // ── 設定未完成 ──
+  if (configError) {
+    return (
+      <main className="exam-wrap">
+        <div className="center-card panel">
+          <h2>設定尚未完成</h2>
+          <p className="err">{configError}</p>
+        </div>
+      </main>
+    );
+  }
 
   // ── 載入中 / 未登入 ──
   if (session === undefined) {

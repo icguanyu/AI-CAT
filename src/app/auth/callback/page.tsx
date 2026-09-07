@@ -11,7 +11,13 @@ import { createSupabaseBrowser } from '@/lib/supabase-browser';
 
 export default function AuthCallbackPage() {
   useEffect(() => {
-    const supabase = createSupabaseBrowser();
+    let supabase;
+    try {
+      supabase = createSupabaseBrowser();
+    } catch {
+      window.location.replace('/exam'); // /exam 會顯示設定錯誤說明
+      return;
+    }
     const goExam = () => window.location.replace('/exam');
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {

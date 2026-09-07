@@ -11,19 +11,28 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 let client: SupabaseClient | null = null;
 
+export class SupabaseConfigError extends Error {}
+
 export function createSupabaseBrowser(): SupabaseClient {
   if (client) return client;
-  client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce',
-      },
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new SupabaseConfigError(
+      '前端 Supabase 環境變數未設定。請在 Vercel 專案 Settings → Environment Variables ' +
+        '加上 NEXT_PUBLIC_SUPABASE_URL 與 NEXT_PUBLIC_SUPABASE_ANON_KEY（值取自 Supabase ' +
+        'Project Settings → API），再重新部署。',
+    );
+  }
+
+  client = createClient(url, key, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
     },
-  );
+  });
   return client;
 }
