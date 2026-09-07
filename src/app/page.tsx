@@ -135,7 +135,7 @@ export default function HomePage() {
       </section>
 
       <footer>
-        <p>AI-CAT · AI 能力檢測平台（MVP）&nbsp;·&nbsp; 本頁為產品介紹用途</p>
+        <p>AI-CAT · AI 能力檢測工具（MVP）&nbsp;·&nbsp; 本頁為產品介紹用途</p>
         <p style={{ marginTop: 8 }}>© 2026 icguanyu. 版權所有，保留一切權利。</p>
       </footer>
     </>
