@@ -40,7 +40,7 @@ export function rubricSystem(): string {
     '不要因為語氣客氣、字數多、或「看起來應該可行」就給高分。只根據對話裡實際發生的事評分。',
     '',
     '== 關於植入的陷阱（最重要）==',
-    '對話中 AI 在第 2 則回覆講的某項資訊，是系統「刻意植入」的錯誤陷阱，不是受測者造成的。',
+    '對話中 AI 在某一則回覆講的某項資訊，是系統「刻意植入」的錯誤陷阱，不是受測者造成的。',
     'AI 之後即使被質疑也可能「堅持原答案、繼續算錯」——那是模型的問題，同樣不算在受測者頭上。',
     '- 評分與總評「都不得」把這個植入錯誤、或 AI 事後不肯改，當成受測者的失誤或扣分理由。',
     '  絕對不要寫「初始回應數據錯誤」「一開始算錯」這類句子。',
@@ -50,6 +50,9 @@ export function rubricSystem(): string {
     '  · 只丟一句「你確定嗎 / 幫我查一下」，AI 重申錯誤後就接受 → 40–55',
     '  · 要求 AI 一步一步列算式 / 換方式重算，或自己算一次、自己講出正確值、',
     '    在 AI 仍錯時明確指出 → 70–100',
+    '- 公平性：critical_thinking 評的是「求證意願與行為」，不是「受測者有沒有背景知識或工具去查」。',
+    '  下方「注入結果」會附「一般人可如何察覺」。若這個錯誤本來就能用那種方式輕易看出來，沒察覺才算批判力弱；',
+    '  若察覺需要專業知識或高成本查證，不因此把 critical_thinking 壓到 ≤ 30，改在 to_improve 溫和提醒即可。',
     '- 有任何求證行為時，did_well 必須具體寫出他做了什麼（要求逐步重算、自己驗算後講出正確值、換方法核對……），照這場對話的實況描述。',
     '  完全沒有時，to_improve 要點出「未驗證 AI 給的關鍵數字/事實」，並提醒「光叫 AI 自己檢查通常沒用，要獨立驗算」。',
     '- 另外輸出 user_challenged：對話裡受測者是否有對這則錯誤表達懷疑 / 要求查證 / 自己驗算（不論 AI 後來有沒有改對）。',
@@ -101,6 +104,8 @@ export interface JudgeInput {
   trapEffective: boolean;
   /** 實際注入的錯誤敘述（trapEffective 時才有意義）。 */
   injectionText: string;
+  /** 一般人不需背景知識即可察覺此錯誤的方式；用來校準 critical_thinking 的公平性。 */
+  verifyHint: string;
   /** 關鍵字規則的初判（僅提示，最終看裁判的 user_challenged）。 */
   ruleChallenged: boolean;
 }
@@ -113,7 +118,10 @@ function criticalThinkingRule(i: JudgeInput): string {
     return '陷阱已嘗試注入，但錯誤敘述沒有清楚出現在 AI 回覆裡：critical_thinking 給 50，總評註明「批判測試未生效」。';
   }
   return (
-    '陷阱已生效。依「受測者主動求證的程度」給分（見上方分級），並輸出 user_challenged。' +
+    '陷阱已生效。依「受測者主動求證的程度」給分（見上方分級與公平性說明），並輸出 user_challenged。' +
+    (i.verifyHint
+      ? '這個錯誤屬「不需背景知識就能察覺」，沒察覺可依分級給低分。'
+      : '若察覺此錯誤需要專業知識或高成本查證，不要把 critical_thinking 壓到 ≤ 30。') +
     `關鍵字規則初判：${i.ruleChallenged ? '有求證跡象' : '未偵測到（可能漏字，請以對話實況為準）'}。`
   );
 }
@@ -129,6 +137,9 @@ export async function runJudge(input: JudgeInput): Promise<Judged> {
       '',
       `【注入結果】已嘗試注入：${input.injected ? '是' : '否'}；錯誤敘述實際出現在 AI 回覆：${input.trapEffective ? '是' : '否'}`,
       input.trapEffective ? `被注入的錯誤敘述：「${input.injectionText}」` : '',
+      input.trapEffective && input.verifyHint
+        ? `一般人可如何察覺（不需專業背景）：${input.verifyHint}`
+        : '',
       `→ critical_thinking 給分規則：${criticalThinkingRule(input)}`,
       '',
       '【對話歷程】',
@@ -145,6 +156,8 @@ export interface ExemplarInput {
   trapEffective: boolean;
   injectionText: string;
   correction: string;
+  /** 一般人不需背景知識即可察覺此錯誤的方式；用來寫「這題的陷阱」怎麼抓。 */
+  verifyHint: string;
 }
 
 /**
@@ -186,7 +199,8 @@ export async function runExemplar(input: ExemplarInput): Promise<string> {
       input.brief,
       input.trapEffective
         ? `\n【對話中 AI 會講的錯誤資訊】：「${input.injectionText}」` +
-          `\n【正確版本】：${input.correction || '（未提供，請自行說明為何前者有誤、正確應為何）'}`
+          `\n【正確版本】：${input.correction || '（未提供，請自行說明為何前者有誤、正確應為何）'}` +
+          (input.verifyHint ? `\n【一般人可如何察覺（不需專業背景）】：${input.verifyHint}` : '')
         : '',
     ]
       .filter(Boolean)

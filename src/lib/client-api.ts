@@ -102,6 +102,7 @@ export interface FixtureDebug {
   injectionLanded: boolean;
   injectionText: string;
   injectAtTurn: number;
+  verifyHint: string;
   history: ChatMessage[];
 }
 

@@ -67,6 +67,7 @@ async function handle(req: Request): Promise<Response> {
       injected: state.injected,
       trapEffective,
       injectionText: state.injectionText,
+      verifyHint: scenario.verifyHint,
       ruleChallenged,
     }),
     runExemplar({
@@ -74,6 +75,7 @@ async function handle(req: Request): Promise<Response> {
       trapEffective,
       injectionText: state.injectionText,
       correction: scenario.correction,
+      verifyHint: scenario.verifyHint,
     }).catch((e) => {
       console.error('runExemplar 失敗', e);
       return '';
@@ -86,6 +88,7 @@ async function handle(req: Request): Promise<Response> {
   const { level, average } = computeLevel(judged.scores, {
     trapEffective,
     challenged,
+    scenarioId: state.scenarioId,
   });
 
   const report: Report = {
@@ -111,6 +114,7 @@ async function handle(req: Request): Promise<Response> {
           injectionLanded: state.injectionLanded,
           injectionText: state.injectionText,
           injectAtTurn: state.injectAtTurn ?? 2,
+          verifyHint: scenario.verifyHint,
           history: state.history,
         }
       : undefined;

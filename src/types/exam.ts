@@ -20,6 +20,11 @@ export interface ScenarioVariant {
   injectionText: string;
   /** 選填：對 injectionText 的正解，報告畫面用來做「錯誤 vs 正確」對照。 */
   correction?: string;
+  /**
+   * 選填：一般人「不需要專業背景」就能察覺這個錯誤的方式。只給裁判與 L5 示範參考，
+   * 用來校準 critical_thinking——沒察覺一個「本來就好查」的錯才算批判力弱。
+   */
+  verifyHint?: string;
 }
 
 /**
@@ -44,6 +49,8 @@ export interface ResolvedScenario {
   injectionText: string;
   /** 正解說明；沒填就是空字串。 */
   correction: string;
+  /** 一般人不需背景知識就能察覺此錯誤的方式；沒填就是空字串。 */
+  verifyHint: string;
 }
 
 /** 提交評分後，回給前端揭露的陷阱資訊（僅在陷阱生效時有值）。 */

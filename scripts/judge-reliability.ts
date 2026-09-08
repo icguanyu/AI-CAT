@@ -26,6 +26,10 @@ interface Fixture {
   injectionText: string;
   /** 注入落在第幾個使用者輪次；省略預設 2。 */
   injectAtTurn?: number;
+  /** 情境題 id；有給就會套該題的維度權重（見 scoring.ts）。 */
+  scenarioId?: string;
+  /** 一般人可如何察覺此錯誤；用來校準 critical_thinking。 */
+  verifyHint?: string;
   history: ChatMessage[];
 }
 
@@ -98,6 +102,7 @@ async function main() {
       injected: fx.injected,
       trapEffective,
       injectionText: fx.injectionText,
+      verifyHint: fx.verifyHint ?? '',
       ruleChallenged,
     });
     scoreRows.push(judged.scores);
@@ -106,6 +111,7 @@ async function main() {
     const { level, average } = computeLevel(judged.scores, {
       trapEffective,
       challenged,
+      scenarioId: fx.scenarioId,
     });
     levels.push(level);
     averages.push(average);

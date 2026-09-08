@@ -35,6 +35,7 @@ function normalize(id: string, raw: RawScenario): Scenario {
         injectionText?: unknown;
         brief?: unknown;
         correction?: unknown;
+        verifyHint?: unknown;
       };
       if (typeof vv.injectionText !== 'string') {
         throw new Error(`情境題 ${id} 變體 #${i} 缺少 injectionText`);
@@ -44,6 +45,9 @@ function normalize(id: string, raw: RawScenario): Scenario {
         ...(typeof vv.brief === 'string' ? { brief: vv.brief } : {}),
         ...(typeof vv.correction === 'string'
           ? { correction: vv.correction }
+          : {}),
+        ...(typeof vv.verifyHint === 'string'
+          ? { verifyHint: vv.verifyHint }
           : {}),
       };
     });
@@ -156,6 +160,7 @@ function flatten(
     system: scenario.system,
     injectionText: variant.injectionText,
     correction: variant.correction ?? '',
+    verifyHint: variant.verifyHint ?? '',
   };
 }
 
