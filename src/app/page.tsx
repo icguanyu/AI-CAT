@@ -11,11 +11,11 @@ import { AiCatMark } from '@/components/AiCatMark';
 import { GoogleIcon } from '@/components/GoogleIcon';
 
 const METRICS = [
-  { i: '01', t: '委派 Delegation', d: '判斷哪些交給 AI、如何框定與切分任務' },
-  { i: '02', t: '描述 Description', d: '角色、脈絡、輸出格式與驗收標準' },
-  { i: '03', t: '辨別 Discernment', d: '評估 AI 產出與作法是否可信' },
-  { i: '04', t: '審慎 Diligence', d: '採用前查證、對照限制、對成品負責' },
-  { i: '05', t: '任務達成率', d: '字數、格式、必含內容逐項符合' },
+  { i: '01', t: '提示詞結構', d: '角色、脈絡與輸出格式限制' },
+  { i: '02', t: '問題拆解力', d: '分階段引導而非一次全丟' },
+  { i: '03', t: '對話效率', d: '產出品質 ÷ 有效輪次' },
+  { i: '04', t: '批判思考', d: '不輕信 AI 所言，拒絕照單全收' },
+  { i: '05', t: '任務達成率', d: '字數、格式、必含內容' },
 ];
 
 const STEPS = [

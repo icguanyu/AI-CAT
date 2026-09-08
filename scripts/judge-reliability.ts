@@ -27,10 +27,10 @@ interface Fixture {
 }
 
 const KEYS = [
-  'delegation',
-  'description',
-  'discernment',
-  'diligence',
+  'prompt_structure',
+  'decomposition',
+  'efficiency',
+  'critical_thinking',
   'task_completion',
 ] as const;
 
