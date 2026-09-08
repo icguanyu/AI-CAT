@@ -225,13 +225,22 @@ section + section {
   letter-spacing: 0.14em;
   cursor: pointer;
 }
-.pill-toggle span {
+.pill-toggle span,
+.pill-toggle button {
   padding: 5px 11px;
   border-radius: 999px;
   color: var(--fg-faint);
   transition: background 0.15s ease, color 0.15s ease;
 }
-.pill-toggle span[data-on='true'] {
+.pill-toggle button {
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+.pill-toggle span[data-on='true'],
+.pill-toggle button[data-on='true'] {
   background: var(--cta-bg);
   color: var(--cta-fg);
 }
@@ -1632,4 +1641,187 @@ footer {
   font-size: 0.95rem;
   color: var(--accent-ink);
   margin-bottom: 10px;
+}
+
+/* ══ 報告畫面：完成頁（結果卡片）＋ 分析報告 兩區隔 ══ */
+.report-view {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.result-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.result-hint {
+  font-size: 0.8rem;
+  color: var(--fg-faint);
+  text-align: center;
+  margin: 0;
+}
+
+/* 兩區之間的標示分隔線 */
+.report-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 4px 0;
+}
+.report-divider::before,
+.report-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── 可分享的結果卡片 ── */
+.result-card {
+  align-self: center;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.result-card.portrait {
+  max-width: 420px;
+}
+.result-card.landscape {
+  max-width: 680px;
+}
+
+.rc-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+}
+.rc-brand .rc-word {
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.rc-brand .mono-label {
+  margin-left: auto;
+}
+
+.rc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.result-card.landscape .rc-body {
+  flex-direction: row;
+  align-items: center;
+}
+
+.rc-radar {
+  flex: 0 0 auto;
+  align-self: center;
+}
+.rc-radar svg {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+}
+.result-card.landscape .rc-radar svg {
+  width: 280px;
+}
+
+.rc-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rc-level {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.rc-level b {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--accent-ink);
+}
+.rc-level span {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.rc-score {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.rc-score .n {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.rc-score .k {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--fg-faint);
+}
+.rc-summary {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--fg-muted);
+}
+
+.rc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.rc-foot .mono-label {
+  font-size: 10px;
+}
+
+@media (max-width: 560px) {
+  .result-card.landscape {
+    max-width: 420px;
+  }
+  .result-card.landscape .rc-body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .result-card.landscape .rc-radar svg {
+    width: 100%;
+  }
+  .rc-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }

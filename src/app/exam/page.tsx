@@ -31,6 +31,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ThinkingCat } from '@/components/ThinkingCat';
 import { GoogleIcon } from '@/components/GoogleIcon';
 import { AiCatMark } from '@/components/AiCatMark';
+import { ResultCard, type CardOrientation } from '@/components/ResultCard';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type Phase = 'idle' | 'chatting' | 'evaluating' | 'done';
@@ -95,6 +96,7 @@ export default function ExamPage() {
   const [trap, setTrap] = useState<TrapReveal | null>(null);
   const [exemplar, setExemplar] = useState('');
   const [dbg, setDbg] = useState<FixtureDebug | null>(null);
+  const [orient, setOrient] = useState<CardOrientation>('portrait');
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -352,12 +354,57 @@ export default function ExamPage() {
     return (
       <main className="exam-wrap">
         {TopBar}
-        <div className="panel report-card">
-          <div className="meta-row">
-            <strong>能力報告</strong>
-            <span className="level-badge">{report.suggested_level}</span>
+        <div className="report-view">
+          {/* ── 完成 · 可分享的結果卡片 ── */}
+          <section className="result-section">
+            <div className="result-head">
+              <span className="mono-label">檢測完成</span>
+              <div
+                className="pill-toggle orient-toggle"
+                role="group"
+                aria-label="結果卡片版面"
+              >
+                <button
+                  type="button"
+                  data-on={orient === 'portrait'}
+                  onClick={() => setOrient('portrait')}
+                >
+                  直式
+                </button>
+                <button
+                  type="button"
+                  data-on={orient === 'landscape'}
+                  onClick={() => setOrient('landscape')}
+                >
+                  橫式
+                </button>
+              </div>
+            </div>
+
+            <ResultCard
+              level={report.suggested_level}
+              scores={report.scores}
+              summary={report.overall_summary}
+              orientation={orient}
+            />
+
+            <p className="result-hint">
+              截圖這張卡片即可分享到社群（分享功能稍後推出）。
+            </p>
+          </section>
+
+          {/* ── 分隔 ── */}
+          <div className="report-divider">
+            <span className="mono-label">分析報告</span>
           </div>
-          {keys.map((k) => (
+
+          {/* ── 詳細分析報告 ── */}
+          <section className="panel report-card">
+            <div className="meta-row">
+              <strong>詳細分析</strong>
+              <span className="level-badge">{report.suggested_level}</span>
+            </div>
+            {keys.map((k) => (
             <div className="score-row" key={k}>
               <span>{METRIC_LABELS[k]}</span>
               <span className="score-bar">
@@ -411,12 +458,15 @@ export default function ExamPage() {
             </div>
           )}
 
-          {exemplar && (
-            <div className="exemplar">
-              <div className="exemplar-head">L5 高手會怎麼用 AI 完成這題</div>
-              <Markdown>{exemplar}</Markdown>
-            </div>
-          )}
+            {exemplar && (
+              <div className="exemplar">
+                <div className="exemplar-head">
+                  L5 高手會怎麼用 AI 完成這題
+                </div>
+                <Markdown>{exemplar}</Markdown>
+              </div>
+            )}
+          </section>
 
           {DEV && dbg && (
             <button
