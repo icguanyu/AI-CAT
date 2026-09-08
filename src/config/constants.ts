@@ -40,11 +40,11 @@ export function rollInjectAtTurn(): number {
 export const FREE_ATTEMPTS = 2;
 
 /** 沙盒對話模型（回答受測者）。可用 SANDBOX_MODEL 環境變數覆寫。 */
-export const SANDBOX_MODEL = process.env.SANDBOX_MODEL || 'gpt-4o-mini';
+export const SANDBOX_MODEL = process.env.SANDBOX_MODEL || 'gpt-5-mini';
 
 /**
  * 裁判模型（評分，一場一次）。可用 JUDGE_MODEL 環境變數覆寫。
  * 值以 "claude" 開頭 → 走 Anthropic（`resolveModel`，需 ANTHROPIC_API_KEY），
  * 例：`claude-opus-5`、`claude-sonnet-5`；否則走 OpenAI。
  */
-export const JUDGE_MODEL = process.env.JUDGE_MODEL || 'gpt-4o';
+export const JUDGE_MODEL = process.env.JUDGE_MODEL || 'gpt-5';
