@@ -48,7 +48,7 @@ export default function HomePage() {
             <span className="mono-label">AI 能力檢測工具</span>
           </div>
           <div className="right">
-            <span className="mono-label">AI COMPETENCY ASSESSMENT · MVP</span>
+            <span className="mono-label">AI COMPETENCY ASSESSMENT TOOL</span>
             <ThemeToggle />
           </div>
         </header>
@@ -144,7 +144,10 @@ export default function HomePage() {
               <li>3 種職場情境題：行銷文案、行政數據、工程除錯</li>
               <li>真實沙盒對話，非題庫選擇題</li>
               <li>檢測結果即時產生，附 L5 示範</li>
-              <li>對話資料僅供評分使用，可隨時刪除</li>
+              <li>
+                對話內容會送交 AI 模型評分，詳見{' '}
+                <Link href="/privacy">隱私政策</Link>
+              </li>
             </ul>
             <p style={{ marginTop: 24 }}>
               <Link className="cta" href="/exam">
@@ -157,8 +160,14 @@ export default function HomePage() {
       </section>
 
       <footer>
-        <p>AI-CAT · AI 能力檢測工具（MVP）&nbsp;·&nbsp; 本頁為產品介紹用途</p>
-        <p style={{ marginTop: 8 }}>© 2026 icguanyu. 版權所有，保留一切權利。</p>
+        <p className="footer-links">
+          <Link href="/privacy">隱私政策</Link>
+          <span>·</span>
+          <Link href="/ip">智慧財產權宣告</Link>
+        </p>
+        <p style={{ marginTop: 10 }}>
+          © 2026 icguanyu. 版權所有，保留一切權利。
+        </p>
       </footer>
     </>
   );

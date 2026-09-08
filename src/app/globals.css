@@ -624,6 +624,102 @@ footer {
   font-size: 0.88rem;
   border-top: 1px solid var(--border);
 }
+.footer-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.footer-links a {
+  color: var(--fg-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.footer-links a:hover {
+  color: var(--fg);
+}
+.footer-links span {
+  color: var(--fg-faint);
+}
+
+/* ══ 內容頁（隱私政策 / 智財宣告）══════════════════════ */
+.legal {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+.legal .back {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  text-decoration: none;
+}
+.legal .back:hover {
+  color: var(--fg);
+}
+.legal h1 {
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin: 22px 0 6px;
+}
+.legal .updated {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--fg-faint);
+  margin-bottom: 34px;
+}
+.legal h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--fg);
+  margin: 34px 0 10px;
+}
+.legal p,
+.legal li {
+  font-size: 0.95rem;
+  line-height: 1.85;
+  color: var(--fg-muted);
+}
+.legal p {
+  margin: 0 0 12px;
+}
+.legal ul {
+  margin: 0 0 12px;
+  padding-left: 1.35em;
+}
+.legal li {
+  margin: 5px 0;
+}
+.legal li::marker {
+  color: var(--fg-faint);
+}
+.legal a {
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal strong {
+  color: var(--fg);
+  font-weight: 700;
+}
+.legal .legal-footer {
+  margin-top: 44px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--fg-faint);
+}
+.legal .legal-footer a {
+  color: var(--fg-faint);
+}
+.legal .legal-footer a:hover {
+  color: var(--fg);
+}
 
 @media (max-width: 560px) {
   .hero h1 {
