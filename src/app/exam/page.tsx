@@ -137,6 +137,11 @@ export default function ExamPage() {
     return () => mq.removeEventListener('change', sync);
   }, []);
 
+  // 手機不提供語音鈕（系統鍵盤本身就有語音輸入）；縮窗時若正在聽就收掉
+  useEffect(() => {
+    if (isNarrow && voiceListening) voiceStop();
+  }, [isNarrow, voiceListening, voiceStop]);
+
   const handleErr = useCallback((e: unknown) => {
     const message = e instanceof Error ? e.message : '發生未預期錯誤';
     setError(message);
@@ -446,7 +451,7 @@ export default function ExamPage() {
                 </span>
               )}
             </div>
-            {voiceSupported && (
+            {voiceSupported && !isNarrow && (
               <button
                 type="button"
                 className={`btn mic${voiceListening ? ' listening' : ''}`}
