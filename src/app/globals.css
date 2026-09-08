@@ -1099,7 +1099,7 @@ footer {
 }
 .evaluating__hint {
   margin: 12px 0 0;
-  max-width: 32ch;
+  max-width: 36ch;
   font-size: 0.85rem;
   line-height: 1.75;
   color: var(--fg-muted);
