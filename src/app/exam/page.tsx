@@ -413,6 +413,7 @@ export default function ExamPage() {
           </div>
 
           <div className="chat-input">
+            <div className="chat-input-row">
             <div className="composer">
               <textarea
                 ref={inputRef}
@@ -500,6 +501,12 @@ export default function ExamPage() {
                 </svg>
               )}
             </button>
+            </div>
+            {isNarrow && canChat && (
+              <p className="input-tip">
+                想用語音？直接點手機鍵盤上的麥克風即可口述輸入
+              </p>
+            )}
           </div>
           {voiceListening && (
             <p className="voice-hint" aria-live="polite">

@@ -1402,10 +1402,19 @@ footer {
 }
 
 .chat-input {
+  margin-top: 16px;
+}
+.chat-input-row {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  margin-top: 16px;
+}
+.input-tip {
+  margin: 8px 2px 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--fg-faint);
+  text-align: center;
 }
 
 .composer {
