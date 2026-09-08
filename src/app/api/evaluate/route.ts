@@ -97,6 +97,24 @@ async function handle(req: Request): Promise<Response> {
     suggested_level: level,
   };
 
+  // 僅本地開發回傳：把這場攤平成 judge:reliability 腳本吃的 fixture 形狀，
+  // 讓報告頁能直接「下載 fixture JSON」。正式環境 NODE_ENV==='production'，一律 undefined，不外流。
+  const debug =
+    process.env.NODE_ENV !== 'production'
+      ? {
+          label: `${state.scenarioId} · 變體#${state.variantIndex} · ${level} · ${new Date()
+            .toISOString()
+            .slice(0, 16)}`,
+          scenarioId: state.scenarioId,
+          brief: scenario.brief,
+          injected: state.injected,
+          injectionLanded: state.injectionLanded,
+          injectionText: state.injectionText,
+          injectAtTurn: state.injectAtTurn ?? 2,
+          history: state.history,
+        }
+      : undefined;
+
   // 提交後才揭露：陷阱生效時給「錯誤 vs 正確」對照
   const trap: TrapReveal | null = trapEffective
     ? {
@@ -123,7 +141,14 @@ async function handle(req: Request): Promise<Response> {
   if (error) {
     // exam_id 有 unique 限制：重複提交同一場不再重複扣次數
     console.error('寫入 exam_reports 失敗（可能為重複提交）', error);
-    return Response.json({ success: true, report, trap, exemplar, duplicate: true });
+    return Response.json({
+      success: true,
+      report,
+      trap,
+      exemplar,
+      debug,
+      duplicate: true,
+    });
   }
 
   // 提交成功才扣一次免費次數；扣點失敗不影響已產生的報告
@@ -136,5 +161,5 @@ async function handle(req: Request): Promise<Response> {
   // 這場已結束，清掉 Redis session
   await deleteExam(examId).catch(() => {});
 
-  return Response.json({ success: true, report, trap, exemplar });
+  return Response.json({ success: true, report, trap, exemplar, debug });
 }

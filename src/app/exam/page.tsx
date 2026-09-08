@@ -23,6 +23,7 @@ import {
   ApiError,
   type Quota,
   type StartResult,
+  type FixtureDebug,
 } from '@/lib/client-api';
 import { readTextStream } from '@/lib/data-stream';
 import { Markdown } from '@/components/Markdown';
@@ -40,6 +41,20 @@ const METRIC_LABELS: Record<keyof Report['scores'], string> = {
   critical_thinking: '批判思考',
   task_completion: '任務達成率',
 };
+
+/** 本地開發用：把場次資料存成 scripts/fixtures/ 吃的 JSON 檔。 */
+const DEV = process.env.NODE_ENV !== 'production';
+function downloadFixture(dbg: FixtureDebug) {
+  const blob = new Blob([JSON.stringify(dbg, null, 2)], {
+    type: 'application/json',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fixture-${dbg.scenarioId}-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function ExamPage() {
   const sbRef = useRef<SupabaseClient | null>(null);
@@ -78,6 +93,7 @@ export default function ExamPage() {
   const [report, setReport] = useState<Report | null>(null);
   const [trap, setTrap] = useState<TrapReveal | null>(null);
   const [exemplar, setExemplar] = useState('');
+  const [dbg, setDbg] = useState<FixtureDebug | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -199,12 +215,12 @@ export default function ExamPage() {
     setBusy(true);
     setPhase('evaluating');
     try {
-      const { report: rep, trap: tr, exemplar: ex } = await evaluateExam(
-        exam.examId,
-      );
+      const { report: rep, trap: tr, exemplar: ex, debug } =
+        await evaluateExam(exam.examId);
       setReport(rep);
       setTrap(tr);
       setExemplar(ex);
+      setDbg(debug);
       setPhase('done');
     } catch (e) {
       handleErr(e);
@@ -401,6 +417,17 @@ export default function ExamPage() {
             </div>
           )}
 
+          {DEV && dbg && (
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => downloadFixture(dbg)}
+              title="存到 scripts/fixtures/ 給 npm run judge:reliability 用"
+            >
+              ⬇ 下載 fixture JSON（本地開發）
+            </button>
+          )}
+
           <button
             type="button"
             className="btn ghost"
@@ -409,6 +436,7 @@ export default function ExamPage() {
               setExam(null);
               setTrap(null);
               setExemplar('');
+              setDbg(null);
             }}
           >
             回到開始

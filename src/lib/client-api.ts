@@ -7,7 +7,7 @@
  */
 'use client';
 
-import type { Report, TrapReveal } from '@/types/exam';
+import type { Report, TrapReveal, ChatMessage } from '@/types/exam';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 
 export class ApiError extends Error {
@@ -90,11 +90,28 @@ export async function sendChat(examId: string, message: string): Promise<Respons
   return res;
 }
 
+/**
+ * 開發用：一場測驗攤平成 judge:reliability 腳本吃的 fixture 形狀。
+ * 只有 NODE_ENV !== 'production' 時後端才會回傳（見 /api/evaluate）。
+ */
+export interface FixtureDebug {
+  label: string;
+  scenarioId: string;
+  brief: string;
+  injected: boolean;
+  injectionLanded: boolean;
+  injectionText: string;
+  injectAtTurn: number;
+  history: ChatMessage[];
+}
+
 export interface EvalResult {
   report: Report;
   trap: TrapReveal | null;
   /** 「L5 高手會怎麼做」的教學示範（Markdown）；產生失敗時為空字串。 */
   exemplar: string;
+  /** 僅本地開發：可下載成 fixture 的完整場次資料；正式環境為 null。 */
+  debug: FixtureDebug | null;
 }
 
 export async function evaluateExam(examId: string): Promise<EvalResult> {
@@ -112,5 +129,6 @@ export async function evaluateExam(examId: string): Promise<EvalResult> {
     report: json.report as Report,
     trap: (json.trap as TrapReveal | null) ?? null,
     exemplar: (json.exemplar as string) ?? '',
+    debug: (json.debug as FixtureDebug | undefined) ?? null,
   };
 }

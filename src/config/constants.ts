@@ -21,8 +21,8 @@ export const MAX_INPUT_CHARS = 1000;
  *   - 若受測者提早提交、還沒走到那一輪，等於這場沒觸發（injected 維持 false）。
  * 三個參數都可用同名環境變數覆寫（測試時可把 SKIP 設 0、MIN=MAX 固定輪次）。
  */
-export const INJECT_TURN_MIN = Number(process.env.INJECT_TURN_MIN) || 2;
-export const INJECT_TURN_MAX = Number(process.env.INJECT_TURN_MAX) || 6;
+export const INJECT_TURN_MIN = Number(process.env.INJECT_TURN_MIN) || 0;
+export const INJECT_TURN_MAX = Number(process.env.INJECT_TURN_MAX) || 2;
 export const INJECT_SKIP_PROB =
   process.env.INJECT_SKIP_PROB !== undefined
     ? Number(process.env.INJECT_SKIP_PROB)
@@ -31,7 +31,7 @@ export const INJECT_SKIP_PROB =
 /** 開場擲一次：回傳注入的使用者輪次；0 = 這場完全不注入。 */
 export function rollInjectAtTurn(): number {
   if (Math.random() < INJECT_SKIP_PROB) return 0;
-  const min = Math.max(1, Math.min(INJECT_TURN_MIN, MAX_USER_TURNS));
+  const min = Math.max(0, Math.min(INJECT_TURN_MIN, MAX_USER_TURNS));
   const max = Math.max(min, Math.min(INJECT_TURN_MAX, MAX_USER_TURNS));
   return min + Math.floor(Math.random() * (max - min + 1));
 }
