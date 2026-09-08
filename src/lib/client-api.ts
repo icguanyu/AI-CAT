@@ -133,3 +133,41 @@ export async function evaluateExam(examId: string): Promise<EvalResult> {
     debug: (json.debug as FixtureDebug | undefined) ?? null,
   };
 }
+
+export interface ReportBundle extends EvalResult {
+  /** 這份報告是否已開啟公開分享（/s/:examId）。 */
+  shared: boolean;
+}
+
+/** 取回「已提交」測驗的完整報告（本人限定；用於 /exam/result/:examId 還原）。 */
+export async function getExamReport(examId: string): Promise<ReportBundle> {
+  const res = await fetch(`/api/exam/${examId}/report`, {
+    headers: { Authorization: `Bearer ${await bearer()}` },
+  });
+  const json = await parseBody(res);
+  if (!res.ok) fail(json, res, '讀取報告失敗');
+  return {
+    report: json.report as Report,
+    trap: (json.trap as TrapReveal | null) ?? null,
+    exemplar: (json.exemplar as string) ?? '',
+    debug: (json.debug as FixtureDebug | undefined) ?? null,
+    shared: Boolean(json.shared),
+  };
+}
+
+/** 切換公開分享旗標。shared=true → POST；false → DELETE。 */
+export async function setExamShared(
+  examId: string,
+  shared: boolean,
+): Promise<{ shared: boolean; url: string }> {
+  const res = await fetch(`/api/exam/${examId}/share`, {
+    method: shared ? 'POST' : 'DELETE',
+    headers: { Authorization: `Bearer ${await bearer()}` },
+  });
+  const json = await parseBody(res);
+  if (!res.ok) fail(json, res, '變更分享狀態失敗');
+  return {
+    shared: Boolean(json.shared),
+    url: (json.url as string) ?? `/s/${examId}`,
+  };
+}

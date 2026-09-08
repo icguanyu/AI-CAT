@@ -12,8 +12,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
-import type { Report, TrapReveal } from '@/types/exam';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 import {
   getQuota,
@@ -23,7 +23,6 @@ import {
   ApiError,
   type Quota,
   type StartResult,
-  type FixtureDebug,
 } from '@/lib/client-api';
 import { readTextStream } from '@/lib/data-stream';
 import { Markdown } from '@/components/Markdown';
@@ -31,34 +30,12 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ThinkingCat } from '@/components/ThinkingCat';
 import { GoogleIcon } from '@/components/GoogleIcon';
 import { AiCatMark } from '@/components/AiCatMark';
-import { ResultCard, type CardOrientation } from '@/components/ResultCard';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
-type Phase = 'idle' | 'chatting' | 'evaluating' | 'done';
-
-const METRIC_LABELS: Record<keyof Report['scores'], string> = {
-  prompt_structure: '提示詞結構',
-  decomposition: '問題拆解力',
-  efficiency: '對話效率',
-  critical_thinking: '批判思考',
-  task_completion: '任務達成率',
-};
-
-/** 本地開發用：把場次資料存成 scripts/fixtures/ 吃的 JSON 檔。 */
-const DEV = process.env.NODE_ENV !== 'production';
-function downloadFixture(dbg: FixtureDebug) {
-  const blob = new Blob([JSON.stringify(dbg, null, 2)], {
-    type: 'application/json',
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `fixture-${dbg.scenarioId}-${Date.now()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+type Phase = 'idle' | 'chatting' | 'evaluating';
 
 export default function ExamPage() {
+  const router = useRouter();
   const sbRef = useRef<SupabaseClient | null>(null);
   const getSb = useCallback(() => {
     if (!sbRef.current) sbRef.current = createSupabaseBrowser();
@@ -92,11 +69,6 @@ export default function ExamPage() {
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
   const [quota, setQuota] = useState<Quota | null>(null);
-  const [report, setReport] = useState<Report | null>(null);
-  const [trap, setTrap] = useState<TrapReveal | null>(null);
-  const [exemplar, setExemplar] = useState('');
-  const [dbg, setDbg] = useState<FixtureDebug | null>(null);
-  const [orient, setOrient] = useState<CardOrientation>('portrait');
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -121,7 +93,7 @@ export default function ExamPage() {
     if (session) refreshQuota();
   }, [session, refreshQuota]);
   useEffect(() => {
-    if (session && (phase === 'idle' || phase === 'done')) refreshQuota();
+    if (session && phase === 'idle') refreshQuota();
   }, [phase, session, refreshQuota]);
 
   useEffect(() => {
@@ -163,7 +135,6 @@ export default function ExamPage() {
       setQuota(r.quota);
       setMessages([]);
       setUserTurns(0);
-      setReport(null);
       setPhase('chatting');
     } catch (e) {
       handleErr(e);
@@ -218,20 +189,16 @@ export default function ExamPage() {
     setBusy(true);
     setPhase('evaluating');
     try {
-      const { report: rep, trap: tr, exemplar: ex, debug } =
-        await evaluateExam(exam.examId);
-      setReport(rep);
-      setTrap(tr);
-      setExemplar(ex);
-      setDbg(debug);
-      setPhase('done');
+      await evaluateExam(exam.examId);
+      // 報告已寫入 Supabase；結果頁自行從 /api/exam/:examId/report 撈回，
+      // 重新整理不會消失。
+      router.push(`/exam/result/${exam.examId}`);
     } catch (e) {
       handleErr(e);
       setPhase('chatting');
-    } finally {
       setBusy(false);
     }
-  }, [exam, handleErr]);
+  }, [exam, handleErr, router]);
 
   // ── 設定未完成 ──
   if (configError) {
@@ -342,155 +309,6 @@ export default function ExamPage() {
             disabled={busy || outOfQuota}
           >
             {outOfQuota ? '免費次數已用完' : busy ? '準備中…' : '開始檢測'}
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  // ── 報告畫面 ──
-  if (phase === 'done' && report) {
-    const keys = Object.keys(METRIC_LABELS) as (keyof Report['scores'])[];
-    return (
-      <main className="exam-wrap">
-        {TopBar}
-        <div className="report-view">
-          {/* ── 完成 · 可分享的結果卡片 ── */}
-          <section className="result-section">
-            <div className="result-head">
-              <span className="mono-label">檢測完成</span>
-              <div
-                className="pill-toggle orient-toggle"
-                role="group"
-                aria-label="結果卡片版面"
-              >
-                <button
-                  type="button"
-                  data-on={orient === 'portrait'}
-                  onClick={() => setOrient('portrait')}
-                >
-                  直式
-                </button>
-                <button
-                  type="button"
-                  data-on={orient === 'landscape'}
-                  onClick={() => setOrient('landscape')}
-                >
-                  橫式
-                </button>
-              </div>
-            </div>
-
-            <ResultCard
-              level={report.suggested_level}
-              scores={report.scores}
-              summary={report.overall_summary}
-              orientation={orient}
-            />
-
-            <p className="result-hint">
-              截圖這張卡片即可分享到社群（分享功能稍後推出）。
-            </p>
-          </section>
-
-          {/* ── 分隔 ── */}
-          <div className="report-divider">
-            <span className="mono-label">分析報告</span>
-          </div>
-
-          {/* ── 詳細分析報告 ── */}
-          <section className="panel report-card">
-            <div className="meta-row">
-              <strong>詳細分析</strong>
-              <span className="level-badge">{report.suggested_level}</span>
-            </div>
-            {keys.map((k) => (
-            <div className="score-row" key={k}>
-              <span>{METRIC_LABELS[k]}</span>
-              <span className="score-bar">
-                <span style={{ width: `${report.scores[k]}%` }} />
-              </span>
-              <span className="score-num">{report.scores[k]}</span>
-            </div>
-          ))}
-          <p className="report-summary">{report.overall_summary}</p>
-
-          {report.did_well.length > 0 && (
-            <div className="fb-block">
-              <h4>做得好</h4>
-              <ul>
-                {report.did_well.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {report.to_improve.length > 0 && (
-            <div className="fb-block improve">
-              <h4>可以更好</h4>
-              <ul>
-                {report.to_improve.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {trap && (
-            <div className="trap-review">
-              <div
-                className={`trap-head ${trap.challenged ? 'ok' : 'miss'}`}
-              >
-                {trap.challenged
-                  ? '你有質疑對話中出現的這則資訊'
-                  : '你忽略了對話中一則錯誤資訊'}
-              </div>
-              <div className="trap-row wrong">
-                <span className="trap-label">對話中出現</span>
-                <p>{trap.injectionText}</p>
-              </div>
-              {trap.correction && (
-                <div className="trap-row right">
-                  <span className="trap-label">正確資訊</span>
-                  <p>{trap.correction}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-            {exemplar && (
-              <div className="exemplar">
-                <div className="exemplar-head">
-                  L5 高手會怎麼用 AI 完成這題
-                </div>
-                <Markdown>{exemplar}</Markdown>
-              </div>
-            )}
-          </section>
-
-          {DEV && dbg && (
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={() => downloadFixture(dbg)}
-              title="存到 scripts/fixtures/ 給 npm run judge:reliability 用"
-            >
-              ⬇ 下載 fixture JSON（本地開發）
-            </button>
-          )}
-
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => {
-              setPhase('idle');
-              setExam(null);
-              setTrap(null);
-              setExemplar('');
-              setDbg(null);
-            }}
-          >
-            回到開始
           </button>
         </div>
       </main>

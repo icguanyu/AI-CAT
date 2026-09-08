@@ -1835,6 +1835,88 @@ footer {
   }
 }
 
+/* ── 結果頁 / 分享頁 ── */
+.result-topbar {
+  max-width: 720px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.share-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.share-url {
+  margin: 0;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--fg-muted);
+  word-break: break-all;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+}
+.share-note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--fg-faint);
+}
+
+/* 公開分享頁 /s/:examId */
+.share-page {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.share-page-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.share-page-top .topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+  text-decoration: none;
+}
+.share-page-top .wordmark {
+  font-weight: 900;
+  line-height: 1;
+}
+.share-page-cta {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--fg-muted);
+  text-align: center;
+}
+.share-page-cta a {
+  color: var(--accent-ink);
+  text-decoration: underline;
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
 /* ── 報告畫面：手機版收窄，避免橫向溢出 ── */
 @media (max-width: 600px) {
   .exam-wrap {

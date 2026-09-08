@@ -138,6 +138,10 @@ async function handle(req: Request): Promise<Response> {
       weighted_average: average,
       variant_index: state.variantIndex,
       exemplar,
+      // 存進 jsonb，讓 /exam/result/:examId 重新整理後能還原陷阱對照；
+      // 公開分享頁 /s 讀不到這個欄位（見 getSharedCard 只挑非機密欄位）。
+      trap,
+      ...(debug ? { debug } : {}),
     },
     rule_challenged: challenged,
     injected: state.injected,
