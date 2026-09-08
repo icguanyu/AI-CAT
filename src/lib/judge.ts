@@ -6,7 +6,7 @@
  *       runExemplar() 產一段「L5 高手會怎麼用 AI 完成這題」的示範（Markdown）。
  */
 import { generateObject, generateText } from 'ai';
-import { openai } from '@/lib/openai';
+import { resolveModel } from '@/lib/model';
 import { JudgeSchema, type Judged, type ChatMessage } from '@/types/exam';
 import { JUDGE_MODEL } from '@/config/constants';
 
@@ -128,7 +128,7 @@ function criticalThinkingRule(i: JudgeInput): string {
 
 export async function runJudge(input: JudgeInput): Promise<Judged> {
   const { object } = await generateObject({
-    model: openai(JUDGE_MODEL),
+    model: resolveModel(JUDGE_MODEL),
     schema: JudgeSchema,
     system: rubricSystem(),
     prompt: [
@@ -168,7 +168,7 @@ export interface ExemplarInput {
  */
 export async function runExemplar(input: ExemplarInput): Promise<string> {
   const { text } = await generateText({
-    model: openai(EXEMPLAR_MODEL),
+    model: resolveModel(EXEMPLAR_MODEL),
     system: [
       '你是一位「AI 協作教練」。針對下面這個任務，示範「一個高手（能力分級 L5）會怎麼用 AI 完成」，',
       '讓看的人學得到方法。用繁體中文、Markdown。**不要評論任何受測者**，只講「應該怎麼做」。',

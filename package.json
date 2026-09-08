@@ -13,6 +13,7 @@
     "scenarios:import": "tsx scripts/import-scenarios.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.2.12",
     "@ai-sdk/openai": "^1.0.11",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.10",
