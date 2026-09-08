@@ -48,3 +48,13 @@ export const SANDBOX_MODEL = process.env.SANDBOX_MODEL || 'gpt-5-mini';
  * 例：`claude-opus-5`、`claude-sonnet-5`；否則走 OpenAI。
  */
 export const JUDGE_MODEL = process.env.JUDGE_MODEL || 'gpt-5';
+
+/**
+ * OpenAI 推理模型（gpt-5 / o 系列）當裁判時的思考量：low | medium | high。
+ * 預設 low —— 裁判是照 rubric 打分，低思考量已足夠且快很多。
+ * 只對 OpenAI 推理模型生效；gpt-4.1 / gpt-4o / Claude 會忽略。
+ */
+export const JUDGE_REASONING_EFFORT = ((): 'low' | 'medium' | 'high' => {
+  const v = process.env.JUDGE_REASONING_EFFORT;
+  return v === 'medium' || v === 'high' ? v : 'low';
+})();

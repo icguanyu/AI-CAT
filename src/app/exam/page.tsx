@@ -70,7 +70,9 @@ export default function ExamPage() {
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
   const [quota, setQuota] = useState<Quota | null>(null);
-  const logRef = useRef<HTMLDivElement>(null);
+  // 視窗是否為窄版（手機）：Enter 一律換行、輸入框改 sticky
+  const [isNarrow, setIsNarrow] = useState(false);
+  const logEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // textarea 隨內容自動增高（上限 180px 後改捲動）
@@ -98,8 +100,17 @@ export default function ExamPage() {
   }, [phase, session, refreshQuota]);
 
   useEffect(() => {
-    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
+    // 用哨兵捲到底，桌機捲 .chat-log、手機捲整頁都適用
+    logEndRef.current?.scrollIntoView({ block: 'end' });
   }, [messages]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 820px)');
+    const sync = () => setIsNarrow(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
 
   const handleErr = useCallback((e: unknown) => {
     const message = e instanceof Error ? e.message : '發生未預期錯誤';
@@ -352,7 +363,7 @@ export default function ExamPage() {
             </button>
           </div>
 
-          <div className="chat-log" ref={logRef}>
+          <div className="chat-log">
             {messages.map((m, i) => (
               <div key={i} className={`bubble ${m.role}`}>
                 {m.role === 'assistant' ? (
@@ -366,23 +377,32 @@ export default function ExamPage() {
                 )}
               </div>
             ))}
+            <div ref={logEndRef} className="chat-end" aria-hidden="true" />
           </div>
 
           <div className="chat-input">
             <div className="composer">
               <textarea
                 ref={inputRef}
-                rows={1}
+                rows={2}
                 value={input}
                 maxLength={exam?.limits.maxInputChars}
                 placeholder={
                   turnsLeft > 0
-                    ? `還可發言 ${turnsLeft} 次…（Enter 送出，Shift+Enter 換行）`
+                    ? isNarrow
+                      ? `還可發言 ${turnsLeft} 次…（點右側按鈕送出）`
+                      : `還可發言 ${turnsLeft} 次…（Enter 送出，Shift+Enter 換行）`
                     : '已達輪次上限，請提交評分'
                 }
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  // 手機一律換行；輸入法選字（IME composing）中按 Enter 不送出
+                  if (
+                    e.key === 'Enter' &&
+                    !e.shiftKey &&
+                    !isNarrow &&
+                    !e.nativeEvent.isComposing
+                  ) {
                     e.preventDefault();
                     if (canChat && input.trim()) void send();
                   }
@@ -405,8 +425,24 @@ export default function ExamPage() {
               onClick={() => void send()}
               disabled={!canChat || !input.trim()}
               aria-label="送出"
+              title="送出"
             >
-              {busy && phase === 'chatting' ? '…' : '送出'}
+              {busy && phase === 'chatting' ? (
+                <span className="send-spinner" aria-hidden="true" />
+              ) : (
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"
+                  />
+                </svg>
+              )}
             </button>
           </div>
           {error && <p className="err">{error}</p>}
