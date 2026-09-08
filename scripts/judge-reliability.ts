@@ -9,12 +9,13 @@
  *   （real fixture 放 scripts/fixtures/，該資料夾已 gitignore）
  *
  * fixture 形狀：
- *   { label?, brief, injected, injectionLanded, injectionText, history: ChatMessage[] }
+ *   { label?, brief, injected, injectionLanded, injectionText,
+ *     injectAtTurn?, history: ChatMessage[] }
+ *   injectAtTurn 省略時預設 2（注入時機正式環境已改為每場隨機）。
  */
 import { readFileSync } from 'node:fs';
 import { runJudge, detectChallenge } from '../src/lib/judge';
 import { computeLevel } from '../src/lib/scoring';
-import { INJECT_AT_TURN } from '../src/config/constants';
 import type { ChatMessage, Judged } from '../src/types/exam';
 
 interface Fixture {
@@ -23,6 +24,8 @@ interface Fixture {
   injected: boolean;
   injectionLanded: boolean;
   injectionText: string;
+  /** 注入落在第幾個使用者輪次；省略預設 2。 */
+  injectAtTurn?: number;
   history: ChatMessage[];
 }
 
@@ -78,7 +81,7 @@ async function main() {
   const fx = JSON.parse(readFileSync(fixturePath, 'utf8')) as Fixture;
 
   const ruleChallenged = fx.injected
-    ? detectChallenge(fx.history, INJECT_AT_TURN)
+    ? detectChallenge(fx.history, fx.injectAtTurn ?? 2)
     : false;
   const trapEffective = fx.injected && fx.injectionLanded;
 

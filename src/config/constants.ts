@@ -1,7 +1,7 @@
 /**
  * 檔案：src/config/constants.ts
  * 角色：設定層 — 全域測驗參數的單一來源
- * 功能：對話輪次上限、輸入字數上限、陷阱注入輪次、免費次數、模型名稱等常數。
+ * 功能：對話輪次上限、輸入字數上限、陷阱注入時機（隨機）、免費次數、模型名稱等常數。
  *       前後端共用；改動前請同步 README 與前端顯示文案。
  */
 
@@ -14,8 +14,27 @@ export const MAX_USER_TURNS = 10;
 /** 單次輸入字數上限（放寬到能寫完整提示詞：角色 + 脈絡 + 格式要求）。 */
 export const MAX_INPUT_CHARS = 1000;
 
-/** 於第幾個使用者輪次注入幻覺陷阱。 */
-export const INJECT_AT_TURN = 2;
+/**
+ * 幻覺陷阱的注入時機改為「每場隨機」，開場時由 rollInjectAtTurn() 擲一次、存進 ExamState：
+ *   - 有 INJECT_SKIP_PROB 的機率整場不注入（injectAtTurn = 0）。
+ *   - 否則落在 [INJECT_TURN_MIN, INJECT_TURN_MAX] 之間的某個使用者輪次。
+ *   - 若受測者提早提交、還沒走到那一輪，等於這場沒觸發（injected 維持 false）。
+ * 三個參數都可用同名環境變數覆寫（測試時可把 SKIP 設 0、MIN=MAX 固定輪次）。
+ */
+export const INJECT_TURN_MIN = Number(process.env.INJECT_TURN_MIN) || 2;
+export const INJECT_TURN_MAX = Number(process.env.INJECT_TURN_MAX) || 6;
+export const INJECT_SKIP_PROB =
+  process.env.INJECT_SKIP_PROB !== undefined
+    ? Number(process.env.INJECT_SKIP_PROB)
+    : 0.2;
+
+/** 開場擲一次：回傳注入的使用者輪次；0 = 這場完全不注入。 */
+export function rollInjectAtTurn(): number {
+  if (Math.random() < INJECT_SKIP_PROB) return 0;
+  const min = Math.max(1, Math.min(INJECT_TURN_MIN, MAX_USER_TURNS));
+  const max = Math.max(min, Math.min(INJECT_TURN_MAX, MAX_USER_TURNS));
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
 
 /** 每個帳號的免費檢測次數。 */
 export const FREE_ATTEMPTS = 2;

@@ -2,8 +2,9 @@
  * 檔案：src/app/api/chat/route.ts  →  POST /api/chat
  * 角色：API 層 — 沙盒對話控制器（核心）
  * 功能：驗證登入與流量後，把使用者訊息接進該場測驗歷程，串流沙盒模型回應。
- *       第 INJECT_AT_TURN 輪仍由真實模型作答並串流，但**只在該回合**於 system
- *       追加一段指示，要模型以肯定語氣自然帶入指定的錯誤敘述（不加但書、不揭露）。
+ *       陷阱注入時機每場隨機（state.injectAtTurn，開場擲定；0 = 這場不注入）。
+ *       走到那一輪時仍由真實模型作答並串流，但**只在該回合**於 system 追加一段指示，
+ *       要模型以肯定語氣自然帶入指定的錯誤敘述（不加但書、不揭露）。
  *       之後由後端關鍵字檢查判斷錯誤敘述是否真的出現（injectionLanded），
  *       裁判階段再做第二層確認。
  *
@@ -20,7 +21,6 @@ import { getScenarioVariant } from '@/lib/scenarios';
 import {
   MAX_INPUT_CHARS,
   MAX_USER_TURNS,
-  INJECT_AT_TURN,
   SANDBOX_MODEL,
 } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
@@ -105,7 +105,10 @@ async function handle(req: Request): Promise<Response> {
     state.variantIndex,
   );
 
-  const isInjectionTurn = currentTurn === INJECT_AT_TURN && !state.injected;
+  const isInjectionTurn =
+    state.injectAtTurn > 0 &&
+    currentTurn === state.injectAtTurn &&
+    !state.injected;
   const system = isInjectionTurn
     ? `${scenario.system}\n${injectionDirective(scenario.injectionText)}`
     : scenario.system;

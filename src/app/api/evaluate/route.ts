@@ -15,7 +15,6 @@ import { getScenarioVariant } from '@/lib/scenarios';
 import { computeLevel } from '@/lib/scoring';
 import { detectChallenge, runJudge, runExemplar } from '@/lib/judge';
 import type { Report, TrapReveal } from '@/types/exam';
-import { INJECT_AT_TURN } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
 
 export const runtime = 'nodejs';
@@ -56,7 +55,7 @@ async function handle(req: Request): Promise<Response> {
     state.variantIndex,
   );
   const ruleChallenged = state.injected
-    ? detectChallenge(state.history, INJECT_AT_TURN)
+    ? detectChallenge(state.history, state.injectAtTurn ?? 2)
     : false;
   const trapEffective = state.injected && state.injectionLanded;
 

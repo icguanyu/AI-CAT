@@ -16,7 +16,7 @@ export interface ChatMessage {
 export interface ScenarioVariant {
   /** 選填：覆寫該場的任務說明（用來變動限制條件）。 */
   brief?: string;
-  /** 這個變體第 INJECT_AT_TURN 輪要注入的蓄意錯誤敘述（機密）。 */
+  /** 這個變體要注入的蓄意錯誤敘述（機密）；注入輪次每場隨機，見 rollInjectAtTurn()。 */
   injectionText: string;
   /** 選填：對 injectionText 的正解，報告畫面用來做「錯誤 vs 正確」對照。 */
   correction?: string;
@@ -61,7 +61,9 @@ export interface ExamState {
   /** 開始測驗時隨機挑中的變體索引。 */
   variantIndex: number;
   history: ChatMessage[];
-  /** 幻覺陷阱是否已嘗試注入（第 INJECT_AT_TURN 輪）。 */
+  /** 這場擲中的注入輪次；0 = 整場不注入。開場時 rollInjectAtTurn() 決定。 */
+  injectAtTurn: number;
+  /** 幻覺陷阱是否已嘗試注入（走到 injectAtTurn 那一輪才會變 true）。 */
   injected: boolean;
   /** 錯誤敘述是否真的出現在 AI 的回覆裡（後端關鍵字檢查）。 */
   injectionLanded: boolean;
