@@ -316,17 +316,7 @@ export default function ExamPage() {
     );
   }
 
-  // ── 評分中：全畫面等待（貓咪掃描動畫 + 逾時提醒）──
-  if (phase === 'evaluating') {
-    return (
-      <main className="exam-wrap">
-        {TopBar}
-        <EvaluatingCat />
-      </main>
-    );
-  }
-
-  // ── 對話畫面（chatting）──
+  // ── 對話畫面（chatting / evaluating）──
   const maxTurns = exam?.limits.maxUserTurns ?? 5;
   const turnsLeft = maxTurns - userTurns;
   const canChat = phase === 'chatting' && !busy && turnsLeft > 0;
@@ -343,6 +333,11 @@ export default function ExamPage() {
         </aside>
 
         <section className="panel chat">
+          {phase === 'evaluating' && (
+            <div className="chat-overlay">
+              <EvaluatingCat />
+            </div>
+          )}
           <div className="meta-row">
             <span>
               第 {Math.min(userTurns + 1, maxTurns)} / {maxTurns} 輪

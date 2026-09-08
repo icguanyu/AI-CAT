@@ -806,10 +806,29 @@ footer {
 }
 
 .chat {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 72vh;
   min-height: 440px;
+}
+
+/* 評分中：蓋在對話面板上的等待遮罩 */
+.chat-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+.chat-overlay .evaluating {
+  padding: 24px;
 }
 
 .chat-log {
