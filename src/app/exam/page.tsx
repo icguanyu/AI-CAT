@@ -28,6 +28,7 @@ import { readTextStream } from '@/lib/data-stream';
 import { Markdown } from '@/components/Markdown';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ThinkingCat } from '@/components/ThinkingCat';
+import { EvaluatingCat } from '@/components/EvaluatingCat';
 import { GoogleIcon } from '@/components/GoogleIcon';
 import { AiCatMark } from '@/components/AiCatMark';
 
@@ -315,7 +316,17 @@ export default function ExamPage() {
     );
   }
 
-  // ── 對話畫面（chatting / evaluating）──
+  // ── 評分中：全畫面等待（貓咪掃描動畫 + 逾時提醒）──
+  if (phase === 'evaluating') {
+    return (
+      <main className="exam-wrap">
+        {TopBar}
+        <EvaluatingCat />
+      </main>
+    );
+  }
+
+  // ── 對話畫面（chatting）──
   const maxTurns = exam?.limits.maxUserTurns ?? 5;
   const turnsLeft = maxTurns - userTurns;
   const canChat = phase === 'chatting' && !busy && turnsLeft > 0;
@@ -342,7 +353,7 @@ export default function ExamPage() {
               onClick={submit}
               disabled={busy || messages.length === 0}
             >
-              {phase === 'evaluating' ? '評分中…' : '提交評分'}
+              提交評分
             </button>
           </div>
 

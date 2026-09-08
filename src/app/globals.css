@@ -1024,6 +1024,96 @@ footer {
   }
 }
 
+/* ── 評分中：全畫面等待（設計稿 §02 掃描狀態）── */
+.evaluating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: clamp(56px, 14vh, 112px) 20px;
+  color: var(--fg);
+}
+.evaluating__cat {
+  width: clamp(96px, 22vw, 132px);
+  height: auto;
+  overflow: visible;
+  color: var(--accent-ink);
+  animation: catBob 2.6s ease-in-out infinite;
+}
+.evaluating__scan {
+  animation: catScan 1.9s linear infinite;
+}
+.evaluating__line {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.evaluating__text {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.evaluating__dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.evaluating__dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+  display: block;
+  animation: catDot 1.3s ease-in-out infinite;
+}
+.evaluating__dots span:nth-child(2) {
+  animation-delay: 0.16s;
+}
+.evaluating__dots span:nth-child(3) {
+  animation-delay: 0.32s;
+}
+.evaluating__sub {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  color: var(--fg-faint);
+}
+.evaluating__hint {
+  margin: 12px 0 0;
+  max-width: 32ch;
+  font-size: 0.85rem;
+  line-height: 1.75;
+  color: var(--fg-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+@keyframes catScan {
+  0% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(76px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .evaluating__cat,
+  .evaluating__scan,
+  .evaluating__dots span {
+    animation: none !important;
+  }
+  .evaluating__scan {
+    opacity: 0.35;
+  }
+}
+
 /* ── 貓咪裝飾（純視覺，aria-hidden；沿用上方 thinking 的 keyframes）── */
 .cat-decor {
   display: block;
