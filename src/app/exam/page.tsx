@@ -25,6 +25,7 @@ import {
   type StartResult,
 } from '@/lib/client-api';
 import { readTextStream } from '@/lib/data-stream';
+import { useVoiceInput } from '@/lib/use-voice-input';
 import { Markdown } from '@/components/Markdown';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ThinkingCat } from '@/components/ThinkingCat';
@@ -74,6 +75,30 @@ export default function ExamPage() {
   const [isNarrow, setIsNarrow] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // 語音輸入：按下麥克風時先記住現有內容，辨識結果接在後面
+  const voiceBaseRef = useRef('');
+  const maxInputChars = exam?.limits.maxInputChars ?? 4000;
+  const {
+    supported: voiceSupported,
+    listening: voiceListening,
+    error: voiceError,
+    start: voiceStart,
+    stop: voiceStop,
+  } = useVoiceInput({
+    onChange: (sessionText) => {
+      const base = voiceBaseRef.current;
+      const joiner = base && sessionText && !/\s$/.test(base) ? ' ' : '';
+      setInput((base + joiner + sessionText).slice(0, maxInputChars));
+    },
+  });
+  const toggleVoice = useCallback(() => {
+    if (voiceListening) {
+      voiceStop();
+    } else {
+      voiceBaseRef.current = input;
+      voiceStart();
+    }
+  }, [voiceListening, voiceStart, voiceStop, input]);
 
   // textarea 隨內容自動增高（上限 180px 後改捲動）
   useEffect(() => {
@@ -157,6 +182,7 @@ export default function ExamPage() {
 
   const send = useCallback(async () => {
     if (!exam || busy) return;
+    voiceStop();
     const text = input.trim();
     if (!text) return;
     if (text.length > exam.limits.maxInputChars) {
@@ -193,10 +219,11 @@ export default function ExamPage() {
     } finally {
       setBusy(false);
     }
-  }, [exam, input, busy, handleErr]);
+  }, [exam, input, busy, handleErr, voiceStop]);
 
   const submit = useCallback(async () => {
     if (!exam) return;
+    voiceStop();
     setError(null);
     setBusy(true);
     setPhase('evaluating');
@@ -210,7 +237,7 @@ export default function ExamPage() {
       setPhase('chatting');
       setBusy(false);
     }
-  }, [exam, handleErr, router]);
+  }, [exam, handleErr, router, voiceStop]);
 
   // ── 設定未完成 ──
   if (configError) {
@@ -419,6 +446,30 @@ export default function ExamPage() {
                 </span>
               )}
             </div>
+            {voiceSupported && (
+              <button
+                type="button"
+                className={`btn mic${voiceListening ? ' listening' : ''}`}
+                onClick={toggleVoice}
+                disabled={!canChat}
+                aria-pressed={voiceListening}
+                aria-label={voiceListening ? '停止語音輸入' : '語音輸入'}
+                title={voiceListening ? '停止語音輸入' : '語音輸入'}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4Zm7-4a7 7 0 0 1-6 6.93V21h-2v-3.07A7 7 0 0 1 5 11h2a5 5 0 0 0 10 0h2Z"
+                  />
+                </svg>
+              </button>
+            )}
             <button
               type="button"
               className="btn send"
@@ -445,6 +496,12 @@ export default function ExamPage() {
               )}
             </button>
           </div>
+          {voiceListening && (
+            <p className="voice-hint" aria-live="polite">
+              聆聽中…請開始說話，說完再按一次麥克風
+            </p>
+          )}
+          {voiceError && <p className="err">{voiceError}</p>}
           {error && <p className="err">{error}</p>}
         </section>
       </div>

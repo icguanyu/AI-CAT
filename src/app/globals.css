@@ -1478,6 +1478,55 @@ footer {
   }
 }
 
+/* 語音輸入麥克風鈕 */
+.btn.mic {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 10px;
+  background: var(--bg-alt);
+  color: var(--fg-muted);
+  border: 1px solid var(--border);
+}
+.btn.mic:hover:not(:disabled) {
+  color: var(--fg);
+}
+.btn.mic:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.btn.mic svg {
+  display: block;
+}
+.btn.mic.listening {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+  animation: micPulse 1.6s ease-out infinite;
+}
+@keyframes micPulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+.voice-hint {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--accent-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn.mic.listening {
+    animation: none;
+  }
+}
+
 /* ── 手機：對話面板隨內容展開、整頁捲動，輸入框釘在視窗底部 ──
    （放在 .chat / .chat-input 基準規則之後，覆蓋才會生效） */
 @media (max-width: 820px) {
