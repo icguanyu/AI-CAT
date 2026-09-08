@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { HeroRadar } from '@/components/HeroRadar';
 import { AiCatMark } from '@/components/AiCatMark';
+import { CatDecor } from '@/components/CatDecor';
 import { GoogleIcon } from '@/components/GoogleIcon';
 import { siteConfig } from '@/config/site';
 
@@ -72,6 +73,7 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="lp">
+        <CatDecor className="cat-watermark" />
         <header className="lp-header">
           <div className="lp-brand">
             <AiCatMark size={24} />
@@ -165,6 +167,7 @@ export default function HomePage() {
       </section>
 
       <section id="start">
+        <CatDecor className="cat-peek" animated />
         <div className="wrap">
           <h2>準備好了嗎？</h2>
           <p className="section-sub">
@@ -191,6 +194,7 @@ export default function HomePage() {
       </section>
 
       <footer>
+        <CatDecor className="cat-foot" />
         <p className="footer-links">
           <Link href="/privacy">隱私政策</Link>
           <span>·</span>
