@@ -34,10 +34,10 @@ type Msg = { role: 'user' | 'assistant'; content: string };
 type Phase = 'idle' | 'chatting' | 'evaluating' | 'done';
 
 const METRIC_LABELS: Record<keyof Report['scores'], string> = {
-  prompt_structure: '提示詞結構',
-  decomposition: '問題拆解力',
-  efficiency: '對話效率',
-  critical_thinking: '批判思考',
+  delegation: '委派 · Delegation',
+  description: '描述 · Description',
+  discernment: '辨別 · Discernment',
+  diligence: '審慎 · Diligence',
   task_completion: '任務達成率',
 };
 
@@ -291,7 +291,6 @@ export default function ExamPage() {
         )}
         {displayName}
       </span>
-      {quotaText && <span>{quotaText}</span>}
       <button type="button" className="linkbtn" onClick={signOut}>
         登出
       </button>

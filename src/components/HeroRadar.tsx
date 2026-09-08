@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-/** 五軸單位向量（外頂點 - 圓心(200,200)）：提示詞結構↑ / 問題拆解↗ / 對話效率↘ / 任務達成↙ / 批判思考↖ */
+/** 五軸單位向量（外頂點 - 圓心(200,200)）：描述↑ / 委派↗ / 任務達成↘ / 審慎↙ / 辨別↖ */
 const AXIS: [number, number][] = [
   [0, -150],
   [142.7, -46.4],
@@ -31,11 +31,11 @@ const SPOKES = [
 ];
 type Anchor = 'start' | 'middle' | 'end';
 const LABELS: [string, number, number, Anchor][] = [
-  ['提示詞結構', 200, 32, 'middle'],
-  ['問題拆解', 356, 150, 'start'],
-  ['對話效率', 300, 347, 'middle'],
-  ['任務達成', 100, 347, 'middle'],
-  ['批判思考', 44, 150, 'end'],
+  ['描述', 200, 32, 'middle'],
+  ['委派', 356, 150, 'start'],
+  ['任務達成', 300, 347, 'middle'],
+  ['審慎', 100, 347, 'middle'],
+  ['辨別', 44, 150, 'end'],
 ];
 
 const LEVELS = [

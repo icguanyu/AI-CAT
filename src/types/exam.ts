@@ -72,14 +72,17 @@ export interface ExamState {
 
 export type LevelCode = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
 
-/** 裁判模型直接輸出的部分：五維度分數 + 總評 + 條列回饋（不含分級，分級由後端計算）。 */
+/**
+ * 裁判模型直接輸出的部分：五維度分數 + 總評 + 條列回饋（不含分級，分級由後端計算）。
+ * 五維度 = Anthropic「AI Fluency」的 4D 能力（委派 / 描述 / 辨別 / 審慎）＋ 一個結果錨點（任務達成率）。
+ */
 export const JudgeSchema = z.object({
   scores: z.object({
-    prompt_structure: z.number().min(0).max(100).describe('提示詞結構：在「任務說明」之外另加的角色 / 脈絡 / 輸出格式限制'),
-    decomposition: z.number().min(0).max(100).describe('問題拆解力：是否分階段引導、逐步確認'),
-    efficiency: z.number().min(0).max(100).describe('對話效率 = 最終成品品質 ÷ 有效輪次'),
-    critical_thinking: z.number().min(0).max(100).describe('批判思考：是否識別並糾正被注入的錯誤資訊'),
-    task_completion: z.number().min(0).max(100).describe('任務達成率：對話中「實際產出的成品」是否滿足所有限制條件'),
+    delegation: z.number().min(0).max(100).describe('委派 Delegation：是否判斷哪些該交給 AI、如何框定與切分任務、分階段推進而非一次全丟'),
+    description: z.number().min(0).max(100).describe('描述 Description：在「任務說明」之外另加的角色、脈絡、輸出格式 / 長度、驗收標準與回饋'),
+    discernment: z.number().min(0).max(100).describe('辨別 Discernment：是否評估 AI 產出與作法的可信度；能否識別並糾正被注入的錯誤資訊'),
+    diligence: z.number().min(0).max(100).describe('審慎 Diligence：採用前是否查證關鍵事實、逐項對照限制條件檢查、對最終產出負責'),
+    task_completion: z.number().min(0).max(100).describe('任務達成率：對話中「實際產出的最完整成品」是否滿足所有限制條件'),
   }),
   overall_summary: z.string().describe('一句話總評，聚焦受測者自己的表現，不得把系統植入的陷阱算成他的失誤'),
   user_challenged: z

@@ -9,10 +9,10 @@ import type { Judged, LevelCode } from '@/types/exam';
 type ScoreKey = keyof Judged['scores'];
 
 const WEIGHTS: Record<ScoreKey, number> = {
-  prompt_structure: 0.25,
-  decomposition: 0.2,
-  efficiency: 0.15,
-  critical_thinking: 0.25,
+  delegation: 0.2,
+  description: 0.25,
+  discernment: 0.25,
+  diligence: 0.15,
   task_completion: 0.15,
 };
 
@@ -39,7 +39,7 @@ export function computeLevel(
   else if (average < 85) idx = 3;
   else idx = 4;
 
-  // 陷阱確實出現在 AI 回覆裡、但受測者沒有質疑 → 分級最高只能到 L3
+  // 陷阱確實出現在 AI 回覆裡、但受測者沒有質疑 → 辨別 / 審慎不足，分級最高只能到 L3
   if (opts.trapEffective && !opts.challenged && idx > 2) idx = 2;
 
   return { level: LEVELS[idx], average };

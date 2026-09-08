@@ -2,9 +2,10 @@
  * 檔案：src/app/api/evaluate/route.ts  →  POST /api/evaluate
  * 角色：API 層 — 裁判評分引擎（核心）
  * 功能：
- *   1. 擋太短的提交（未到注入輪次無法評估批判思考）
+ *   1. 擋太短的提交（未到注入輪次無法評估辨別 / 審慎）
  *   2. detectChallenge() 規則判定使用者是否質疑被注入的錯誤資訊
  *   3. runJudge()（見 src/lib/judge.ts）輸出五維度分數與總評
+ *      （4D：委派 / 描述 / 辨別 / 審慎 ＋ 任務達成率）
  *   4. computeLevel()：分級由後端依加權分數 + 規則上限決定，不交給裁判
  *   5. 寫入 Supabase、扣次數、清 Redis session
  */
