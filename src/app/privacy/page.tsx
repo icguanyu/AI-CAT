@@ -15,9 +15,14 @@ const CONTACT = 'icguanyu@gmail.com';
 export default function PrivacyPage() {
   return (
     <main className="legal">
-      <Link className="back" href="/">
-        ← 回首頁
-      </Link>
+      <div className="legal-nav">
+        <Link className="back" href="/">
+          ← 回首頁
+        </Link>
+        <Link className="back" href="/privacy/en">
+          English
+        </Link>
+      </div>
       <h1>隱私政策</h1>
       <p className="updated">最後更新：2026-09-08</p>
 
@@ -99,6 +104,11 @@ export default function PrivacyPage() {
       <p>
         傳輸過程以 HTTPS 加密。伺服器端金鑰以環境變數保管，具高權限的資料庫金鑰不會出現在前端。
         但沒有任何系統能保證絕對安全，你了解並接受此風險。
+      </p>
+      <p>
+        任何嘗試未經授權存取、破解、干擾、竄改本服務，或植入惡意程式碼之行為均被嚴格禁止，
+        行為人可能因此負民事賠償及刑事責任，著作權人並保留一切法律追訴權；
+        詳見<Link href="/ip">智慧財產權宣告</Link>「禁止行為」與「法律責任與權利保留」。
       </p>
 
       <h2>七、未成年人</h2>

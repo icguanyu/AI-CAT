@@ -28,6 +28,7 @@ import {
 import { readTextStream } from '@/lib/data-stream';
 import { Markdown } from '@/components/Markdown';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { ThinkingCat } from '@/components/ThinkingCat';
 import { GoogleIcon } from '@/components/GoogleIcon';
 import { AiCatMark } from '@/components/AiCatMark';
 
@@ -484,7 +485,7 @@ export default function ExamPage() {
                   m.content ? (
                     <Markdown>{m.content}</Markdown>
                   ) : busy ? (
-                    <span className="typing">思考中…</span>
+                    <ThinkingCat />
                   ) : null
                 ) : (
                   m.content

@@ -66,7 +66,7 @@ export default function HomePage() {
             </h1>
             <p>
               不是測你知不知道 AI，而是測你能不能駕馭 AI。
-              三個真實職場情境、動態沙盒實作、AI 自動盲審。
+              真實職場情境、動態沙盒實作、AI 自動盲審。
             </p>
             <div className="lp-cta">
               <Link className="cta" href="/exam">
@@ -85,9 +85,9 @@ export default function HomePage() {
               </div>
               <div>
                 <div className="n">
-                  3 <span>SCENARIOS</span>
+                  多種 <span>SCENARIOS</span>
                 </div>
-                <div className="k">職場情境</div>
+                <div className="k">隨機職場情境</div>
               </div>
               <div>
                 <div className="n">L1 – L5</div>
@@ -141,7 +141,7 @@ export default function HomePage() {
           </p>
           <div className="highlight">
             <ul>
-              <li>3 種職場情境題：行銷文案、行政數據、工程除錯</li>
+              <li>多種職場情境題，每次隨機抽選（如行銷文案、行政數據、工程除錯等）</li>
               <li>真實沙盒對話，非題庫選擇題</li>
               <li>檢測結果即時產生，附 L5 示範</li>
               <li>
