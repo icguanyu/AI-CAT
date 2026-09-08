@@ -96,7 +96,10 @@ export const JudgeSchema = z.object({
   to_improve: z
     .array(z.string())
     .max(3)
-    .describe('最該改進的 1–3 點，要具體、可操作，例：「開場就指定字數與段落結構，不要只說『幫我整理』」'),
+    .describe(
+      '最該改進的 1–3 點。每一點都要指向「這場對話裡實際發生的事」，並說明下次換成怎麼做；' +
+        '用這名受測者的情境來寫，不要輸出可以原封不動貼到任何人身上的通用樣板句。真的沒有明顯可改處就回空陣列。',
+    ),
 });
 
 export type Judged = z.infer<typeof JudgeSchema>;
