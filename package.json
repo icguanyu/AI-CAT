@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "judge:reliability": "tsx scripts/judge-reliability.ts"
+    "judge:reliability": "tsx scripts/judge-reliability.ts",
+    "scenarios:import": "tsx scripts/import-scenarios.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.0.11",
