@@ -1231,6 +1231,7 @@ footer {
   border-radius: 8px;
   padding: 10px 12px;
   margin: 0 0 0.7em;
+  max-width: 100%;
   overflow-x: auto;
   line-height: 1.5;
 }
@@ -1651,6 +1652,11 @@ footer {
   flex-direction: column;
   gap: 20px;
 }
+/* flex 欄的子項預設 min-width:auto，內含寬元素（程式碼區塊等）會把整欄撐爆版面 */
+.report-view > *,
+.result-section > * {
+  min-width: 0;
+}
 
 .result-section {
   display: flex;
@@ -1661,6 +1667,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
 }
 .result-hint {
@@ -1800,12 +1807,14 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
 }
 .rc-foot .mono-label {
   font-size: 10px;
+  letter-spacing: 0.12em;
 }
 
 @media (max-width: 560px) {
@@ -1823,5 +1832,37 @@ footer {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+  }
+}
+
+/* ── 報告畫面：手機版收窄，避免橫向溢出 ── */
+@media (max-width: 600px) {
+  .exam-wrap {
+    padding: 16px 12px;
+  }
+  .report-view {
+    gap: 16px;
+  }
+  .result-card {
+    padding: 16px;
+  }
+  .result-card.portrait,
+  .result-card.landscape {
+    max-width: 100%;
+  }
+  .report-card {
+    padding: 16px;
+  }
+  .score-row {
+    grid-template-columns: 84px 1fr 32px;
+    gap: 8px;
+    font-size: 0.82rem;
+  }
+  .trap-review,
+  .exemplar {
+    padding: 12px;
+  }
+  .rc-level b {
+    font-size: 1.7rem;
   }
 }
