@@ -8,9 +8,21 @@
 import { generateObject, generateText } from 'ai';
 import { resolveModel } from '@/lib/model';
 import { JudgeSchema, type Judged, type ChatMessage } from '@/types/exam';
-import { JUDGE_MODEL } from '@/config/constants';
+import { JUDGE_MODEL, JUDGE_REASONING_EFFORT } from '@/config/constants';
 
 const EXEMPLAR_MODEL = process.env.EXEMPLAR_MODEL || JUDGE_MODEL;
+
+/**
+ * OpenAI 推理模型（gpt-5* / o1 / o3 / o4 …）才吃 reasoningEffort；
+ * gpt-4.1 / gpt-4o 傳了會報錯，Claude 走另一個 provider。因此只在符合時才回。
+ */
+function reasoningOptions(modelId: string) {
+  const isOpenAiReasoning =
+    !modelId.startsWith('claude') && /^(gpt-5|o[134])/.test(modelId);
+  return isOpenAiReasoning
+    ? { providerOptions: { openai: { reasoningEffort: JUDGE_REASONING_EFFORT } } }
+    : {};
+}
 
 /**
  * 陷阱注入後，使用者是否對錯誤資訊表達質疑 / 要求查證 / 自己驗算。
@@ -129,6 +141,7 @@ function criticalThinkingRule(i: JudgeInput): string {
 export async function runJudge(input: JudgeInput): Promise<Judged> {
   const { object } = await generateObject({
     model: resolveModel(JUDGE_MODEL),
+    ...reasoningOptions(JUDGE_MODEL),
     schema: JudgeSchema,
     system: rubricSystem(),
     prompt: [
@@ -169,6 +182,7 @@ export interface ExemplarInput {
 export async function runExemplar(input: ExemplarInput): Promise<string> {
   const { text } = await generateText({
     model: resolveModel(EXEMPLAR_MODEL),
+    ...reasoningOptions(EXEMPLAR_MODEL),
     system: [
       '你是一位「AI 協作教練」。針對下面這個任務，示範「一個高手（能力分級 L5）會怎麼用 AI 完成」，',
       '讓看的人學得到方法。用繁體中文、Markdown。**不要評論任何受測者**，只講「應該怎麼做」。',
