@@ -89,7 +89,7 @@ export function ReportView({
       {/* ── 完成 · 可分享的結果卡片 ── */}
       <section className="result-section">
         <div className="result-head">
-          <span className="mono-label">檢測完成</span>
+          <h2 className="result-title">檢測完成</h2>
           <div
             className="pill-toggle orient-toggle"
             role="group"
@@ -241,10 +241,14 @@ export function ReportView({
         )}
 
         {exemplar && (
-          <div className="exemplar">
-            <div className="exemplar-head">L5 高手會怎麼用 AI 完成這題</div>
-            <Markdown>{exemplar}</Markdown>
-          </div>
+          <details className="exemplar">
+            <summary className="exemplar-head">
+              L5 高手會怎麼用 AI 完成這題
+            </summary>
+            <div className="exemplar-body">
+              <Markdown>{exemplar}</Markdown>
+            </div>
+          </details>
         )}
       </section>
 

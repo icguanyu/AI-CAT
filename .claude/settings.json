@@ -3,7 +3,12 @@
     "allow": [
       "Bash(Remove-Item \"c:\\\\Users\\\\user\\\\Desktop\\\\AI-CAT\\\\googlef23f0f32ec6412f4.html\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\user\\\\Desktop\\\\AI-CAT\" -Force)",
-      "Bash(Select-Object Name, Mode)"
+      "Bash(Select-Object Name, Mode)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(tasklist /FI \"PID eq 6252\")",
+      "PowerShell(Get-Process | Where-Object { $_.Id -eq 6252 })",
+      "PowerShell(netstat -ano)"
     ]
   }
 }

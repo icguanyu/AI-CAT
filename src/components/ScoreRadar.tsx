@@ -59,7 +59,7 @@ export function ScoreRadar({
 }) {
   return (
     <svg
-      viewBox="0 0 400 400"
+      viewBox="-44 -18 488 404"
       className={className}
       role="img"
       aria-label={`五維能力雷達圖：${labels

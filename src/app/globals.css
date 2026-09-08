@@ -1518,7 +1518,7 @@ footer {
 }
 
 .report-card {
-  max-width: 640px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -1628,25 +1628,52 @@ footer {
   line-height: 1.6;
 }
 
-/* 報告畫面：L5 示範 */
+/* 報告畫面：L5 示範（預設收合，點標題展開） */
 .exemplar {
   margin: 20px 0;
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 16px 18px;
   background: var(--card);
   font-size: 0.92rem;
+  overflow: hidden;
 }
 .exemplar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 18px;
   font-weight: 700;
   font-size: 0.95rem;
   color: var(--accent-ink);
-  margin-bottom: 10px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.exemplar-head::-webkit-details-marker {
+  display: none;
+}
+.exemplar-head::after {
+  content: '＋';
+  font-weight: 400;
+  color: var(--fg-faint);
+}
+.exemplar[open] .exemplar-head::after {
+  content: '－';
+}
+.exemplar[open] .exemplar-head {
+  border-bottom: 1px solid var(--border);
+}
+.exemplar:not([open]) .exemplar-body {
+  display: none;
+}
+.exemplar-body {
+  padding: 14px 18px 16px;
 }
 
 /* ══ 報告畫面：完成頁（結果卡片）＋ 分析報告 兩區隔 ══ */
 .report-view {
-  max-width: 720px;
+  max-width: 560px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1661,14 +1688,24 @@ footer {
 .result-section {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 14px;
 }
 .result-head {
+  width: 100%;
+  max-width: 460px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
+}
+.result-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--fg);
 }
 .result-hint {
   font-size: 0.8rem;
@@ -1710,7 +1747,7 @@ footer {
   max-width: 420px;
 }
 .result-card.landscape {
-  max-width: 680px;
+  max-width: 100%;
 }
 
 .rc-brand {
@@ -1845,16 +1882,20 @@ footer {
 }
 
 .share-box {
+  width: 100%;
+  max-width: 460px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
 }
 .share-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  justify-content: center;
 }
 .share-url {
   margin: 0;
@@ -1862,6 +1903,7 @@ footer {
   font-family: var(--font-mono);
   font-size: 0.78rem;
   color: var(--fg-muted);
+  text-align: center;
   word-break: break-all;
   background: var(--bg-alt);
   border: 1px solid var(--border);
@@ -1940,9 +1982,14 @@ footer {
     gap: 8px;
     font-size: 0.82rem;
   }
-  .trap-review,
-  .exemplar {
+  .trap-review {
     padding: 12px;
+  }
+  .exemplar-head {
+    padding: 12px 14px;
+  }
+  .exemplar-body {
+    padding: 12px 14px 14px;
   }
   .rc-level b {
     font-size: 1.7rem;
