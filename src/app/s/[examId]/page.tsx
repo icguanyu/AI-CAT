@@ -59,6 +59,7 @@ export default async function SharePage({ params }: Params) {
         scores={card.scores}
         summary={card.overall_summary}
         orientation="portrait"
+        name={card.name}
       />
 
       <p className="share-page-cta">

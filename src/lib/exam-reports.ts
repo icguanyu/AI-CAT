@@ -17,12 +17,15 @@ interface StoredReport extends Report {
   variant_index?: number;
   exemplar?: string;
   trap?: TrapReveal | null;
+  /** 受測者顯示名稱快照（提交當下的 Google full_name）。 */
+  user_name?: string | null;
   /** 僅本地開發寫入；型別留寬鬆，前端 client-api 有精確型別。 */
   debug?: unknown;
 }
 
 export interface OwnerReport {
   report: Report;
+  name: string | null;
   trap: TrapReveal | null;
   exemplar: string;
   debug: unknown | null;
@@ -58,6 +61,7 @@ export async function getOwnerReport(
     ok: true,
     data: {
       report: pickReport(r),
+      name: r.user_name ?? null,
       trap: r.trap ?? null,
       exemplar: r.exemplar ?? '',
       debug: r.debug ?? null,
@@ -70,6 +74,7 @@ export interface SharedCard {
   suggested_level: Report['suggested_level'];
   scores: Report['scores'];
   overall_summary: string;
+  name: string | null;
 }
 
 export async function getSharedCard(examId: string): Promise<SharedCard | null> {
@@ -84,6 +89,7 @@ export async function getSharedCard(examId: string): Promise<SharedCard | null> 
     suggested_level: r.suggested_level,
     scores: r.scores,
     overall_summary: r.overall_summary,
+    name: r.user_name ?? null,
   };
 }
 

@@ -135,6 +135,8 @@ export async function evaluateExam(examId: string): Promise<EvalResult> {
 }
 
 export interface ReportBundle extends EvalResult {
+  /** 受測者顯示名稱（提交當下的 Google full_name 快照）；沒有就 null。 */
+  name: string | null;
   /** 這份報告是否已開啟公開分享（/s/:examId）。 */
   shared: boolean;
 }
@@ -148,6 +150,7 @@ export async function getExamReport(examId: string): Promise<ReportBundle> {
   if (!res.ok) fail(json, res, '讀取報告失敗');
   return {
     report: json.report as Report,
+    name: (json.name as string | null) ?? null,
     trap: (json.trap as TrapReveal | null) ?? null,
     exemplar: (json.exemplar as string) ?? '',
     debug: (json.debug as FixtureDebug | undefined) ?? null,

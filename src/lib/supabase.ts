@@ -25,7 +25,7 @@ export function getSupabaseAdmin(): SupabaseClient {
 }
 
 export type AuthResult =
-  | { userId: string }
+  | { userId: string; name: string | null }
   | { error: string; status: number };
 
 /**
@@ -53,5 +53,11 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
     return { error: '登入憑證無效', status: 401 };
   }
 
-  return { userId: data.user.id };
+  const meta = data.user.user_metadata ?? {};
+  const name =
+    (typeof meta.full_name === 'string' && meta.full_name.trim()) ||
+    (typeof meta.name === 'string' && meta.name.trim()) ||
+    null;
+
+  return { userId: data.user.id, name };
 }

@@ -39,11 +39,14 @@ export function ResultCard({
   scores,
   summary,
   orientation,
+  name,
 }: {
   level: Report['suggested_level'];
   scores: Report['scores'];
   summary: string;
   orientation: CardOrientation;
+  /** 受測者顯示名稱；有值才在卡片上顯示。 */
+  name?: string | null;
 }) {
   const arr = ORDER.map((k) => scores[k]);
   const overall = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
@@ -62,6 +65,7 @@ export function ResultCard({
         </div>
 
         <div className="rc-meta">
+          {name ? <p className="rc-name">{name}</p> : null}
           <div className="rc-level">
             <b>{level}</b>
             <span>{LEVEL_NAME[level]}</span>

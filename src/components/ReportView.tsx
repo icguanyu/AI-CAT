@@ -47,12 +47,15 @@ export function ReportView({
   report,
   trap,
   exemplar,
+  name = null,
   debug = null,
   share,
 }: {
   report: Report;
   trap: TrapReveal | null;
   exemplar: string;
+  /** 受測者顯示名稱；顯示在結果卡片上。 */
+  name?: string | null;
   debug?: FixtureDebug | null;
   share?: ShareControls;
 }) {
@@ -117,6 +120,7 @@ export function ReportView({
           scores={report.scores}
           summary={report.overall_summary}
           orientation={orient}
+          name={name}
         />
 
         {share ? (

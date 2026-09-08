@@ -39,6 +39,7 @@ async function handle(
   const dev = process.env.NODE_ENV !== 'production';
   return Response.json({
     report: res.data.report,
+    name: res.data.name,
     trap: res.data.trap,
     exemplar: res.data.exemplar,
     debug: dev ? res.data.debug : null,

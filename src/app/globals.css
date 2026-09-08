@@ -1798,6 +1798,13 @@ footer {
   flex-direction: column;
   gap: 10px;
 }
+.rc-name {
+  margin: 0 0 -2px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--fg-muted);
+  word-break: break-word;
+}
 .rc-level {
   display: flex;
   align-items: baseline;

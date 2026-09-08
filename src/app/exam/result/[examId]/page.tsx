@@ -73,6 +73,15 @@ export default function ResultPage() {
     });
   }, [getSb, examId]);
 
+  const sessionName = useMemo(() => {
+    const m = session?.user.user_metadata as
+      | Record<string, unknown>
+      | undefined;
+    const pick = (v: unknown) =>
+      typeof v === 'string' && v.trim() ? v.trim() : null;
+    return pick(m?.full_name) ?? pick(m?.name) ?? null;
+  }, [session]);
+
   const shareUrl = useMemo(
     () =>
       typeof window !== 'undefined' ? `${window.location.origin}/s/${examId}` : '',
@@ -156,6 +165,7 @@ export default function ResultPage() {
         report={bundle.report}
         trap={bundle.trap}
         exemplar={bundle.exemplar}
+        name={bundle.name ?? sessionName}
         debug={bundle.debug}
         share={{
           shared: bundle.shared,
