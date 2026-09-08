@@ -6,9 +6,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy｜AI-CAT',
+  title: 'Privacy Policy',
   description:
     'How AI-CAT collects, uses, and retains personal data, and your rights.',
+  alternates: {
+    canonical: '/privacy/en',
+    languages: { 'zh-Hant': '/privacy', en: '/privacy/en' },
+  },
 };
 
 const CONTACT = 'icguanyu@gmail.com';

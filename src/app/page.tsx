@@ -4,11 +4,24 @@
  * 功能：Hero 一屏（header / 左文案 + 右能力模型 sample panel / 底部五大維度），
  *       其後接運作方式、最終 CTA、頁尾。純靜態 Server Component，CTA 連 /exam。
  */
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { HeroRadar } from '@/components/HeroRadar';
 import { AiCatMark } from '@/components/AiCatMark';
 import { GoogleIcon } from '@/components/GoogleIcon';
+import { siteConfig } from '@/config/site';
+
+export const metadata: Metadata = {
+  title: { absolute: siteConfig.title },
+  description: siteConfig.description,
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: siteConfig.title,
+    description: siteConfig.shortDescription,
+    url: '/',
+  },
+};
 
 const METRICS = [
   { i: '01', t: '提示詞結構', d: '角色、脈絡與輸出格式限制' },
@@ -37,9 +50,27 @@ const STEPS = [
   },
 ];
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: siteConfig.title,
+  alternateName: siteConfig.name,
+  url: siteConfig.url,
+  description: siteConfig.shortDescription,
+  applicationCategory: 'EducationalApplication',
+  operatingSystem: 'Web',
+  inLanguage: 'zh-Hant',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' },
+  author: { '@type': 'Person', name: siteConfig.author },
+};
+
 export default function HomePage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="lp">
         <header className="lp-header">
           <div className="lp-brand">

@@ -6,8 +6,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: '智慧財產權宣告｜AI-CAT',
+  title: '智慧財產權宣告',
   description: 'AI-CAT 網站、原始碼、標誌與內容之著作權與使用規範。',
+  alternates: {
+    canonical: '/ip',
+    languages: { 'zh-Hant': '/ip', en: '/ip/en' },
+  },
 };
 
 const CONTACT = 'icguanyu@gmail.com';

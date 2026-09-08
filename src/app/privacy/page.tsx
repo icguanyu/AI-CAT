@@ -6,8 +6,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: '隱私政策｜AI-CAT',
+  title: '隱私政策',
   description: 'AI-CAT 蒐集、使用與保存個人資料的方式，以及使用者的權利。',
+  alternates: {
+    canonical: '/privacy',
+    languages: { 'zh-Hant': '/privacy', en: '/privacy/en' },
+  },
 };
 
 const CONTACT = 'icguanyu@gmail.com';

@@ -6,9 +6,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Intellectual Property Notice｜AI-CAT',
+  title: 'Intellectual Property Notice',
   description:
     'Copyright and usage terms for the AI-CAT website, source code, mark, and content.',
+  alternates: {
+    canonical: '/ip/en',
+    languages: { 'zh-Hant': '/ip', en: '/ip/en' },
+  },
 };
 
 const CONTACT = 'icguanyu@gmail.com';
