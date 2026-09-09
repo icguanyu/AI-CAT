@@ -66,10 +66,16 @@ export async function getQuota(): Promise<Quota> {
   return json as unknown as Quota;
 }
 
-export async function startExam(): Promise<StartResult> {
+export async function startExam(
+  familiarity: import('@/types/exam').Familiarity = 'mid',
+): Promise<StartResult> {
   const res = await fetch('/api/exam/start', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${await bearer()}` },
+    headers: {
+      Authorization: `Bearer ${await bearer()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ familiarity }),
   });
   const json = await parseBody(res);
   if (!res.ok) fail(json, res, '開始測驗失敗');
@@ -103,6 +109,7 @@ export interface FixtureDebug {
   injectionText: string;
   injectAtTurn: number;
   verifyHint: string;
+  familiarity: import('@/types/exam').Familiarity;
   history: ChatMessage[];
 }
 
@@ -137,6 +144,8 @@ export async function evaluateExam(examId: string): Promise<EvalResult> {
 export interface ReportBundle extends EvalResult {
   /** 受測者顯示名稱（提交當下的 Google full_name 快照）；沒有就 null。 */
   name: string | null;
+  /** 開場自評的領域熟悉度（很熟 / 普通 / 不熟）；舊報告沒有就 null。 */
+  familiarity: import('@/types/exam').Familiarity | null;
   /** 這份報告是否已開啟公開分享（/s/:examId）。 */
   shared: boolean;
 }
@@ -151,6 +160,8 @@ export async function getExamReport(examId: string): Promise<ReportBundle> {
   return {
     report: json.report as Report,
     name: (json.name as string | null) ?? null,
+    familiarity:
+      (json.familiarity as ReportBundle['familiarity'] | undefined) ?? null,
     trap: (json.trap as TrapReveal | null) ?? null,
     exemplar: (json.exemplar as string) ?? '',
     debug: (json.debug as FixtureDebug | undefined) ?? null,

@@ -68,6 +68,7 @@ async function handle(req: Request): Promise<Response> {
       trapEffective,
       injectionText: state.injectionText,
       verifyHint: scenario.verifyHint,
+      familiarity: state.familiarity ?? 'mid',
       ruleChallenged,
     }),
     runExemplar({
@@ -115,6 +116,7 @@ async function handle(req: Request): Promise<Response> {
           injectionText: state.injectionText,
           injectAtTurn: state.injectAtTurn ?? 2,
           verifyHint: scenario.verifyHint,
+          familiarity: state.familiarity ?? 'mid',
           history: state.history,
         }
       : undefined;
@@ -140,6 +142,8 @@ async function handle(req: Request): Promise<Response> {
       exemplar,
       // 受測者顯示名稱快照（Google 登入當下的 full_name）；結果卡片用。
       user_name: auth.name,
+      // 開場自評的領域熟悉度；報告頁顯示為分數的脈絡。
+      familiarity: state.familiarity ?? 'mid',
       // 存進 jsonb，讓 /exam/result/:examId 重新整理後能還原陷阱對照；
       // 公開分享頁 /s 讀不到這個欄位（見 getSharedCard 只挑非機密欄位）。
       trap,

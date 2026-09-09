@@ -166,6 +166,7 @@ export default function ResultPage() {
         trap={bundle.trap}
         exemplar={bundle.exemplar}
         name={bundle.name ?? sessionName}
+        familiarity={bundle.familiarity}
         debug={bundle.debug}
         share={{
           shared: bundle.shared,

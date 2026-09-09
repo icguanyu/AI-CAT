@@ -1706,6 +1706,35 @@ footer {
   margin-bottom: 16px;
 }
 
+/* 開始畫面：領域熟悉度自評 */
+.familiarity-pick {
+  margin: 4px 0 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.familiarity-pick .fp-q {
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+  margin: 0;
+}
+.familiarity-pick .fp-hint {
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--fg-faint);
+  margin: 0;
+  max-width: 360px;
+}
+
+/* 報告：分數的脈絡註記 */
+.familiarity-note {
+  margin: 6px 0 14px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--fg-faint);
+}
+
 .err {
   color: var(--danger);
   font-size: 0.9rem;

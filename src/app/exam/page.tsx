@@ -26,6 +26,10 @@ import {
 } from '@/lib/client-api';
 import { readTextStream } from '@/lib/data-stream';
 import { useVoiceInput } from '@/lib/use-voice-input';
+import {
+  FAMILIARITY_LABEL,
+  type Familiarity,
+} from '@/types/exam';
 import { Markdown } from '@/components/Markdown';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ThinkingCat } from '@/components/ThinkingCat';
@@ -71,6 +75,8 @@ export default function ExamPage() {
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
   const [quota, setQuota] = useState<Quota | null>(null);
+  // 開場自評的領域熟悉度（給裁判校準 task_completion）
+  const [familiarity, setFamiliarity] = useState<Familiarity>('mid');
   // 視窗是否為窄版（手機）：Enter 一律換行、輸入框改 sticky
   const [isNarrow, setIsNarrow] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
@@ -172,7 +178,7 @@ export default function ExamPage() {
     setError(null);
     setBusy(true);
     try {
-      const r = await startExam();
+      const r = await startExam(familiarity);
       setExam(r);
       setQuota(r.quota);
       setMessages([]);
@@ -183,7 +189,7 @@ export default function ExamPage() {
     } finally {
       setBusy(false);
     }
-  }, [handleErr]);
+  }, [handleErr, familiarity]);
 
   const send = useCallback(async () => {
     if (!exam || busy) return;
@@ -340,6 +346,31 @@ export default function ExamPage() {
             一場約 5–10 分鐘，最多 10 輪對話。準備好就開始。
           </p>
           {quotaText && <p className="quota-line">{quotaText}</p>}
+
+          <div className="familiarity-pick">
+            <p className="fp-q">接下來會隨機抽一個職場情境。你對這類任務的熟悉度？</p>
+            <div
+              className="pill-toggle"
+              role="group"
+              aria-label="領域熟悉度"
+            >
+              {(['high', 'mid', 'low'] as Familiarity[]).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  data-on={familiarity === f}
+                  onClick={() => setFamiliarity(f)}
+                >
+                  {FAMILIARITY_LABEL[f]}
+                </button>
+              ))}
+            </div>
+            <p className="fp-hint">
+              抽到的情境若不是你的領域，選「不熟」——評分會據此校準，
+              任務達成率只看題目明列的要求。
+            </p>
+          </div>
+
           {error && (
             <div className="notice notice-error" role="alert">
               <strong>無法開始檢測</strong>

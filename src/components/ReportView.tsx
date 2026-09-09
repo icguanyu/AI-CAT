@@ -10,7 +10,12 @@
 import { useState } from 'react';
 import { Markdown } from '@/components/Markdown';
 import { ResultCard, type CardOrientation } from '@/components/ResultCard';
-import type { Report, TrapReveal } from '@/types/exam';
+import {
+  FAMILIARITY_LABEL,
+  type Report,
+  type TrapReveal,
+  type Familiarity,
+} from '@/types/exam';
 import type { FixtureDebug } from '@/lib/client-api';
 
 const METRIC_LABELS: Record<keyof Report['scores'], string> = {
@@ -48,6 +53,7 @@ export function ReportView({
   trap,
   exemplar,
   name = null,
+  familiarity = null,
   debug = null,
   share,
 }: {
@@ -56,6 +62,8 @@ export function ReportView({
   exemplar: string;
   /** 受測者顯示名稱；顯示在結果卡片上。 */
   name?: string | null;
+  /** 開場自評的領域熟悉度；顯示為分數的脈絡。 */
+  familiarity?: Familiarity | null;
   debug?: FixtureDebug | null;
   share?: ShareControls;
 }) {
@@ -192,6 +200,14 @@ export function ReportView({
           <strong>詳細分析</strong>
           <span className="level-badge">{report.suggested_level}</span>
         </div>
+        {familiarity && familiarity !== 'mid' && (
+          <p className="familiarity-note">
+            作答時你自評對這個領域「{FAMILIARITY_LABEL[familiarity]}」——
+            {familiarity === 'low'
+              ? '任務達成率只依題目白紙黑字的限制評分，不因不熟領域細節而扣分。'
+              : '任務達成率以較高標準檢視。'}
+          </p>
+        )}
         {keys.map((k) => (
           <div className="score-row" key={k}>
             <span>{METRIC_LABELS[k]}</span>

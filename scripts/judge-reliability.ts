@@ -30,6 +30,8 @@ interface Fixture {
   scenarioId?: string;
   /** 一般人可如何察覺此錯誤；用來校準 critical_thinking。 */
   verifyHint?: string;
+  /** 受測者自評領域熟悉度；省略預設 'mid'。 */
+  familiarity?: 'high' | 'mid' | 'low';
   history: ChatMessage[];
 }
 
@@ -103,6 +105,7 @@ async function main() {
       trapEffective,
       injectionText: fx.injectionText,
       verifyHint: fx.verifyHint ?? '',
+      familiarity: fx.familiarity ?? 'mid',
       ruleChallenged,
     });
     scoreRows.push(judged.scores);

@@ -12,6 +12,20 @@ export interface ChatMessage {
   content: string;
 }
 
+/** 受測者開場自評「對這個情境的領域有多熟」。用來給裁判校準 task_completion。 */
+export type Familiarity = 'high' | 'mid' | 'low';
+
+export const FAMILIARITY_LABEL: Record<Familiarity, string> = {
+  high: '很熟',
+  mid: '普通',
+  low: '不熟',
+};
+
+/** 收窄未知輸入為合法值；預設「普通」。 */
+export function toFamiliarity(v: unknown): Familiarity {
+  return v === 'high' || v === 'low' ? v : 'mid';
+}
+
 /** 情境題的一個隨機變體。 */
 export interface ScenarioVariant {
   /** 選填：覆寫該場的任務說明（用來變動限制條件）。 */
@@ -68,6 +82,8 @@ export interface ExamState {
   /** 開始測驗時隨機挑中的變體索引。 */
   variantIndex: number;
   history: ChatMessage[];
+  /** 受測者開場自評的領域熟悉度（很熟 / 普通 / 不熟）。 */
+  familiarity: Familiarity;
   /** 這場擲中的注入輪次；0 = 整場不注入。開場時 rollInjectAtTurn() 決定。 */
   injectAtTurn: number;
   /** 幻覺陷阱是否已嘗試注入（走到 injectAtTurn 那一輪才會變 true）。 */

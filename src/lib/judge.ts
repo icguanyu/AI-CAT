@@ -7,7 +7,13 @@
  */
 import { generateObject, generateText } from 'ai';
 import { resolveModel } from '@/lib/model';
-import { JudgeSchema, type Judged, type ChatMessage } from '@/types/exam';
+import {
+  JudgeSchema,
+  FAMILIARITY_LABEL,
+  type Judged,
+  type ChatMessage,
+  type Familiarity,
+} from '@/types/exam';
 import { JUDGE_MODEL, JUDGE_REASONING_EFFORT } from '@/config/constants';
 
 const EXEMPLAR_MODEL = process.env.EXEMPLAR_MODEL || JUDGE_MODEL;
@@ -118,8 +124,29 @@ export interface JudgeInput {
   injectionText: string;
   /** 一般人不需背景知識即可察覺此錯誤的方式；用來校準 critical_thinking 的公平性。 */
   verifyHint: string;
+  /** 受測者開場自評的領域熟悉度；用來校準 task_completion。 */
+  familiarity: Familiarity;
   /** 關鍵字規則的初判（僅提示，最終看裁判的 user_challenged）。 */
   ruleChallenged: boolean;
+}
+
+/** 依受測者自評的領域熟悉度，給裁判 task_completion 的校準指示。 */
+function familiarityRule(f: Familiarity): string {
+  const label = FAMILIARITY_LABEL[f];
+  if (f === 'low') {
+    return (
+      `受測者自評對這個領域「${label}」。task_completion 只依 brief 白紙黑字的限制條件評分，` +
+      '不要因為他不懂 brief 沒要求的領域細節而扣分；他若靠追問 AI、要求出處、逐項對照限制把成品做出來，那正是能力的展現。' +
+      'overall_summary 可提一句「在不熟悉的領域下完成/未完成」。其餘四維照常。'
+    );
+  }
+  if (f === 'high') {
+    return (
+      `受測者自評對這個領域「${label}」。task_completion 可用較高標準——` +
+      '內行人應該產出真正到位、經得起同行檢視的成品，不只是符合 brief 字面。其餘四維照常。'
+    );
+  }
+  return `受測者自評對這個領域「${label}」。task_completion 依一般標準評分。`;
 }
 
 function criticalThinkingRule(i: JudgeInput): string {
@@ -154,6 +181,8 @@ export async function runJudge(input: JudgeInput): Promise<Judged> {
         ? `一般人可如何察覺（不需專業背景）：${input.verifyHint}`
         : '',
       `→ critical_thinking 給分規則：${criticalThinkingRule(input)}`,
+      '',
+      `【受測者自評領域熟悉度】${familiarityRule(input.familiarity)}`,
       '',
       '【對話歷程】',
       JSON.stringify(input.history, null, 2),

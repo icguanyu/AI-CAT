@@ -18,7 +18,7 @@ import {
   rollInjectAtTurn,
 } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
-import type { ExamState } from '@/types/exam';
+import { toFamiliarity, type ExamState } from '@/types/exam';
 
 export const runtime = 'nodejs';
 
@@ -34,6 +34,9 @@ async function handle(req: Request): Promise<Response> {
 
   const rl = await checkRateLimit(req, auth.userId);
   if (!rl.ok) return rateLimitResponse(rl);
+
+  const body = (await req.json().catch(() => ({}))) as { familiarity?: unknown };
+  const familiarity = toFamiliarity(body.familiarity);
 
   const quota = await checkQuota(auth.userId);
   if (!quota.ok) {
@@ -59,6 +62,7 @@ async function handle(req: Request): Promise<Response> {
     scenarioId,
     variantIndex: scenario.variantIndex,
     history: [],
+    familiarity,
     injectAtTurn: rollInjectAtTurn(),
     injected: false,
     injectionLanded: false,

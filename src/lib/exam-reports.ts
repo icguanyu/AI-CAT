@@ -9,7 +9,7 @@
  * 全部走 service_role client（繞過 RLS），呼叫端負責驗證身分。
  */
 import { getSupabaseAdmin } from '@/lib/supabase';
-import type { Report, TrapReveal } from '@/types/exam';
+import type { Report, TrapReveal, Familiarity } from '@/types/exam';
 
 /** exam_reports.report jsonb 實際存的形狀（ReportSchema + 後端附加欄位）。 */
 interface StoredReport extends Report {
@@ -19,6 +19,8 @@ interface StoredReport extends Report {
   trap?: TrapReveal | null;
   /** 受測者顯示名稱快照（提交當下的 Google full_name）。 */
   user_name?: string | null;
+  /** 開場自評的領域熟悉度；舊報告可能沒有。 */
+  familiarity?: Familiarity;
   /** 僅本地開發寫入；型別留寬鬆，前端 client-api 有精確型別。 */
   debug?: unknown;
 }
@@ -26,6 +28,7 @@ interface StoredReport extends Report {
 export interface OwnerReport {
   report: Report;
   name: string | null;
+  familiarity: Familiarity | null;
   trap: TrapReveal | null;
   exemplar: string;
   debug: unknown | null;
@@ -62,6 +65,7 @@ export async function getOwnerReport(
     data: {
       report: pickReport(r),
       name: r.user_name ?? null,
+      familiarity: r.familiarity ?? null,
       trap: r.trap ?? null,
       exemplar: r.exemplar ?? '',
       debug: r.debug ?? null,

@@ -40,6 +40,7 @@ async function handle(
   return Response.json({
     report: res.data.report,
     name: res.data.name,
+    familiarity: res.data.familiarity,
     trap: res.data.trap,
     exemplar: res.data.exemplar,
     debug: dev ? res.data.debug : null,
