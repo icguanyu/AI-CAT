@@ -674,6 +674,57 @@ h2 {
   }
 }
 
+/* ── 「準備好了嗎」區：本站平均分級／分數（社群比較鉤子）── */
+.benchmark {
+  margin: 0 0 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  border-top: 3px solid var(--accent);
+  background: var(--card);
+}
+.benchmark-tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.benchmark-figures {
+  display: flex;
+  align-items: baseline;
+  gap: 28px;
+  margin: 8px 0 6px;
+  flex-wrap: wrap;
+}
+.benchmark-fig {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.benchmark-fig b {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--accent-ink);
+  font-variant-numeric: tabular-nums;
+}
+.benchmark-fig span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--fg-faint);
+}
+.benchmark-cta {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+}
+.benchmark-count {
+  color: var(--fg-faint);
+}
+
 .highlight {
   background: var(--bg-alt);
   border: 1px solid var(--border);
@@ -1781,6 +1832,18 @@ footer {
   margin-top: 16px;
   font-size: 0.8rem;
   color: var(--fg-muted);
+}
+
+/* 開始畫面：免費試用 / 登入後開始 兩顆按鈕（同結構、不同樣式）直向並排 */
+.idle-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+.idle-actions .btn {
+  width: 100%;
+  margin-top: 0;
 }
 
 .topbar {

@@ -9,9 +9,11 @@ import Link from 'next/link';
 import { AccountMenu } from '@/components/AccountMenu';
 import { HeroRadar } from '@/components/HeroRadar';
 import { ResultCard } from '@/components/ResultCard';
+import { SiteBenchmark } from '@/components/SiteBenchmark';
 import { AiCatMark } from '@/components/AiCatMark';
 import { CatDecor } from '@/components/CatDecor';
 import { siteConfig } from '@/config/site';
+import { getSiteStats } from '@/lib/site-stats';
 
 // openGraph / twitter 由 root layout 提供完整版（type / siteName / locale / image）；
 // 此頁不再覆寫 openGraph，否則會把 layout 的那些欄位整包蓋掉。
@@ -20,6 +22,9 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   alternates: { canonical: '/' },
 };
+
+// 「本站平均」要抓 DB，但不必即時——每 30 分鐘重新產生一次即可。
+export const revalidate = 1800;
 
 const METRICS = [
   { i: '01', t: '提示詞結構', d: '角色、脈絡與輸出格式限制' },
@@ -125,7 +130,9 @@ const jsonLd = {
   ],
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const siteStats = await getSiteStats();
+
   return (
     <>
       <script
@@ -262,18 +269,18 @@ export default function HomePage() {
           <div className="steps">
             <div className="step">
               <div>
-                <h3>你的檢測紀錄</h3>
+                <h3>我的檢測紀錄</h3>
                 <p>
-                  每場自動存進「我的檢測紀錄」：逐場分數、L 分級與情境分類一目了然，
-                  並跨情境彙總出綜合能力雷達與綜合分級——完成 3 種不同分類就解鎖，做越多估得越準。
+                  每次對話自動記錄：逐場分數、L 分級與情境分類一目了然，
+                  跨情境彙整綜合能力雷達與綜合分級——完成 3 種不同分類立即解鎖，做越多越準。
                 </p>
               </div>
             </div>
             <div className="step">
               <div>
-                <h3>分享你的成績</h3>
+                <h3>與好友分享你的成績</h3>
                 <p>
-                  一鍵產生公開連結，只顯示雷達圖、分級、分數與一句總評，帶 AI-CAT 品牌視覺；
+                  一鍵產生公開連結，顯示雷達圖、分級、分數與一句總評；
                   題目內容與逐點回饋不會外流。
                 </p>
               </div>
@@ -287,16 +294,17 @@ export default function HomePage() {
         <div className="wrap">
           <h2>準備好了嗎？</h2>
           <p className="section-sub">
-            不用註冊，先免費試一場。想保存結果、追蹤進步再用 Google 登入——
-            登入後每日 3 場免費（隔日重置），帳號累計上限 21 場。
+            不用註冊，先免費體驗。若想保存結果、追蹤進步，可用 Google 登入——
+            登入後每日 3 場免費（隔日重置），免費帳號累計上限 21 次。
           </p>
+          <SiteBenchmark stats={siteStats} />
           <div className="highlight">
             <ul>
               <li>
-                多種職場情境題，每次隨機抽選（行銷文案、行政數據、工程除錯、8D 改善…）
+                多種職場情境題，每次隨機抽選（行銷文案、行政數據、工程除錯、財務金融、日常生活…）
               </li>
-              <li>真實沙盒對話，非題庫選擇題</li>
-              <li>檢測結果即時產生，附 L5 高手示範與逐點回饋</li>
+              <li>真實沙盒對話，非訪間常見選擇題題庫</li>
+              <li>檢測結果即時產生，可參考高手示範與逐點回饋</li>
               <li>歷次紀錄留存於「我的檢測紀錄」，可跨情境看綜合分級與趨勢</li>
               <li>
                 對話內容會送交 AI 模型評分，詳見{' '}
@@ -305,7 +313,7 @@ export default function HomePage() {
             </ul>
             <p style={{ marginTop: 24 }}>
               <Link className="cta" href="/exam">
-                免費試一場 →
+                免費體驗 →
               </Link>
             </p>
           </div>
