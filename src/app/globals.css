@@ -440,6 +440,7 @@ h2 {
   width: 100%;
   height: auto;
   overflow: visible;
+  pointer-events: none; /* 純裝飾，別吃掉上層（帳號選單）的點擊 */
 }
 .lp-level {
   display: flex;
@@ -2196,6 +2197,7 @@ footer {
   width: 100%;
   max-width: 300px;
   height: auto;
+  pointer-events: none; /* 純裝飾雷達，不吃上層點擊 */
 }
 .result-card.landscape .rc-radar svg {
   width: 280px;
