@@ -7,6 +7,7 @@
  */
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono, Noto_Sans_TC } from 'next/font/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { siteConfig } from '@/config/site';
 import './globals.css';
 
@@ -91,7 +92,10 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <SpeedInsights />
+      </body>
     </html>
   );
 }
