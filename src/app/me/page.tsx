@@ -234,9 +234,9 @@ export default function MyExamsPage() {
       <div className="me-view">
         <div className="me-head">
           <h1 className="me-h1">我的檢測紀錄</h1>
-          <span className="mono-label">
+          {/* <span className="mono-label">
             {exams.length} 場 · {agg.distinctCategories} / 3 種分類
-          </span>
+          </span> */}
         </div>
 
         {exams.length === 0 ? (

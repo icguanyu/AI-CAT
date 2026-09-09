@@ -41,7 +41,7 @@ const STEPS = [
   },
   {
     title: '在雙欄沙盒裡指揮 AI',
-    desc: '左側是任務，右側是與 AI 助手對話。下提示詞、追問、修正——過程中系統會悄悄埋入一則錯誤資訊。',
+    desc: '查看任務與限制，與本平台提供之 AI 助手對話。下提示詞、追問、修正——過程中系統會悄悄埋入一則錯誤資訊。',
   },
   {
     title: '提交給 AI 裁判盲審',
@@ -60,7 +60,7 @@ const STEPS = [
 /** 首頁「你會拿到什麼」用的靜態範例——一題真實情境的任務說明。 */
 const SAMPLE_BRIEF = `情境：你是某台灣電商的客服人員。一位客戶因收到破損商品，來信表達不滿並要求退貨與說明。
 
-任務：透過右側 AI 助手，產出一封給該客戶的道歉信。
+任務：透過平台提供的 AI 助手，產出一封給該客戶的道歉信。
 
 限制條件：
 1. 繁體中文，200–300 字
@@ -220,7 +220,7 @@ export default async function HomePage() {
         <div className="wrap">
           <h2>你會拿到什麼</h2>
           <p className="section-sub">
-            一題像這樣的職場情境、一場你主導的對話，換一張能力成績單。
+            像這樣的動態情境題、一場完全由你主導的對話、能力檢測結果。
           </p>
           <div className="sample-io">
             <div className="sample-brief">
@@ -236,7 +236,7 @@ export default async function HomePage() {
                 orientation="portrait"
               />
               <p className="sample-note">
-                此為範例，實際分數與總評依你的對話生成。完整報告另附「做得好／可以更好」與 L5 高手示範。
+                此為範例，實際分數與總評依你的對話生成。完整報告另附「做得好／可以更好」與 L5 示範。
               </p>
             </div>
           </div>

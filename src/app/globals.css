@@ -529,7 +529,7 @@ h2 {
   padding: 0 clamp(20px, 5vw, 64px) clamp(20px, 5vw, 40px);
 }
 .lp-foot > div {
-  padding: 22px 24px 26px;
+  padding: 18px 18px 22px;
   border-top: 1px solid var(--border);
   border-right: 1px solid var(--border);
   display: flex;
@@ -544,16 +544,16 @@ h2 {
 }
 .lp-foot .i {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 16px;
   color: var(--fg-faint);
 }
 .lp-foot .t {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
 }
 .lp-foot .d {
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.4;
   color: var(--fg-faint);
 }
 
