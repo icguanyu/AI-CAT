@@ -2637,6 +2637,22 @@ footer {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
+.me-catrow.stale {
+  opacity: 0.55;
+}
+.me-catrow-age {
+  display: block;
+  font-style: normal;
+  font-size: 9px;
+  color: var(--fg-faint);
+  letter-spacing: 0;
+}
+.me-comp-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--fg-faint);
+}
 .me-catrow-go {
   flex: none;
   width: 58px;

@@ -280,13 +280,24 @@ export default function MyExamsPage() {
 
                   <div className="me-catrows">
                     {agg.perCategory.map((c) => (
-                      <div className="me-catrow" key={c.category}>
+                      <div
+                        className={`me-catrow${c.stale ? ' stale' : ''}`}
+                        key={c.category}
+                        title={
+                          c.stale
+                            ? `${c.ageDays} 天沒重測，對綜合估計的影響已降低`
+                            : undefined
+                        }
+                      >
                         <span className="me-catrow-name">{c.label}</span>
                         <span className="me-catrow-bar">
                           <span style={{ width: `${c.average}%` }} />
                         </span>
                         <span className="me-catrow-val">
                           {c.average} · {c.level}
+                          {c.stale && (
+                            <em className="me-catrow-age">{c.ageDays}天前</em>
+                          )}
                         </span>
                       </div>
                     ))}
@@ -300,6 +311,12 @@ export default function MyExamsPage() {
                       </div>
                     ))}
                   </div>
+
+                  {agg.perCategory.some((c) => c.stale) && (
+                    <p className="me-comp-hint">
+                      久沒重測的分類，對綜合估計的影響會逐漸降低（約 45 天減半）。
+                    </p>
+                  )}
                 </div>
 
                 <div className="me-col">
