@@ -812,7 +812,10 @@ footer {
 }
 
 .center-card .btn {
-  display: block;
+  /* block-level flex：icon 與文字同一行（沿用 .btn 的 align/gap），fit-content + auto 邊界置中 */
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
   margin: 8px auto 0 auto;
 }
 
