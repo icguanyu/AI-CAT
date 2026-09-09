@@ -37,10 +37,11 @@ async function handle(req: Request): Promise<Response> {
 
   const quota = await checkQuota(auth.userId);
   if (!quota.ok) {
-    return Response.json(
-      { error: `免費檢測次數已用完（${quota.used}/${quota.limit}）`, quota },
-      { status: 403 },
-    );
+    const error =
+      quota.reason === 'daily'
+        ? `今天的檢測次數已用完（每日上限 ${quota.dayLimit} 次），隔天會重新計算。`
+        : `檢測次數已達總上限（${quota.used}/${quota.limit} 次）。`;
+    return Response.json({ error, quota }, { status: 403 });
   }
 
   const ids = await listScenarioIds();
@@ -72,6 +73,11 @@ async function handle(req: Request): Promise<Response> {
     examId,
     brief: scenario.brief,
     limits: { maxUserTurns: MAX_USER_TURNS, maxInputChars: MAX_INPUT_CHARS },
-    quota: { used: quota.used, limit: quota.limit },
+    quota: {
+      used: quota.used,
+      limit: quota.limit,
+      dayUsed: quota.dayUsed,
+      dayLimit: quota.dayLimit,
+    },
   });
 }

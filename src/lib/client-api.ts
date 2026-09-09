@@ -51,8 +51,12 @@ function fail(json: Record<string, unknown>, res: Response, fallback: string): n
 }
 
 export interface Quota {
+  /** 生涯已用 / 生涯上限 */
   used: number;
   limit: number;
+  /** 今日已用 / 每日上限（隔天台北時間重置） */
+  dayUsed: number;
+  dayLimit: number;
 }
 
 export interface StartResult {

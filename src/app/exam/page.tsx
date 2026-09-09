@@ -307,9 +307,18 @@ export default function ExamPage() {
     );
   }
 
-  const outOfQuota = quota != null && quota.used >= quota.limit;
+  const outOfDaily = quota != null && quota.dayUsed >= quota.dayLimit;
+  const outOfTotal = quota != null && quota.used >= quota.limit;
+  const outOfQuota = outOfDaily || outOfTotal;
   const quotaText =
-    quota != null ? `本帳號已完成 ${quota.used} / ${quota.limit} 次檢測` : null;
+    quota != null
+      ? `今日 ${quota.dayUsed} / ${quota.dayLimit} 次 · 累計 ${quota.used} / ${quota.limit} 次`
+      : null;
+  const quotaButtonText = outOfTotal
+    ? '檢測次數已用完'
+    : outOfDaily
+      ? '今日次數已用完'
+      : null;
 
   const TopBar = (
     <div className="topbar">
@@ -344,7 +353,7 @@ export default function ExamPage() {
             onClick={begin}
             disabled={busy || outOfQuota}
           >
-            {outOfQuota ? '免費次數已用完' : busy ? '抽題中…' : '開始檢測'}
+            {quotaButtonText ?? (busy ? '抽題中…' : '開始檢測')}
           </button>
         </div>
       </main>

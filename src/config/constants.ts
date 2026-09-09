@@ -36,8 +36,11 @@ export function rollInjectAtTurn(): number {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
 
-/** 每個帳號的免費檢測次數。 */
-export const FREE_ATTEMPTS = 2;
+/** 每個帳號每日可開始的檢測次數；隔天（台北時間 00:00）重新計算。 */
+export const DAILY_ATTEMPTS = Number(process.env.DAILY_ATTEMPTS) || 3;
+
+/** 每個帳號的生涯總上限；達到後暫不開放（之後可能改付費）。 */
+export const MAX_ATTEMPTS = Number(process.env.MAX_ATTEMPTS) || 21;
 
 /** 沙盒對話模型（回答受測者）。可用 SANDBOX_MODEL 環境變數覆寫。 */
 export const SANDBOX_MODEL = process.env.SANDBOX_MODEL || 'gpt-5-mini';

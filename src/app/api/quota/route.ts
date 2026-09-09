@@ -19,5 +19,10 @@ async function handle(req: Request): Promise<Response> {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
   const quota = await checkQuota(auth.userId);
-  return Response.json({ used: quota.used, limit: quota.limit });
+  return Response.json({
+    used: quota.used,
+    limit: quota.limit,
+    dayUsed: quota.dayUsed,
+    dayLimit: quota.dayLimit,
+  });
 }
