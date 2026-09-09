@@ -18,7 +18,7 @@ import {
   type ReportBundle,
 } from '@/lib/client-api';
 import { ReportView } from '@/components/ReportView';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { AccountMenu } from '@/components/AccountMenu';
 import { AiCatMark } from '@/components/AiCatMark';
 
 export default function ResultPage() {
@@ -106,7 +106,7 @@ export default function ResultPage() {
       <Link href="/" className="topbar-brand" aria-label="AI-CAT 首頁">
         <AiCatMark size={18} />
       </Link>
-      <ThemeToggle />
+      <AccountMenu />
     </header>
   );
 

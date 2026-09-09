@@ -32,7 +32,7 @@ import {
   type Familiarity,
 } from '@/types/exam';
 import { Markdown } from '@/components/Markdown';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { AccountMenu } from '@/components/AccountMenu';
 import { ThinkingCat } from '@/components/ThinkingCat';
 import { EvaluatingCat } from '@/components/EvaluatingCat';
 import { GoogleIcon } from '@/components/GoogleIcon';
@@ -306,13 +306,6 @@ export default function ExamPage() {
     );
   }
 
-  const meta = session.user.user_metadata ?? {};
-  const displayName =
-    (meta.full_name as string) ||
-    (meta.name as string) ||
-    session.user.email ||
-    '使用者';
-  const avatarUrl = (meta.avatar_url as string) || (meta.picture as string) || '';
   const outOfQuota = quota != null && quota.used >= quota.limit;
   const quotaText =
     quota != null ? `本帳號已完成 ${quota.used} / ${quota.limit} 次檢測` : null;
@@ -322,18 +315,8 @@ export default function ExamPage() {
       <Link href="/" className="topbar-brand" aria-label="AI-CAT 首頁">
         <AiCatMark size={18} />
       </Link>
-      <span className="who">
-        {avatarUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img className="avatar" src={avatarUrl} alt="" width={20} height={20} />
-        )}
-        {displayName}
-      </span>
       {quotaText && <span>{quotaText}</span>}
-      <button type="button" className="linkbtn" onClick={signOut}>
-        登出
-      </button>
-      <ThemeToggle />
+      <AccountMenu />
     </div>
   );
 

@@ -6,7 +6,7 @@
  */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { AccountMenu } from '@/components/AccountMenu';
 import { HeroRadar } from '@/components/HeroRadar';
 import { AiCatMark } from '@/components/AiCatMark';
 import { CatDecor } from '@/components/CatDecor';
@@ -82,7 +82,7 @@ export default function HomePage() {
           </div>
           <div className="right">
             <span className="mono-label">AI COMPETENCY ASSESSMENT TOOL</span>
-            <ThemeToggle />
+            <AccountMenu />
           </div>
         </header>
 

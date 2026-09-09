@@ -1714,6 +1714,95 @@ footer {
   object-fit: cover;
 }
 
+/* ── header 右上角帳號選單 ── */
+.acct {
+  position: relative;
+  flex: 0 0 auto;
+}
+.topbar .acct {
+  margin-left: auto;
+}
+.acct-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.acct-trigger:hover,
+.acct-trigger[aria-expanded='true'] {
+  border-color: var(--accent-ink);
+  color: var(--fg);
+}
+.acct-trigger .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.acct-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  min-width: 210px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--shadow);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.acct-name {
+  padding: 8px 10px 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--fg);
+  word-break: break-all;
+}
+.acct-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+}
+.acct-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+.acct-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  font: inherit;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.acct-item:hover {
+  background: var(--bg-alt);
+  color: var(--fg);
+}
+.acct-item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .quota-line {
   font-size: 0.9rem;
   color: var(--fg-muted);
@@ -1744,19 +1833,28 @@ footer {
 .familiarity-pick .fp-opts > div {
   display: flex;
   gap: 10px;
-  padding: 6px 10px;
+  padding: 7px 10px 7px 12px;
   border-radius: var(--radius);
   border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 .familiarity-pick .fp-opts > div[data-on='true'] {
-  border-color: var(--border);
-  background: var(--bg-alt);
+  border-color: color-mix(in srgb, var(--accent-ink) 45%, var(--border));
+  border-left-color: var(--accent-ink);
+  background: color-mix(in srgb, var(--accent) 18%, var(--card));
+}
+.familiarity-pick .fp-opts > div:not([data-on='true']) {
+  opacity: 0.6;
 }
 .familiarity-pick .fp-opts dt {
   flex: 0 0 3em;
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--fg);
+}
+.familiarity-pick .fp-opts > div[data-on='true'] dt {
+  color: var(--accent-ink);
 }
 .familiarity-pick .fp-opts dd {
   margin: 0;
