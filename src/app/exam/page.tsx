@@ -111,6 +111,8 @@ function ExamPageInner() {
   const tsGate = turnstileEnabledClient();
   // 開場自評的領域熟悉度（給裁判校準 task_completion）
   const [familiarity, setFamiliarity] = useState<Familiarity>('mid');
+  // 提交評分前的二次確認（避免誤按）
+  const [confirmingSubmit, setConfirmingSubmit] = useState(false);
   // 視窗是否為窄版（手機）：Enter 一律換行、輸入框改 sticky
   const [isNarrow, setIsNarrow] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
@@ -258,6 +260,7 @@ function ExamPageInner() {
   const send = useCallback(async () => {
     if (!exam || busy) return;
     voiceStop();
+    setConfirmingSubmit(false);
     const text = input.trim();
     if (!text) return;
     if (text.length > exam.limits.maxInputChars) {
@@ -299,6 +302,7 @@ function ExamPageInner() {
   const submit = useCallback(async () => {
     if (!exam) return;
     voiceStop();
+    setConfirmingSubmit(false);
     setError(null);
     setBusy(true);
     setPhase('evaluating');
@@ -728,15 +732,40 @@ function ExamPageInner() {
                 想用語音？直接點手機鍵盤上的麥克風即可口述輸入
               </p>
             )}
-            <button
-              type="button"
-              className="btn chat-submit"
-              onClick={submit}
-              disabled={busy || messages.length === 0}
-            >
-              <AiCatMark size={15} />
-              提交評分，交給 AI 裁判
-            </button>
+            {confirmingSubmit ? (
+              <div className="submit-confirm" role="alertdialog" aria-live="polite">
+                <p>提交後就不能再跟 AI 對話了，確定交出去評分嗎？</p>
+                <div className="submit-confirm-actions">
+                  <button
+                    type="button"
+                    className="btn chat-submit"
+                    onClick={submit}
+                    disabled={busy}
+                  >
+                    <AiCatMark size={15} />
+                    確定提交
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => setConfirmingSubmit(false)}
+                    disabled={busy}
+                  >
+                    再想想
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="btn chat-submit"
+                onClick={() => setConfirmingSubmit(true)}
+                disabled={busy || messages.length === 0}
+              >
+                <AiCatMark size={15} />
+                提交評分，交給 AI 裁判
+              </button>
+            )}
           </div>
           {voiceListening && (
             <p className="voice-hint" aria-live="polite">
