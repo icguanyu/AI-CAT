@@ -184,7 +184,7 @@ export default function MyExamsPage() {
                     <>
                       <p className="me-sum-gate">綜合分級</p>
                       <p className="me-sum-gate-n">
-                        再做 {agg.gateNeeded} 種不同分類的情境就能算出
+                        再做 {agg.gateNeeded} 種不同分類的情境就能算出綜合分級
                       </p>
                       <p className="me-sum-note">
                         目前 {agg.distinctCategories} / 3 種分類 · {agg.totalExams}{' '}

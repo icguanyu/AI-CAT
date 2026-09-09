@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { PageLoading } from '@/components/PageLoading';
 import { useRouter } from 'next/navigation';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
@@ -269,7 +270,7 @@ export default function ExamPage() {
     return (
       <main className="exam-wrap">
         <div className="center-card">
-          <p>載入中…</p>
+          <PageLoading />
         </div>
       </main>
     );
