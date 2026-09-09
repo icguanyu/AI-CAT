@@ -116,6 +116,7 @@ async function handle(req: Request): Promise<Response> {
             .toISOString()
             .slice(0, 16)}`,
           scenarioId: state.scenarioId,
+          category: state.category ?? scenario.category,
           brief: scenario.brief,
           injected: state.injected,
           injectionLanded: state.injectionLanded,
@@ -148,6 +149,8 @@ async function handle(req: Request): Promise<Response> {
       exemplar,
       // 受測者顯示名稱快照（Google 登入當下的 full_name）；結果卡片用。
       user_name: auth.name,
+      // 情境的領域分類快照；個人統整頁以此為分組單位（轉動態題目後仍固定）。
+      category: state.category ?? scenario.category,
       // 看到 brief 後自評的領域熟悉度；報告頁顯示為分數的脈絡。
       familiarity,
       // 存進 jsonb，讓 /exam/result/:examId 重新整理後能還原陷阱對照；

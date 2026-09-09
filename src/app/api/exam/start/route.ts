@@ -57,6 +57,7 @@ async function handle(req: Request): Promise<Response> {
   const state: ExamState = {
     userId: auth.userId,
     scenarioId,
+    category: scenario.category,
     variantIndex: scenario.variantIndex,
     history: [],
     injectAtTurn: rollInjectAtTurn(),

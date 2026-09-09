@@ -127,6 +127,8 @@ export interface TrapReveal {
 export interface ExamState {
   userId: string;
   scenarioId: string;
+  /** 抽中情境的領域分類；快照下來，之後改題不影響已開場的場次。 */
+  category: Category;
   /** 開始測驗時隨機挑中的變體索引。 */
   variantIndex: number;
   history: ChatMessage[];

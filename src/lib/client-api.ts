@@ -97,6 +97,7 @@ export async function sendChat(examId: string, message: string): Promise<Respons
 export interface FixtureDebug {
   label: string;
   scenarioId: string;
+  category: import('@/types/exam').Category;
   brief: string;
   injected: boolean;
   injectionLanded: boolean;
