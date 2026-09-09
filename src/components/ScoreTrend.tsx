@@ -3,19 +3,24 @@
  * 角色：前端層 — /me 的「分數走勢」折線圖（Recharts）
  * 功能：吃一串「舊 → 新」排序的場次（加權平均分 0–100 + 日期 / 標題 / 分類 / 分級），
  *       畫一條折線；滑鼠移過去的點顯示該場的日期、標題、分類、分數與分級。
- *       線與格線走主題 token；少於兩點不畫。
+ *       另畫一條 L3 分數門檻虛線。線與格線走主題 token；少於兩點不畫。
  */
 'use client';
 
 import {
+  CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
 import type { LevelCode } from '@/types/exam';
+
+/** L3 分數門檻（scoring.ts：weightedAverage < 55 → L2）。 */
+const L3_MIN = 55;
 
 export interface TrendPoint {
   /** 加權平均分（0–100）。 */
@@ -60,15 +65,35 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={points}
-          margin={{ top: 8, right: 10, bottom: 4, left: 10 }}
+          margin={{ top: 10, right: 12, bottom: 2, left: 2 }}
         >
-          <XAxis dataKey="date" hide />
-          <YAxis domain={[0, 100]} hide />
+          <CartesianGrid vertical={false} stroke="var(--grid)" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 10, fill: 'var(--fg-faint)' }}
+            tickLine={false}
+            axisLine={{ stroke: 'var(--border)' }}
+            interval="preserveStartEnd"
+            minTickGap={44}
+          />
+          <YAxis
+            domain={[0, 100]}
+            ticks={[0, 50, 100]}
+            width={26}
+            tick={{ fontSize: 10, fill: 'var(--fg-faint)' }}
+            tickLine={false}
+            axisLine={false}
+          />
+          <ReferenceLine
+            y={L3_MIN}
+            stroke="var(--fg-faint)"
+            strokeDasharray="4 4"
+            strokeWidth={1}
+          />
           <Tooltip
             content={<TrendTip />}
             cursor={{ stroke: 'var(--grid)', strokeWidth: 1 }}
             wrapperStyle={{ outline: 'none' }}
-            isAnimationActive={false}
           />
           <Line
             type="monotone"
