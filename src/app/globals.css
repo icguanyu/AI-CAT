@@ -2700,6 +2700,32 @@ footer {
   color: var(--fg-faint);
 }
 
+/* ── 分數走勢 ── */
+.me-trend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--panel-radius);
+  background: var(--card);
+}
+.me-trend-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.me-trend-cap {
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+.score-trend {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 @media (max-width: 560px) {
   .me-row {
     gap: 10px;

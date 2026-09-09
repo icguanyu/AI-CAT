@@ -17,6 +17,7 @@ import { aggregateExams } from '@/lib/aggregate';
 import { AccountMenu } from '@/components/AccountMenu';
 import { AiCatMark } from '@/components/AiCatMark';
 import { ScoreRadar } from '@/components/ScoreRadar';
+import { ScoreTrend } from '@/components/ScoreTrend';
 import {
   CATEGORY_LABEL,
   FAMILIARITY_LABEL,
@@ -79,6 +80,16 @@ export default function MyExamsPage() {
   }, [session]);
 
   const agg = useMemo(() => aggregateExams(exams ?? []), [exams]);
+
+  /** 最近 20 場的加權平均，舊 → 新（走勢圖用）。 */
+  const trend = useMemo(
+    () =>
+      (exams ?? [])
+        .slice(0, 20)
+        .map((e) => e.weightedAverage)
+        .reverse(),
+    [exams],
+  );
 
   const signIn = useCallback(() => {
     void getSb().auth.signInWithOAuth({
@@ -176,8 +187,10 @@ export default function MyExamsPage() {
                         <span className="k">AI SCORE</span>
                       </div>
                       <p className="me-sum-note">
-                        {agg.totalExams} 場 · {agg.distinctCategories} 種分類 ·
-                        每種分類取近期加權，跨分類平均
+                        {agg.totalExams} 場 · {agg.distinctCategories} 種分類
+                      </p>
+                      <p className="me-sum-note">
+                        取每種分類的近期表現再平均；這是最近估計，會隨你多做而變動。
                       </p>
                     </>
                   ) : (
@@ -212,6 +225,19 @@ export default function MyExamsPage() {
                 </div>
               </section>
             )}
+
+            {trend.length >= 2 && (
+              <section className="me-trend">
+                <div className="me-trend-head">
+                  <span className="mono-label">分數走勢</span>
+                  <span className="me-trend-cap">
+                    最近 {trend.length} 場的加權平均（舊 → 新）
+                  </span>
+                </div>
+                <ScoreTrend values={trend} />
+              </section>
+            )}
+
             <ul className="me-list">
             {exams.map((e) => (
               <li key={e.examId}>
