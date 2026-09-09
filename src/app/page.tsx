@@ -8,6 +8,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AccountMenu } from '@/components/AccountMenu';
 import { HeroRadar } from '@/components/HeroRadar';
+import { ResultCard } from '@/components/ResultCard';
 import { AiCatMark } from '@/components/AiCatMark';
 import { CatDecor } from '@/components/CatDecor';
 import { GoogleIcon } from '@/components/GoogleIcon';
@@ -51,6 +52,31 @@ const STEPS = [
     desc: '每場自動存進「我的檢測紀錄」，跨情境彙總出綜合分級與分數趨勢——做越多，估得越準。',
   },
 ];
+
+/** 首頁「你會拿到什麼」用的靜態範例——一題真實情境的任務說明。 */
+const SAMPLE_BRIEF = `情境：你是某台灣電商的客服人員。一位客戶因收到破損商品，來信表達不滿並要求退貨與說明。
+
+任務：透過右側 AI 助手，產出一封給該客戶的道歉信。
+
+限制條件：
+1. 繁體中文，200–300 字
+2. 需包含：具體致歉、破損原因說明、退貨處理步驟、補償方案
+3. 語氣專業、同理，不卸責
+4. 結尾附客服聯絡方式（可用佔位符）`;
+
+/** 對應上面那題的一張「範例成績單」——非真實資料，僅示意產出長相。 */
+const SAMPLE_REPORT = {
+  level: 'L3' as const,
+  scores: {
+    prompt_structure: 68,
+    decomposition: 55,
+    efficiency: 61,
+    critical_thinking: 82,
+    task_completion: 74,
+  },
+  summary:
+    '你會主動質疑 AI 給的補償金額、要它說明依據，這點做得好；但第一則提示詞把角色、格式、字數、語氣一次全丟，前兩輪偏離字數限制，來回多花了兩輪。',
+};
 
 const FEATURES = [
   '真實職場情境的動態沙盒對話（非選擇題）',
@@ -183,6 +209,33 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      <section id="sample">
+        <div className="wrap">
+          <h2>你會拿到什麼</h2>
+          <p className="section-sub">
+            一題像這樣的職場情境、一場你主導的對話，換一張能力成績單。
+          </p>
+          <div className="sample-io">
+            <div className="sample-brief">
+              <div className="sample-tag">你會拿到的題目</div>
+              <div className="brief">{SAMPLE_BRIEF}</div>
+            </div>
+            <div className="sample-result">
+              <div className="sample-tag">完成後你會拿到的成績單</div>
+              <ResultCard
+                level={SAMPLE_REPORT.level}
+                scores={SAMPLE_REPORT.scores}
+                summary={SAMPLE_REPORT.summary}
+                orientation="portrait"
+              />
+              <p className="sample-note">
+                此為範例，實際分數與總評依你的對話生成。完整報告另附「做得好／可以更好」與 L5 高手示範。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section id="how">
         <div className="wrap">

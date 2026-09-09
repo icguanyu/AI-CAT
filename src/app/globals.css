@@ -627,6 +627,53 @@ h2 {
   color: var(--fg-muted);
 }
 
+/* ── 首頁：題目 → 成績單 靜態範例 ── */
+.sample-io {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .sample-io {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+.sample-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-bottom: 10px;
+}
+.sample-brief .brief {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--panel-radius);
+  padding: 20px 22px;
+}
+.sample-result {
+  display: flex;
+  flex-direction: column;
+}
+.sample-result .result-card {
+  align-self: stretch;
+}
+.sample-note {
+  margin: 12px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--fg-faint);
+  text-align: center;
+}
+@media (max-width: 760px) {
+  .sample-result .result-card {
+    align-self: center;
+  }
+}
+
 .highlight {
   background: var(--bg-alt);
   border: 1px solid var(--border);
