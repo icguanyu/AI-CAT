@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { GoogleIcon } from '@/components/GoogleIcon';
 
 function PersonIcon() {
   return (
@@ -146,6 +147,7 @@ export function AccountMenu() {
               onClick={signIn}
               disabled={session === undefined}
             >
+              <GoogleIcon size={16} />
               使用 Google 登入
             </button>
           )}

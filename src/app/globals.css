@@ -145,7 +145,7 @@ a {
 }
 
 section {
-  padding: 72px 0;
+  padding: 60px 0;
 }
 
 section + section {
@@ -263,12 +263,16 @@ section + section {
   color: var(--cta-fg);
   font-size: 1rem;
   font-weight: 700;
+  line-height: 1;
   text-decoration: none;
   padding: 16px 30px;
   border-radius: var(--radius);
   transition:
     transform 0.15s ease,
     opacity 0.15s ease;
+}
+.cta > svg {
+  display: block;
 }
 
 .cta:hover {
@@ -334,6 +338,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: 20px;
+  margin-left: auto;
 }
 
 .lp-main {
@@ -1649,8 +1654,12 @@ footer {
   padding: 10px 18px;
   font: inherit;
   font-weight: 700;
+  line-height: 1; /* 不繼承 body 的 1.7，否則 icon 與文字視覺不對齊 */
   cursor: pointer;
   white-space: nowrap;
+}
+.btn > svg {
+  display: block;
 }
 
 .btn:disabled {
@@ -1804,7 +1813,9 @@ footer {
   margin: 4px 0;
 }
 .acct-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   text-align: left;
   padding: 8px 10px;
@@ -1812,8 +1823,13 @@ footer {
   border-radius: var(--radius);
   background: none;
   font: inherit;
+  line-height: 1;
   color: var(--fg-muted);
   cursor: pointer;
+}
+.acct-item > svg {
+  display: block;
+  flex: 0 0 auto;
 }
 .acct-item:hover {
   background: var(--bg-alt);
