@@ -312,6 +312,9 @@ h2 {
   flex-wrap: wrap;
   padding: 18px clamp(20px, 5vw, 64px);
   border-bottom: 1px solid var(--border);
+  /* 讓整個 header（含帳號選單下拉）疊在主內容 / 雷達圖之上 */
+  position: relative;
+  z-index: 40;
 }
 .lp-brand {
   display: flex;
@@ -1681,6 +1684,8 @@ footer {
   margin-bottom: 16px;
   font-size: 0.82rem;
   color: var(--fg-muted);
+  position: relative;
+  z-index: 40;
 }
 
 .topbar-brand {
@@ -1718,6 +1723,7 @@ footer {
 .acct {
   position: relative;
   flex: 0 0 auto;
+  z-index: 2;
 }
 .topbar .acct {
   margin-left: auto;
@@ -1726,8 +1732,8 @@ footer {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -1752,8 +1758,9 @@ footer {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 50;
+  z-index: 200;
   min-width: 210px;
+  max-width: calc(100vw - 24px);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--panel-radius);
@@ -1762,6 +1769,16 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+/* 手機：加大觸發鈕，選單不超出視窗 */
+@media (max-width: 560px) {
+  .acct-trigger {
+    width: 40px;
+    height: 40px;
+  }
+  .acct-menu {
+    min-width: min(240px, calc(100vw - 24px));
+  }
 }
 .acct-name {
   padding: 8px 10px 6px;
@@ -2279,6 +2296,8 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
+  z-index: 40;
 }
 
 .share-box {
