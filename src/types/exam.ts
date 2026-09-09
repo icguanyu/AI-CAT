@@ -33,6 +33,34 @@ export function toFamiliarity(v: unknown): Familiarity {
   return v === 'high' || v === 'low' ? v : 'mid';
 }
 
+/**
+ * 情境分類（封閉詞彙）。這是「彙總 / 個人統整 / 分場景權重」的穩定分組單位——
+ * 之後轉動態產題時，題目每次不同、但 category 固定，彙總機制不用改。
+ * 新增分類：加一個 id + label，別重用或改動舊 id（會讓歷史報告對不上）。
+ */
+export type Category =
+  | 'customer_comms'
+  | 'interpersonal'
+  | 'data_summary'
+  | 'quality_ops'
+  | 'code_debug'
+  | 'life_planning';
+
+export const CATEGORY_LABEL: Record<Category, string> = {
+  customer_comms: '客戶溝通',
+  interpersonal: '人際溝通',
+  data_summary: '數據整理',
+  quality_ops: '品質與流程改善',
+  code_debug: '程式除錯',
+  life_planning: '生活規劃',
+};
+
+export const CATEGORY_IDS = Object.keys(CATEGORY_LABEL) as Category[];
+
+export function isCategory(v: unknown): v is Category {
+  return typeof v === 'string' && v in CATEGORY_LABEL;
+}
+
 /** 情境題的一個隨機變體。 */
 export interface ScenarioVariant {
   /** 選填：覆寫該場的任務說明（用來變動限制條件）。 */
