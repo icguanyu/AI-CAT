@@ -38,6 +38,10 @@ import { Markdown } from '@/components/Markdown';
 import { AccountMenu } from '@/components/AccountMenu';
 import { ReportView } from '@/components/ReportView';
 import { LoginToSaveCard } from '@/components/LoginToSaveCard';
+import {
+  TurnstileWidget,
+  turnstileEnabledClient,
+} from '@/components/TurnstileWidget';
 import { ThinkingCat } from '@/components/ThinkingCat';
 import { EvaluatingCat } from '@/components/EvaluatingCat';
 import { GoogleIcon } from '@/components/GoogleIcon';
@@ -103,6 +107,8 @@ function ExamPageInner() {
   const [startCode, setStartCode] = useState<string | null>(null);
   const [trialResult, setTrialResult] = useState<TrialResult | null>(null);
   const [trialExamId, setTrialExamId] = useState<string | null>(null);
+  const [tsToken, setTsToken] = useState('');
+  const tsGate = turnstileEnabledClient();
   // 開場自評的領域熟悉度（給裁判校準 task_completion）
   const [familiarity, setFamiliarity] = useState<Familiarity>('mid');
   // 視窗是否為窄版（手機）：Enter 一律換行、輸入框改 sticky
@@ -234,7 +240,7 @@ function ExamPageInner() {
     setStartCode(null);
     setBusy(true);
     try {
-      const r = await startExam();
+      const r = await startExam(tsToken || undefined);
       setExam(r);
       setQuota(r.quota);
       setMessages([]);
@@ -247,7 +253,7 @@ function ExamPageInner() {
     } finally {
       setBusy(false);
     }
-  }, [handleErr]);
+  }, [handleErr, tsToken]);
 
   const send = useCallback(async () => {
     if (!exam || busy) return;
@@ -431,19 +437,29 @@ function ExamPageInner() {
                   <span>{error}</span>
                 </div>
               )}
-              <button
-                type="button"
-                className="btn"
-                onClick={begin}
-                disabled={busy}
-              >
-                {busy ? '抽題中…' : '免費試用一次（不需登入）'}
-              </button>
-              <p className="signed-in">
-                <button type="button" className="linkbtn" onClick={signIn}>
-                  或登入後開始（每日 3 場免費）
+              {tsGate && <TurnstileWidget onVerify={setTsToken} />}
+              <div className="idle-actions">
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={begin}
+                  disabled={busy || (tsGate && !tsToken)}
+                >
+                  {busy
+                    ? '抽題中…'
+                    : tsGate && !tsToken
+                      ? '驗證中…'
+                      : '免費試用一次（不需登入）'}
                 </button>
-              </p>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={signIn}
+                >
+                  <GoogleIcon />
+                  登入後開始（每日 3 場免費）
+                </button>
+              </div>
             </>
           )}
         </div>

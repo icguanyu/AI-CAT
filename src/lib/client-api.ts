@@ -101,10 +101,11 @@ export async function getQuota(): Promise<Quota> {
   return json as unknown as Quota;
 }
 
-export async function startExam(): Promise<StartResult> {
+export async function startExam(turnstileToken?: string): Promise<StartResult> {
   const res = await fetch('/api/exam/start', {
     method: 'POST',
-    headers: await authHeader(),
+    headers: { ...(await authHeader()), 'Content-Type': 'application/json' },
+    body: JSON.stringify(turnstileToken ? { turnstileToken } : {}),
   });
   const json = await parseBody(res);
   if (!res.ok) fail(json, res, '開始測驗失敗');

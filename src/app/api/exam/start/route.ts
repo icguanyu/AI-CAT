@@ -9,10 +9,10 @@
  *     結果只放 Redis、不寫 DB，登入後由 /claim 認領。
  */
 import { setExam } from '@/lib/redis';
-import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit';
-import { resolveActor } from '@/lib/actor';
+import { checkRateLimit, rateLimitResponse, clientIp } from '@/lib/ratelimit';
 import { requireAuth } from '@/lib/supabase';
 import { readAnonId, mintAnon, anonSetCookie } from '@/lib/anon';
+import { verifyTurnstile } from '@/lib/turnstile';
 import {
   hasAnonUsed,
   markAnonUsed,
@@ -114,6 +114,20 @@ async function handle(req: Request): Promise<Response> {
   // ── 免登入試用版 ────────────────────────────────────────
   const rlAnon = await checkRateLimit(req); // 以 IP 為 key，粗略防連點
   if (!rlAnon.ok) return rateLimitResponse(rlAnon);
+
+  // Turnstile：兩把 key 都設好才啟用；沒設一律放行
+  const body = (await req.json().catch(() => ({}))) as {
+    turnstileToken?: string;
+  };
+  if (!(await verifyTurnstile(body.turnstileToken, clientIp(req)))) {
+    return Response.json(
+      {
+        code: 'TURNSTILE_FAILED',
+        error: '沒通過人機驗證，請重新整理再試一次。',
+      },
+      { status: 403 },
+    );
+  }
 
   let anonId = readAnonId(req);
   let setCookie: string | null = null;
