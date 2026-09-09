@@ -14,6 +14,7 @@
  * 需要 .env.local（或環境變數）有：SUPABASE_URL、SUPABASE_SERVICE_ROLE_KEY。
  */
 import { readFileSync } from 'node:fs';
+import { isCategory } from '../src/types/exam';
 
 /** 自己讀 .env.local（CRLF 安全），不依賴 tsx --env-file。 */
 function loadEnvLocal() {
@@ -50,11 +51,16 @@ interface Row {
   system: string;
   variants: unknown[];
   active: true;
-  category: string | null;
+  category: string;
   note: string | null;
 }
 
 function toRow(id: string, raw: RawScenario): Row {
+  if (!isCategory(raw.category)) {
+    throw new Error(
+      `題目 ${id}：category 缺少或非法（「${String(raw.category)}」，見 src/types/exam.ts CATEGORY_LABEL）`,
+    );
+  }
   if (typeof raw.brief !== 'string' || raw.brief.trim() === '') {
     throw new Error(`題目 ${id}：brief 缺少或非字串`);
   }
@@ -75,7 +81,7 @@ function toRow(id: string, raw: RawScenario): Row {
     system: raw.system,
     variants: raw.variants,
     active: true,
-    category: typeof raw.category === 'string' ? raw.category : null,
+    category: raw.category,
     note: typeof raw.note === 'string' ? raw.note : null,
   };
 }

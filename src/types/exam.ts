@@ -91,6 +91,8 @@ export interface ScenarioVariant {
  * 舊格式 `{ brief, system, injectionText }` 由載入器自動轉為單一 variant。
  */
 export interface Scenario {
+  /** 領域分類（封閉詞彙）。彙總 / 自評 / 動態產題的穩定分組單位。 */
+  category: Category;
   /** 給受測者看的任務說明與限制條件（變體可覆寫）。 */
   brief: string;
   /** 沙盒模型的 system 指令（機密）。 */
@@ -102,6 +104,7 @@ export interface Scenario {
 /** 一場測驗實際採用的情境題 + 變體，攤平後的樣子。 */
 export interface ResolvedScenario {
   scenarioId: string;
+  category: Category;
   variantIndex: number;
   brief: string;
   system: string;

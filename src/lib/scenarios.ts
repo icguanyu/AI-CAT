@@ -6,18 +6,20 @@
  *       由呼叫端回明確錯誤給前端。支援每題多個隨機變體。題目內容機密，不進版控。
  *
  * scenario 形狀（DB 欄位）：
- *   { brief, system, variants: [ { injectionText, correction?, brief? }, ... ] }
+ *   { category, brief, system, variants: [ { injectionText, correction?, brief?, verifyHint? }, ... ] }
+ * category 必填且須在 CATEGORY_LABEL（見 types/exam.ts）內，否則載入丟錯。
  * 舊形狀 { brief, system, injectionText } 仍相容（自動轉成單一 variant）。
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import type { Scenario, ResolvedScenario } from '@/types/exam';
+import { isCategory, type Scenario, type ResolvedScenario } from '@/types/exam';
 
 const TTL_MS = 60_000;
 let cache: { at: number; data: Record<string, Scenario> } | null = null;
 
 type RawScenario = {
+  category?: unknown;
   brief?: unknown;
   system?: unknown;
   injectionText?: unknown;
@@ -27,6 +29,11 @@ type RawScenario = {
 function normalize(id: string, raw: RawScenario): Scenario {
   if (typeof raw.brief !== 'string' || typeof raw.system !== 'string') {
     throw new Error(`情境題 ${id} 缺少 brief 或 system`);
+  }
+  if (!isCategory(raw.category)) {
+    throw new Error(
+      `情境題 ${id} 缺少或非法的 category：「${String(raw.category)}」（見 CATEGORY_LABEL）`,
+    );
   }
   let variants: Scenario['variants'];
   if (Array.isArray(raw.variants) && raw.variants.length > 0) {
@@ -63,7 +70,7 @@ function normalize(id: string, raw: RawScenario): Scenario {
   } else {
     throw new Error(`情境題 ${id} 需要 injectionText 或非空的 variants`);
   }
-  return { brief: raw.brief, system: raw.system, variants };
+  return { category: raw.category, brief: raw.brief, system: raw.system, variants };
 }
 
 /** 題庫載入失敗（可與「題庫為空」區分）。 */
@@ -103,7 +110,7 @@ async function load(): Promise<Record<string, Scenario>> {
   try {
     const { data, error } = await getSupabaseAdmin()
       .from('scenarios')
-      .select('id, brief, system, variants')
+      .select('id, category, brief, system, variants')
       .eq('active', true);
     if (error) {
       throw new ScenarioLoadError(`題庫載入失敗：${error.message}`);
@@ -155,6 +162,7 @@ function flatten(
   const variant = scenario.variants[idx];
   return {
     scenarioId: id,
+    category: scenario.category,
     variantIndex: idx,
     brief: variant.brief ?? scenario.brief,
     system: scenario.system,
