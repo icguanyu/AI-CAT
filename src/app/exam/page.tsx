@@ -28,6 +28,7 @@ import { readTextStream } from '@/lib/data-stream';
 import { useVoiceInput } from '@/lib/use-voice-input';
 import {
   FAMILIARITY_LABEL,
+  FAMILIARITY_DESC,
   type Familiarity,
 } from '@/types/exam';
 import { Markdown } from '@/components/Markdown';
@@ -401,8 +402,16 @@ export default function ExamPage() {
                 </button>
               ))}
             </div>
+            <dl className="fp-opts">
+              {(['high', 'mid', 'low'] as Familiarity[]).map((f) => (
+                <div key={f} data-on={familiarity === f}>
+                  <dt>{FAMILIARITY_LABEL[f]}</dt>
+                  <dd>{FAMILIARITY_DESC[f]}</dd>
+                </div>
+              ))}
+            </dl>
             <p className="fp-hint">
-              不是你的領域就選「不熟」——評分會據此校準，任務達成率只看題目明列的要求。
+              誠實選就好——評分會據此校準，任務達成率只看題目明列的要求。
             </p>
           </div>
 

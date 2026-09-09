@@ -21,6 +21,13 @@ export const FAMILIARITY_LABEL: Record<Familiarity, string> = {
   low: '不熟',
 };
 
+/** 給受測者看的每個選項說明（開始對話前的自評畫面）。 */
+export const FAMILIARITY_DESC: Record<Familiarity, string> = {
+  high: '你的專業或很常做的事——不用查也大致知道怎樣算做得好。',
+  mid: '略懂——判斷得出 AI 給的合不合理，但細節要想一下或查一下。',
+  low: '不是你的領域——主要靠問 AI、要它解釋跟舉證來完成。',
+};
+
 /** 收窄未知輸入為合法值；預設「普通」。 */
 export function toFamiliarity(v: unknown): Familiarity {
   return v === 'high' || v === 'low' ? v : 'mid';
