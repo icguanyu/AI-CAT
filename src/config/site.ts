@@ -12,7 +12,7 @@ function resolveSiteUrl(): string {
   const vercel = process.env.NEXT_PUBLIC_VERCEL_URL?.trim();
   if (vercel) return `https://${vercel.replace(/\/$/, '')}`;
 
-  return 'https://ai-cat-dusky.vercel.app';
+  return 'https://www.ai-cat.app';
 }
 
 export const siteConfig = {

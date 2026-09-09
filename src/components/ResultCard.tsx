@@ -21,7 +21,7 @@ const ORDER: (keyof Report['scores'])[] = [
 ];
 
 const SITE = (
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://ai-cat-dusky.vercel.app'
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ai-cat.app'
 ).replace(/^https?:\/\//, '');
 
 export type CardOrientation = 'portrait' | 'landscape';
