@@ -2721,9 +2721,60 @@ footer {
   color: var(--fg-faint);
 }
 .score-trend {
-  display: block;
   width: 100%;
-  height: auto;
+  height: 148px;
+}
+.score-trend .recharts-surface {
+  overflow: visible;
+}
+.trend-tip {
+  min-width: 140px;
+  max-width: 240px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.trend-tip p {
+  margin: 0;
+}
+.trend-tip__date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--fg-faint);
+}
+.trend-tip__title {
+  font-weight: 700;
+  margin-top: 2px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trend-tip__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px !important;
+}
+.trend-tip__cat {
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+.trend-tip__score {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.trend-tip__score em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--fg-faint);
+  margin-left: 4px;
 }
 
 @media (max-width: 560px) {

@@ -17,7 +17,7 @@ import { aggregateExams } from '@/lib/aggregate';
 import { AccountMenu } from '@/components/AccountMenu';
 import { AiCatMark } from '@/components/AiCatMark';
 import { ScoreRadar } from '@/components/ScoreRadar';
-import { ScoreTrend } from '@/components/ScoreTrend';
+import { ScoreTrend, type TrendPoint } from '@/components/ScoreTrend';
 import {
   CATEGORY_LABEL,
   FAMILIARITY_LABEL,
@@ -81,12 +81,18 @@ export default function MyExamsPage() {
 
   const agg = useMemo(() => aggregateExams(exams ?? []), [exams]);
 
-  /** 最近 20 場的加權平均，舊 → 新（走勢圖用）。 */
-  const trend = useMemo(
+  /** 最近 20 場，舊 → 新（走勢圖用；帶標題 / 日期 / 分類 / 分級供 tooltip）。 */
+  const trend = useMemo<TrendPoint[]>(
     () =>
       (exams ?? [])
         .slice(0, 20)
-        .map((e) => e.weightedAverage)
+        .map((e) => ({
+          value: e.weightedAverage,
+          date: fmtDate(e.createdAt),
+          title: e.titleZh ?? '（未命名情境）',
+          category: e.category ? CATEGORY_LABEL[e.category] : null,
+          level: e.suggestedLevel,
+        }))
         .reverse(),
     [exams],
   );
@@ -234,7 +240,7 @@ export default function MyExamsPage() {
                     最近 {trend.length} 場的加權平均（舊 → 新）
                   </span>
                 </div>
-                <ScoreTrend values={trend} />
+                <ScoreTrend points={trend} />
               </section>
             )}
 
