@@ -312,7 +312,10 @@ h2 {
   flex-wrap: wrap;
   padding: 18px clamp(20px, 5vw, 64px);
   border-bottom: 1px solid var(--border);
-  /* 讓整個 header（含帳號選單下拉）疊在主內容 / 雷達圖之上 */
+}
+/* 蓋過 `.lp > * { z-index: 1 }`（同 specificity、排在後面）：
+   header（含帳號選單下拉）要疊在 .lp-main / 雷達圖之上，選擇器加一層提高 specificity。 */
+.lp > .lp-header {
   position: relative;
   z-index: 40;
 }
