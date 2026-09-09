@@ -285,7 +285,7 @@ export default function ExamPage() {
           <p className="section-sub">
             {authExpired
               ? '你的登入狀態已過期或無效，請重新登入。'
-              : '使用 Google 登入，每個帳號提供 2 次免費檢測。'}
+              : '使用 Google 登入即可開始。每日 3 場免費、隔日重置。'}
           </p>
           <button
             type="button"

@@ -13,15 +13,12 @@ import { CatDecor } from '@/components/CatDecor';
 import { GoogleIcon } from '@/components/GoogleIcon';
 import { siteConfig } from '@/config/site';
 
+// openGraph / twitter 由 root layout 提供完整版（type / siteName / locale / image）；
+// 此頁不再覆寫 openGraph，否則會把 layout 的那些欄位整包蓋掉。
 export const metadata: Metadata = {
   title: { absolute: siteConfig.title },
   description: siteConfig.description,
   alternates: { canonical: '/' },
-  openGraph: {
-    title: siteConfig.title,
-    description: siteConfig.shortDescription,
-    url: '/',
-  },
 };
 
 const METRICS = [
@@ -34,35 +31,73 @@ const METRICS = [
 
 const STEPS = [
   {
-    title: '進入雙欄測驗沙盒',
-    desc: '左側是職場情境任務與限制條件，右側是與 AI 助手對話的視窗。',
+    title: '選一題、先自評熟悉度',
+    desc: '隨機抽一個真實職場情境（附任務與限制條件）；你先自評對這個領域有多熟，讓評分更公平。',
   },
   {
-    title: '用你的方式指揮 AI',
-    desc: '下提示詞、追問、修正。過程中系統會悄悄埋入一則錯誤資訊。',
+    title: '在雙欄沙盒裡指揮 AI',
+    desc: '左側是任務，右側是與 AI 助手對話。下提示詞、追問、修正——過程中系統會悄悄埋入一則錯誤資訊。',
   },
   {
     title: '提交給 AI 裁判盲審',
-    desc: '高階裁判模型依 rubric 審查完整對話歷程，輸出結構化評分。',
+    desc: '高階裁判模型依 rubric 審查完整對話歷程，輸出五維度結構化評分，不看你是誰。',
   },
   {
     title: '取得能力報告',
-    desc: '五角雷達圖 + 綜合分級（L1–L5）+ 做得好／可以更好 + L5 示範。',
+    desc: '五角雷達圖 + 綜合分級（L1–L5）+ 做得好／可以更好 + L5 高手示範，並可一鍵產生公開分享連結。',
   },
+  {
+    title: '多做幾場，看真實水準',
+    desc: '每場自動存進「我的檢測紀錄」，跨情境彙總出綜合分級與分數趨勢——做越多，估得越準。',
+  },
+];
+
+const FEATURES = [
+  '真實職場情境的動態沙盒對話（非選擇題）',
+  '開場自評領域熟悉度，校準評分公平性',
+  '高階 AI 裁判盲審，輸出五維度分數與 L1–L5 分級',
+  '幻覺陷阱：檢驗你是否照單全收 AI 的說法',
+  '能力報告附 L5 高手示範與逐點回饋',
+  '歷次紀錄自動留存，跨情境綜合分級與分數趨勢',
+  '一鍵產生公開分享連結',
 ];
 
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: siteConfig.title,
-  alternateName: siteConfig.name,
-  url: siteConfig.url,
-  description: siteConfig.shortDescription,
-  applicationCategory: 'EducationalApplication',
-  operatingSystem: 'Web',
-  inLanguage: 'zh-Hant',
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' },
-  author: { '@type': 'Person', name: siteConfig.author },
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${siteConfig.url}/#website`,
+      url: siteConfig.url,
+      name: siteConfig.title,
+      alternateName: siteConfig.name,
+      description: siteConfig.shortDescription,
+      inLanguage: 'zh-Hant',
+      publisher: { '@id': `${siteConfig.url}/#person` },
+    },
+    {
+      '@type': 'Person',
+      '@id': `${siteConfig.url}/#person`,
+      name: siteConfig.author,
+      url: siteConfig.url,
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': `${siteConfig.url}/#webapp`,
+      name: siteConfig.title,
+      alternateName: siteConfig.name,
+      url: siteConfig.url,
+      description: siteConfig.shortDescription,
+      applicationCategory: 'EducationalApplication',
+      operatingSystem: 'Web',
+      browserRequirements: 'Requires JavaScript. Requires HTML5.',
+      inLanguage: 'zh-Hant',
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' },
+      featureList: FEATURES,
+      author: { '@id': `${siteConfig.url}/#person` },
+    },
+  ],
 };
 
 export default function HomePage() {
@@ -166,18 +201,50 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section id="after">
+        <div className="wrap">
+          <h2>檢測完之後</h2>
+          <p className="section-sub">
+            一次分數只是切片，多做幾場才看得出真實水準。
+          </p>
+          <div className="steps">
+            <div className="step">
+              <div>
+                <h3>你的檢測紀錄</h3>
+                <p>
+                  每場自動存進「我的檢測紀錄」：逐場分數、L 分級與情境分類一目了然，
+                  並跨情境彙總出綜合能力雷達與綜合分級——完成 3 種不同分類就解鎖，做越多估得越準。
+                </p>
+              </div>
+            </div>
+            <div className="step">
+              <div>
+                <h3>分享你的成績</h3>
+                <p>
+                  一鍵產生公開連結，只顯示雷達圖、分級、分數與一句總評，帶 AI-CAT 品牌視覺；
+                  題目內容與逐點回饋不會外流。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="start">
         <CatDecor className="cat-peek" animated />
         <div className="wrap">
           <h2>準備好了嗎？</h2>
           <p className="section-sub">
-            使用 Google 登入即可開始，每個帳號提供 2 次免費檢測。
+            使用 Google 登入即可開始。每日 3 場免費、隔日重置，帳號累計上限 21 場。
           </p>
           <div className="highlight">
             <ul>
-              <li>多種職場情境題，每次隨機抽選（如行銷文案、行政數據、工程除錯等）</li>
+              <li>
+                多種職場情境題，每次隨機抽選（行銷文案、行政數據、工程除錯、8D 改善…）
+              </li>
               <li>真實沙盒對話，非題庫選擇題</li>
-              <li>檢測結果即時產生，附 L5 示範</li>
+              <li>檢測結果即時產生，附 L5 高手示範與逐點回饋</li>
+              <li>歷次紀錄留存於「我的檢測紀錄」，可跨情境看綜合分級與趨勢</li>
               <li>
                 對話內容會送交 AI 模型評分，詳見{' '}
                 <Link href="/privacy">隱私政策</Link>

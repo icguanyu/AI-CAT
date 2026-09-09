@@ -10,7 +10,11 @@ export const metadata: Metadata = {
   description: 'AI-CAT 蒐集、使用與保存個人資料的方式，以及使用者的權利。',
   alternates: {
     canonical: '/privacy',
-    languages: { 'zh-Hant': '/privacy', en: '/privacy/en' },
+    languages: {
+      'zh-Hant': '/privacy',
+      en: '/privacy/en',
+      'x-default': '/privacy',
+    },
   },
 };
 

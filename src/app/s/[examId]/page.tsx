@@ -24,12 +24,16 @@ function mean(scores: Record<string, number>): number {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { examId } = await params;
   const card = await getSharedCard(examId);
-  if (!card) return { title: 'AI-CAT 檢測結果' };
+  // 分享頁是使用者個人結果、內容量薄且網址無上限 → 不進搜尋索引（連結照樣可分享）。
+  const robots = { index: false, follow: false };
+  if (!card) return { title: 'AI-CAT 檢測結果', robots };
   const m = mean(card.scores);
   const title = `我的 AI 應用能力：${card.suggested_level}（AI SCORE ${m}）`;
   return {
     title: `${title}｜AI-CAT`,
     description: card.overall_summary,
+    robots,
+    alternates: { canonical: `/s/${examId}` },
     openGraph: {
       title,
       description: card.overall_summary,

@@ -11,9 +11,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/exam', '/auth/', '/api/'],
+      // 互動工具、登入流程、API、個人頁與個人分享頁不進索引
+      disallow: ['/exam', '/me', '/s/', '/auth/', '/api/'],
     },
     sitemap: `${siteConfig.url}/sitemap.xml`,
-    host: siteConfig.url,
+    host: new URL(siteConfig.url).host,
   };
 }

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     'Copyright and usage terms for the AI-CAT website, source code, mark, and content.',
   alternates: {
     canonical: '/ip/en',
-    languages: { 'zh-Hant': '/ip', en: '/ip/en' },
+    languages: { 'zh-Hant': '/ip', en: '/ip/en', 'x-default': '/ip' },
   },
 };
 

@@ -6,33 +6,41 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/config/site';
 
+/** 內容實際更新日；改版時再動，別用 new Date()（每次請求都變會被搜尋引擎打折）。 */
+const HOME_UPDATED = new Date('2026-09-09');
+const LEGAL_UPDATED = new Date('2026-09-08');
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
   const base = siteConfig.url;
 
   return [
-    { url: base, lastModified: now, changeFrequency: 'weekly', priority: 1 },
+    {
+      url: base,
+      lastModified: HOME_UPDATED,
+      changeFrequency: 'weekly',
+      priority: 1,
+    },
     {
       url: `${base}/privacy`,
-      lastModified: now,
+      lastModified: LEGAL_UPDATED,
       changeFrequency: 'yearly',
       priority: 0.4,
     },
     {
       url: `${base}/privacy/en`,
-      lastModified: now,
+      lastModified: LEGAL_UPDATED,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${base}/ip`,
-      lastModified: now,
+      lastModified: LEGAL_UPDATED,
       changeFrequency: 'yearly',
       priority: 0.4,
     },
     {
       url: `${base}/ip/en`,
-      lastModified: now,
+      lastModified: LEGAL_UPDATED,
       changeFrequency: 'yearly',
       priority: 0.3,
     },

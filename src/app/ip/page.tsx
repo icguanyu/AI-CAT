@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: 'AI-CAT 網站、原始碼、標誌與內容之著作權與使用規範。',
   alternates: {
     canonical: '/ip',
-    languages: { 'zh-Hant': '/ip', en: '/ip/en' },
+    languages: { 'zh-Hant': '/ip', en: '/ip/en', 'x-default': '/ip' },
   },
 };
 

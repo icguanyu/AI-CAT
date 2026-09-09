@@ -11,7 +11,11 @@ export const metadata: Metadata = {
     'How AI-CAT collects, uses, and retains personal data, and your rights.',
   alternates: {
     canonical: '/privacy/en',
-    languages: { 'zh-Hant': '/privacy', en: '/privacy/en' },
+    languages: {
+      'zh-Hant': '/privacy',
+      en: '/privacy/en',
+      'x-default': '/privacy',
+    },
   },
 };
 
