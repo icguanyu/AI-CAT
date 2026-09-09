@@ -38,7 +38,7 @@ import { GoogleIcon } from '@/components/GoogleIcon';
 import { AiCatMark } from '@/components/AiCatMark';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
-type Phase = 'idle' | 'chatting' | 'evaluating';
+type Phase = 'idle' | 'brief' | 'chatting' | 'evaluating';
 
 export default function ExamPage() {
   const router = useRouter();
@@ -178,18 +178,19 @@ export default function ExamPage() {
     setError(null);
     setBusy(true);
     try {
-      const r = await startExam(familiarity);
+      const r = await startExam();
       setExam(r);
       setQuota(r.quota);
       setMessages([]);
       setUserTurns(0);
-      setPhase('chatting');
+      setFamiliarity('mid');
+      setPhase('brief'); // 先看題目 → 自評熟悉度 → 開始對話
     } catch (e) {
       handleErr(e);
     } finally {
       setBusy(false);
     }
-  }, [handleErr, familiarity]);
+  }, [handleErr]);
 
   const send = useCallback(async () => {
     if (!exam || busy) return;
@@ -239,7 +240,7 @@ export default function ExamPage() {
     setBusy(true);
     setPhase('evaluating');
     try {
-      await evaluateExam(exam.examId);
+      await evaluateExam(exam.examId, familiarity);
       // 報告已寫入 Supabase；結果頁自行從 /api/exam/:examId/report 撈回，
       // 重新整理不會消失。
       router.push(`/exam/result/${exam.examId}`);
@@ -248,7 +249,7 @@ export default function ExamPage() {
       setPhase('chatting');
       setBusy(false);
     }
-  }, [exam, handleErr, router, voiceStop]);
+  }, [exam, handleErr, router, voiceStop, familiarity]);
 
   // ── 設定未完成 ──
   if (configError) {
@@ -346,31 +347,6 @@ export default function ExamPage() {
             一場約 5–10 分鐘，最多 10 輪對話。準備好就開始。
           </p>
           {quotaText && <p className="quota-line">{quotaText}</p>}
-
-          <div className="familiarity-pick">
-            <p className="fp-q">接下來會隨機抽一個職場情境。你對這類任務的熟悉度？</p>
-            <div
-              className="pill-toggle"
-              role="group"
-              aria-label="領域熟悉度"
-            >
-              {(['high', 'mid', 'low'] as Familiarity[]).map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  data-on={familiarity === f}
-                  onClick={() => setFamiliarity(f)}
-                >
-                  {FAMILIARITY_LABEL[f]}
-                </button>
-              ))}
-            </div>
-            <p className="fp-hint">
-              抽到的情境若不是你的領域，選「不熟」——評分會據此校準，
-              任務達成率只看題目明列的要求。
-            </p>
-          </div>
-
           {error && (
             <div className="notice notice-error" role="alert">
               <strong>無法開始檢測</strong>
@@ -383,7 +359,59 @@ export default function ExamPage() {
             onClick={begin}
             disabled={busy || outOfQuota}
           >
-            {outOfQuota ? '免費次數已用完' : busy ? '準備中…' : '開始檢測'}
+            {outOfQuota ? '免費次數已用完' : busy ? '抽題中…' : '開始檢測'}
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // ── 看題目 + 自評領域熟悉度（開始對話前）──
+  if (phase === 'brief' && exam) {
+    return (
+      <main className="exam-wrap">
+        {TopBar}
+        <div className="center-card panel brief-gate">
+          <div className="meta-row">
+            <strong>你的任務</strong>
+            <button
+              type="button"
+              className="linkbtn"
+              onClick={() => {
+                setPhase('idle');
+                setExam(null);
+              }}
+            >
+              換一題
+            </button>
+          </div>
+          <p className="brief">{exam.brief}</p>
+
+          <div className="familiarity-pick">
+            <p className="fp-q">你對這個情境的領域熟悉度？</p>
+            <div className="pill-toggle" role="group" aria-label="領域熟悉度">
+              {(['high', 'mid', 'low'] as Familiarity[]).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  data-on={familiarity === f}
+                  onClick={() => setFamiliarity(f)}
+                >
+                  {FAMILIARITY_LABEL[f]}
+                </button>
+              ))}
+            </div>
+            <p className="fp-hint">
+              不是你的領域就選「不熟」——評分會據此校準，任務達成率只看題目明列的要求。
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setPhase('chatting')}
+          >
+            開始對話
           </button>
         </div>
       </main>

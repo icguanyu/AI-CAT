@@ -66,16 +66,10 @@ export async function getQuota(): Promise<Quota> {
   return json as unknown as Quota;
 }
 
-export async function startExam(
-  familiarity: import('@/types/exam').Familiarity = 'mid',
-): Promise<StartResult> {
+export async function startExam(): Promise<StartResult> {
   const res = await fetch('/api/exam/start', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${await bearer()}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ familiarity }),
+    headers: { Authorization: `Bearer ${await bearer()}` },
   });
   const json = await parseBody(res);
   if (!res.ok) fail(json, res, '開始測驗失敗');
@@ -122,14 +116,17 @@ export interface EvalResult {
   debug: FixtureDebug | null;
 }
 
-export async function evaluateExam(examId: string): Promise<EvalResult> {
+export async function evaluateExam(
+  examId: string,
+  familiarity: import('@/types/exam').Familiarity = 'mid',
+): Promise<EvalResult> {
   const res = await fetch('/api/evaluate', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${await bearer()}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ examId }),
+    body: JSON.stringify({ examId, familiarity }),
   });
   const json = await parseBody(res);
   if (!res.ok) fail(json, res, '評分失敗');

@@ -82,8 +82,6 @@ export interface ExamState {
   /** 開始測驗時隨機挑中的變體索引。 */
   variantIndex: number;
   history: ChatMessage[];
-  /** 受測者開場自評的領域熟悉度（很熟 / 普通 / 不熟）。 */
-  familiarity: Familiarity;
   /** 這場擲中的注入輪次；0 = 整場不注入。開場時 rollInjectAtTurn() 決定。 */
   injectAtTurn: number;
   /** 幻覺陷阱是否已嘗試注入（走到 injectAtTurn 那一輪才會變 true）。 */

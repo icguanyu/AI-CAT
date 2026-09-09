@@ -14,7 +14,7 @@ import { consumeQuota } from '@/lib/quota';
 import { getScenarioVariant } from '@/lib/scenarios';
 import { computeLevel } from '@/lib/scoring';
 import { detectChallenge, runJudge, runExemplar } from '@/lib/judge';
-import type { Report, TrapReveal } from '@/types/exam';
+import { toFamiliarity, type Report, type TrapReveal } from '@/types/exam';
 import { errJson } from '@/lib/api-error';
 
 export const runtime = 'nodejs';
@@ -29,10 +29,16 @@ async function handle(req: Request): Promise<Response> {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
 
-  const { examId } = (await req.json()) as { examId?: string };
+  const body = (await req.json()) as {
+    examId?: string;
+    familiarity?: unknown;
+  };
+  const { examId } = body;
   if (!examId) {
     return Response.json({ error: '缺少 examId' }, { status: 400 });
   }
+  // 領域熟悉度：看到 brief 後才自評，提交時一起送（不進 ExamState）。
+  const familiarity = toFamiliarity(body.familiarity);
 
   const state = await getExam(examId);
   if (!state) {
@@ -68,7 +74,7 @@ async function handle(req: Request): Promise<Response> {
       trapEffective,
       injectionText: state.injectionText,
       verifyHint: scenario.verifyHint,
-      familiarity: state.familiarity ?? 'mid',
+      familiarity,
       ruleChallenged,
     }),
     runExemplar({
@@ -116,7 +122,7 @@ async function handle(req: Request): Promise<Response> {
           injectionText: state.injectionText,
           injectAtTurn: state.injectAtTurn ?? 2,
           verifyHint: scenario.verifyHint,
-          familiarity: state.familiarity ?? 'mid',
+          familiarity,
           history: state.history,
         }
       : undefined;
@@ -142,8 +148,8 @@ async function handle(req: Request): Promise<Response> {
       exemplar,
       // 受測者顯示名稱快照（Google 登入當下的 full_name）；結果卡片用。
       user_name: auth.name,
-      // 開場自評的領域熟悉度；報告頁顯示為分數的脈絡。
-      familiarity: state.familiarity ?? 'mid',
+      // 看到 brief 後自評的領域熟悉度；報告頁顯示為分數的脈絡。
+      familiarity,
       // 存進 jsonb，讓 /exam/result/:examId 重新整理後能還原陷阱對照；
       // 公開分享頁 /s 讀不到這個欄位（見 getSharedCard 只挑非機密欄位）。
       trap,
