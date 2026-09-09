@@ -95,7 +95,6 @@ async function handle(req: Request): Promise<Response> {
   const { level, average } = computeLevel(judged.scores, {
     trapEffective,
     challenged,
-    scenarioId: state.scenarioId,
   });
 
   const report: Report = {
