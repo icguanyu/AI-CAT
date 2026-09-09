@@ -49,21 +49,21 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0b0c0d;
-  --card: #101214;
-  --bg-alt: #16181a;
+  --card: #17191c;
+  --bg-alt: #1f2225;
   --fg: #f4f4f1;
-  --fg-sub: #7e8488;
-  --fg-muted: #a9aeb1;
-  --fg-faint: #8a8f92;
-  --border: #1e2022;
-  --grid: #26292c;
+  --fg-sub: #8d9398;
+  --fg-muted: #b4b9bd;
+  --fg-faint: #979ca1;
+  --border: #33373c;
+  --grid: #3a3f45;
   --accent-ink: #d8ff4f;
   --cta-bg: #d8ff4f;
   --cta-fg: #0b0c0d;
   --hl-bg: transparent;
   --hl-fg: #d8ff4f;
   --radar-base: transparent;
-  --radar-fill: rgba(216, 255, 79, 0.14);
+  --radar-fill: rgba(216, 255, 79, 0.19);
   --radar-stroke: #d8ff4f;
   --radius: 6px;
   --panel-radius: 10px;
@@ -76,21 +76,21 @@
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
     color-scheme: dark;
     --bg: #0b0c0d;
-    --card: #101214;
-    --bg-alt: #16181a;
+    --card: #17191c;
+    --bg-alt: #1f2225;
     --fg: #f4f4f1;
-    --fg-sub: #7e8488;
-    --fg-muted: #a9aeb1;
-    --fg-faint: #8a8f92;
-    --border: #1e2022;
-    --grid: #26292c;
+    --fg-sub: #8d9398;
+    --fg-muted: #b4b9bd;
+    --fg-faint: #979ca1;
+    --border: #33373c;
+    --grid: #3a3f45;
     --accent-ink: #d8ff4f;
     --cta-bg: #d8ff4f;
     --cta-fg: #0b0c0d;
     --hl-bg: transparent;
     --hl-fg: #d8ff4f;
     --radar-base: transparent;
-    --radar-fill: rgba(216, 255, 79, 0.14);
+    --radar-fill: rgba(216, 255, 79, 0.19);
     --radar-stroke: #d8ff4f;
     --radius: 6px;
     --panel-radius: 10px;
@@ -246,6 +246,17 @@ section + section {
 .pill-toggle button[data-on="true"] {
   background: var(--cta-bg);
   color: var(--cta-fg);
+}
+
+/* 日 / 月 icon 版：段落收窄置中，SVG 對齊 */
+.pill-toggle--icon span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 9px;
+}
+.pill-toggle--icon svg {
+  display: block;
 }
 
 .hero p {
@@ -1817,6 +1828,9 @@ footer {
   justify-content: space-between;
   gap: 10px;
   padding: 6px 10px;
+}
+.acct-row--theme {
+  justify-content: center;
 }
 .acct-sep {
   height: 1px;

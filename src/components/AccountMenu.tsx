@@ -124,8 +124,7 @@ export function AccountMenu() {
         <div className="acct-menu" role="menu">
           {name && <div className="acct-name">{name}</div>}
 
-          <div className="acct-row">
-            <span className="mono-label">主題</span>
+          <div className="acct-row acct-row--theme">
             <ThemeToggle />
           </div>
 
