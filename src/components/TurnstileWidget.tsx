@@ -96,5 +96,11 @@ export function TurnstileWidget({
   }, [onVerify, onExpire]);
 
   if (!SITE_KEY) return null;
-  return <div ref={boxRef} className="turnstile-box" />;
+  return (
+    <div
+      ref={boxRef}
+      className="turnstile-box"
+      style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}
+    />
+  );
 }
