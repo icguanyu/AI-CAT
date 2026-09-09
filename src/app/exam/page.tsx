@@ -115,6 +115,7 @@ function ExamPageInner() {
   const [confirmingSubmit, setConfirmingSubmit] = useState(false);
   // 視窗是否為窄版（手機）：Enter 一律換行、輸入框改 sticky
   const [isNarrow, setIsNarrow] = useState(false);
+  const logRef = useRef<HTMLDivElement>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // 語音輸入：按下麥克風時先記住現有內容，辨識結果接在後面
@@ -193,10 +194,21 @@ function ExamPageInner() {
     };
   }, [searchParams, session, trialResult]);
 
+  // 對話自動捲到底：桌機 .chat-log 自己會捲時只動它（不劫持整頁捲軸）；
+  // 手機（.chat-log overflow:visible）才退回用哨兵捲整頁。
   useEffect(() => {
-    // 用哨兵捲到底，桌機捲 .chat-log、手機捲整頁都適用
-    logEndRef.current?.scrollIntoView({ block: 'end' });
+    const el = logRef.current;
+    if (el && el.scrollHeight > el.clientHeight + 1) {
+      el.scrollTop = el.scrollHeight;
+    } else {
+      logEndRef.current?.scrollIntoView({ block: 'end' });
+    }
   }, [messages]);
+
+  // 切換情境／畫面（idle → brief → chatting …）時，整頁捲軸回到最上面
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [phase]);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 820px)');
@@ -461,7 +473,7 @@ function ExamPageInner() {
                   onClick={signIn}
                 >
                   <GoogleIcon />
-                  登入後開始（每日 3 場免費）
+                  登入後開始
                 </button>
               </div>
             </>
@@ -476,7 +488,7 @@ function ExamPageInner() {
   const outOfQuota = outOfDaily || outOfTotal;
   const quotaText =
     quota != null
-      ? `今日 ${quota.dayUsed} / ${quota.dayLimit} 次 · 累計 ${quota.used} / ${quota.limit} 次`
+      ? `今日 ${quota.dayUsed} / ${quota.dayLimit} 次 · 累計 ${quota.used} 次`
       : null;
   const quotaButtonText = outOfTotal
     ? '檢測次數已用完'
@@ -620,7 +632,7 @@ function ExamPageInner() {
             </span>
           </div>
 
-          <div className="chat-log">
+          <div className="chat-log" ref={logRef}>
             {messages.map((m, i) => (
               <div key={i} className={`bubble ${m.role}`}>
                 {m.role === 'assistant' ? (
@@ -762,8 +774,8 @@ function ExamPageInner() {
                 onClick={() => setConfirmingSubmit(true)}
                 disabled={busy || messages.length === 0}
               >
-                <AiCatMark size={15} />
-                提交評分，交給 AI 裁判
+                <AiCatMark size={16} />
+                提交評分
               </button>
             )}
           </div>
