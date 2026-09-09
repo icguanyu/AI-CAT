@@ -52,6 +52,10 @@ export const PUBLIC_SANDBOX_MODEL =
 /** 公開試用池每月上限（台北時間跨月重置）；用完就只給登入。 */
 export const PUBLIC_TRIAL_MONTHLY_LIMIT =
   Number(process.env.PUBLIC_TRIAL_MONTHLY_LIMIT) || 300;
+/** 公開試用池每日子上限（防一次爆量把整月燒光）；台北時間跨日重置。 */
+export const PUBLIC_TRIAL_DAILY_LIMIT =
+  Number(process.env.PUBLIC_TRIAL_DAILY_LIMIT) ||
+  Math.max(5, Math.ceil(PUBLIC_TRIAL_MONTHLY_LIMIT / 12));
 /** 試用場的對話輪次上限（比登入版短，壓成本）。 */
 export const PUBLIC_TRIAL_MAX_TURNS =
   Number(process.env.PUBLIC_TRIAL_MAX_TURNS) || 6;

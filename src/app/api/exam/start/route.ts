@@ -18,6 +18,7 @@ import {
   markAnonUsed,
   tryConsumePublicSlot,
   releasePublicSlot,
+  bumpTrialMetric,
 } from '@/lib/public-pool';
 import { checkQuota } from '@/lib/quota';
 import { listScenarioIds, resolveScenario } from '@/lib/scenarios';
@@ -138,7 +139,9 @@ async function handle(req: Request): Promise<Response> {
       {
         code: 'PUBLIC_POOL_EXHAUSTED',
         error:
-          '這個月的免費公開試用額度太熱門、已經被用完了。登入即可立刻繼續使用你自己的免費額度（每日 3 場）。',
+          slot.reason === 'daily'
+            ? '今天的免費公開試用額度剛好被用完了，明天請早——或登入即可立刻繼續使用你自己的免費額度（每日 3 場）。'
+            : '這個月的免費公開試用額度太熱門、已經被用完了。登入即可立刻繼續使用你自己的免費額度（每日 3 場）。',
       },
       { status: 403, ...(setCookie ? { headers: { 'set-cookie': setCookie } } : {}) },
     );
@@ -154,6 +157,7 @@ async function handle(req: Request): Promise<Response> {
   }
 
   await markAnonUsed(anonId);
+  void bumpTrialMetric('started');
 
   const examId = crypto.randomUUID();
   const state: ExamState = {

@@ -8,7 +8,11 @@
  */
 import { requireAuth, getSupabaseAdmin } from '@/lib/supabase';
 import { readAnonId } from '@/lib/anon';
-import { getAnonReport, deleteAnonReport } from '@/lib/public-pool';
+import {
+  getAnonReport,
+  deleteAnonReport,
+  bumpTrialMetric,
+} from '@/lib/public-pool';
 import { errJson } from '@/lib/api-error';
 
 export const runtime = 'nodejs';
@@ -75,5 +79,6 @@ async function handle(
   }
 
   await deleteAnonReport(examId);
+  void bumpTrialMetric('claimed');
   return Response.json({ examId });
 }

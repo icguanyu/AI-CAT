@@ -11,7 +11,6 @@ import { HeroRadar } from '@/components/HeroRadar';
 import { ResultCard } from '@/components/ResultCard';
 import { AiCatMark } from '@/components/AiCatMark';
 import { CatDecor } from '@/components/CatDecor';
-import { GoogleIcon } from '@/components/GoogleIcon';
 import { siteConfig } from '@/config/site';
 
 // openGraph / twitter 由 root layout 提供完整版（type / siteName / locale / image）；
@@ -288,7 +287,8 @@ export default function HomePage() {
         <div className="wrap">
           <h2>準備好了嗎？</h2>
           <p className="section-sub">
-            使用 Google 登入即可開始。每日 3 場免費、隔日重置，帳號累計上限 21 場。
+            不用註冊，先免費試一場。想保存結果、追蹤進步再用 Google 登入——
+            登入後每日 3 場免費（隔日重置），帳號累計上限 21 場。
           </p>
           <div className="highlight">
             <ul>
@@ -305,8 +305,7 @@ export default function HomePage() {
             </ul>
             <p style={{ marginTop: 24 }}>
               <Link className="cta" href="/exam">
-                <GoogleIcon />
-                使用 Google 登入並開始
+                免費試一場 →
               </Link>
             </p>
           </div>

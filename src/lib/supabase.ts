@@ -25,7 +25,7 @@ export function getSupabaseAdmin(): SupabaseClient {
 }
 
 export type AuthResult =
-  | { userId: string; name: string | null }
+  | { userId: string; name: string | null; email: string | null }
   | { error: string; status: number };
 
 /**
@@ -59,5 +59,9 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
     (typeof meta.name === 'string' && meta.name.trim()) ||
     null;
 
-  return { userId: data.user.id, name };
+  return {
+    userId: data.user.id,
+    name,
+    email: data.user.email?.toLowerCase() ?? null,
+  };
 }

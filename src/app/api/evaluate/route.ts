@@ -11,7 +11,7 @@
 import { getExam, deleteExam } from '@/lib/redis';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { resolveActor, ownsExam } from '@/lib/actor';
-import { setAnonReport } from '@/lib/public-pool';
+import { setAnonReport, bumpTrialMetric } from '@/lib/public-pool';
 import { consumeQuota } from '@/lib/quota';
 import { getScenarioVariant } from '@/lib/scenarios';
 import { computeLevel } from '@/lib/scoring';
@@ -163,6 +163,7 @@ async function handle(req: Request): Promise<Response> {
       createdAt: Date.now(),
     };
     await setAnonReport(examId, blob);
+    void bumpTrialMetric('completed');
     await deleteExam(examId).catch(() => {});
     return Response.json({
       success: true,
