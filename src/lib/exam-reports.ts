@@ -9,7 +9,16 @@
  * 全部走 service_role client（繞過 RLS），呼叫端負責驗證身分。
  */
 import { getSupabaseAdmin } from '@/lib/supabase';
-import type { Report, TrapReveal, Familiarity } from '@/types/exam';
+import { weightedAverage } from '@/lib/scoring';
+import type {
+  Report,
+  TrapReveal,
+  Familiarity,
+  Category,
+  ExamListItem,
+} from '@/types/exam';
+
+export type { ExamListItem };
 
 /** exam_reports.report jsonb 實際存的形狀（ReportSchema + 後端附加欄位）。 */
 interface StoredReport extends Report {
@@ -21,6 +30,10 @@ interface StoredReport extends Report {
   user_name?: string | null;
   /** 開場自評的領域熟悉度；舊報告可能沒有。 */
   familiarity?: Familiarity;
+  /** 情境的領域分類快照；舊報告可能沒有。 */
+  category?: Category;
+  /** 情境的中文標題快照；舊報告可能沒有。 */
+  titleZh?: string;
   /** 僅本地開發寫入；型別留寬鬆，前端 client-api 有精確型別。 */
   debug?: unknown;
 }
@@ -95,6 +108,34 @@ export async function getSharedCard(examId: string): Promise<SharedCard | null> 
     overall_summary: r.overall_summary,
     name: r.user_name ?? null,
   };
+}
+
+/** 本人所有已提交測驗，新到舊。 */
+export async function listOwnerExams(
+  userId: string,
+): Promise<ExamListItem[]> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('exam_reports')
+    .select('exam_id, created_at, shared, report')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error || !data) return [];
+  return data.map((row) => {
+    const r = row.report as StoredReport;
+    return {
+      examId: row.exam_id as string,
+      createdAt: row.created_at as string,
+      titleZh: r.titleZh ?? null,
+      category: r.category ?? null,
+      suggestedLevel: r.suggested_level,
+      weightedAverage: r.weighted_average ?? weightedAverage(r.scores),
+      scores: r.scores,
+      familiarity: r.familiarity ?? null,
+      challenged: Boolean(r.user_challenged),
+      shared: Boolean(row.shared),
+    };
+  });
 }
 
 export async function setShared(

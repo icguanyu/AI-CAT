@@ -2438,3 +2438,130 @@ footer {
     font-size: 1.7rem;
   }
 }
+
+/* ══ /me 個人檢測紀錄 ══════════════════════════════════ */
+.me-view {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.me-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.me-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.me-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--panel-radius);
+  background: var(--card);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.me-row:hover {
+  border-color: var(--accent-ink);
+}
+.me-lv {
+  flex: 0 0 auto;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--accent-ink);
+  width: 2.2em;
+  text-align: center;
+}
+.me-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.me-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.me-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.me-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  color: var(--fg-muted);
+}
+.me-chip.ghost {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--fg-faint);
+}
+.me-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 22px;
+}
+.me-bars > span {
+  width: 6px;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: var(--bg-alt);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.me-bars > span > span {
+  width: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.me-side {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.me-score {
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.me-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-faint);
+}
+
+@media (max-width: 560px) {
+  .me-row {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .me-lv {
+    font-size: 1.15rem;
+    width: 1.8em;
+  }
+}

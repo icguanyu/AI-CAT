@@ -7,7 +7,12 @@
  */
 'use client';
 
-import type { Report, TrapReveal, ChatMessage } from '@/types/exam';
+import type {
+  Report,
+  TrapReveal,
+  ChatMessage,
+  ExamListItem,
+} from '@/types/exam';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 
 export class ApiError extends Error {
@@ -165,6 +170,18 @@ export async function getExamReport(examId: string): Promise<ReportBundle> {
     debug: (json.debug as FixtureDebug | undefined) ?? null,
     shared: Boolean(json.shared),
   };
+}
+
+export type { ExamListItem };
+
+/** 本人的檢測歷史（新到舊）。 */
+export async function getMyExams(): Promise<ExamListItem[]> {
+  const res = await fetch('/api/me/exams', {
+    headers: { Authorization: `Bearer ${await bearer()}` },
+  });
+  const json = await parseBody(res);
+  if (!res.ok) fail(json, res, '讀取檢測紀錄失敗');
+  return (json.exams as ExamListItem[] | undefined) ?? [];
 }
 
 /** 切換公開分享旗標。shared=true → POST；false → DELETE。 */

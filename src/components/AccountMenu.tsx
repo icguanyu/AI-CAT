@@ -8,6 +8,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
@@ -131,14 +132,24 @@ export function AccountMenu() {
           <div className="acct-sep" />
 
           {user ? (
-            <button
-              type="button"
-              className="acct-item"
-              role="menuitem"
-              onClick={signOut}
-            >
-              登出
-            </button>
+            <>
+              <Link
+                href="/me"
+                className="acct-item"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+              >
+                我的檢測紀錄
+              </Link>
+              <button
+                type="button"
+                className="acct-item"
+                role="menuitem"
+                onClick={signOut}
+              >
+                登出
+              </button>
+            </>
           ) : (
             <button
               type="button"

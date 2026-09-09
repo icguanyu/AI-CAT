@@ -181,6 +181,20 @@ export const JudgeSchema = z.object({
 
 export type Judged = z.infer<typeof JudgeSchema>;
 
+/** 個人歷史列表的一列（精簡；點進去才拿完整報告）。見 lib/exam-reports.ts。 */
+export interface ExamListItem {
+  examId: string;
+  createdAt: string;
+  titleZh: string | null;
+  category: Category | null;
+  suggestedLevel: LevelCode;
+  weightedAverage: number;
+  scores: Judged['scores'];
+  familiarity: Familiarity | null;
+  challenged: boolean;
+  shared: boolean;
+}
+
 /** 回傳給前端的完整報告：裁判輸出 + 後端計算的分級。 */
 export const ReportSchema = JudgeSchema.extend({
   suggested_level: z.enum(['L1', 'L2', 'L3', 'L4', 'L5']).describe('後端依加權分數與規則計算'),
