@@ -1,21 +1,26 @@
 /**
  * 檔案：src/app/me/page.tsx  →  /me
- * 角色：前端層 — 個人檢測歷史列表
- * 功能：驗證登入 → GET /api/me/exams → 逐列（標題 · 日期 · L 分級 · 五維迷你條 ·
- *       分類 / 熟悉度標籤）→ 點列進 /exam/result/:examId。綜合分數彙總留待 P2。
+ * 角色：前端層 — 個人檢測歷史 + 綜合能力估計
+ * 功能：驗證登入 → GET /api/me/exams →
+ *       上方：綜合彙總（相異分類近期加權；≥3 種分類才給綜合分級）
+ *       下方：逐列（標題 · 日期 · L 分級 · 五維迷你條 · 分類 / 熟悉度標籤）→ /exam/result/:examId
  */
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { PageLoading } from '@/components/PageLoading';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 import { getMyExams, type ExamListItem } from '@/lib/client-api';
+import { aggregateExams } from '@/lib/aggregate';
 import { AccountMenu } from '@/components/AccountMenu';
 import { AiCatMark } from '@/components/AiCatMark';
+import { ScoreRadar } from '@/components/ScoreRadar';
 import {
   CATEGORY_LABEL,
   FAMILIARITY_LABEL,
+  LEVEL_NAME,
   type Report,
 } from '@/types/exam';
 
@@ -73,6 +78,8 @@ export default function MyExamsPage() {
     };
   }, [session]);
 
+  const agg = useMemo(() => aggregateExams(exams ?? []), [exams]);
+
   const signIn = useCallback(() => {
     void getSb().auth.signInWithOAuth({
       provider: 'google',
@@ -85,7 +92,7 @@ export default function MyExamsPage() {
   const Header = (
     <header className="result-topbar">
       <Link href="/" className="topbar-brand" aria-label="AI-CAT 首頁">
-        <AiCatMark size={18} />
+        <AiCatMark size={24} />
       </Link>
       <AccountMenu />
     </header>
@@ -126,7 +133,7 @@ export default function MyExamsPage() {
       <main className="exam-wrap">
         {Header}
         <div className="center-card">
-          <p>載入中…</p>
+          <PageLoading />
         </div>
       </main>
     );
@@ -149,7 +156,63 @@ export default function MyExamsPage() {
             </Link>
           </div>
         ) : (
-          <ul className="me-list">
+          <>
+            {agg.composite && (
+              <section
+                className={`me-summary${agg.compositeLevel ? '' : ' pending'}`}
+              >
+                <div className="me-sum-radar">
+                  <ScoreRadar scores={agg.composite} />
+                </div>
+                <div className="me-sum-meta">
+                  {agg.compositeLevel ? (
+                    <>
+                      <div className="me-sum-lv">
+                        <b>{agg.compositeLevel}</b>
+                        <span>{LEVEL_NAME[agg.compositeLevel]}</span>
+                      </div>
+                      <div className="me-sum-score">
+                        <span className="n">{agg.compositeAverage}</span>
+                        <span className="k">AI SCORE</span>
+                      </div>
+                      <p className="me-sum-note">
+                        {agg.totalExams} 場 · {agg.distinctCategories} 種分類 ·
+                        每種分類取近期加權，跨分類平均
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="me-sum-gate">綜合分級</p>
+                      <p className="me-sum-gate-n">
+                        再做 {agg.gateNeeded} 種不同分類的情境就能算出
+                      </p>
+                      <p className="me-sum-note">
+                        目前 {agg.distinctCategories} / 3 種分類 · {agg.totalExams}{' '}
+                        場
+                      </p>
+                    </>
+                  )}
+                  {agg.perCategory.length > 0 && (
+                    <ul className="me-sum-cats">
+                      {agg.perCategory.map((c) => (
+                        <li key={c.category}>
+                          <span className="me-sum-cat-name">{c.label}</span>
+                          <span className="me-sum-cat-bar">
+                            <span style={{ width: `${c.average}%` }} />
+                          </span>
+                          <span className="me-sum-cat-val">
+                            {c.average}
+                            <em>{c.level}</em>
+                          </span>
+                          <span className="me-sum-cat-n">×{c.count}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </section>
+            )}
+            <ul className="me-list">
             {exams.map((e) => (
               <li key={e.examId}>
                 <Link className="me-row" href={`/exam/result/${e.examId}`}>
@@ -186,7 +249,8 @@ export default function MyExamsPage() {
                 </Link>
               </li>
             ))}
-          </ul>
+            </ul>
+          </>
         )}
 
         <Link className="btn ghost" href="/exam" style={{ marginTop: 8 }}>

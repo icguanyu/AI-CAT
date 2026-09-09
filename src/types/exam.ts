@@ -151,6 +151,15 @@ export interface ExamState {
 
 export type LevelCode = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
 
+/** L1–L5 的身份名（結果卡片 / 個人頁共用）。 */
+export const LEVEL_NAME: Record<LevelCode, string> = {
+  L1: 'AI NOVICE',
+  L2: 'AI USER',
+  L3: 'AI PRACTITIONER',
+  L4: 'AI COLLABORATOR',
+  L5: 'AI ORCHESTRATOR',
+};
+
 /** 裁判模型直接輸出的部分：五維度分數 + 總評 + 條列回饋（不含分級，分級由後端計算）。 */
 export const JudgeSchema = z.object({
   scores: z.object({

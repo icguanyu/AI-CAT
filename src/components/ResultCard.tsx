@@ -7,17 +7,9 @@
  */
 'use client';
 
-import type { Report } from '@/types/exam';
+import { LEVEL_NAME, type Report } from '@/types/exam';
 import { AiCatMark } from '@/components/AiCatMark';
 import { ScoreRadar } from '@/components/ScoreRadar';
-
-const LEVEL_NAME: Record<string, string> = {
-  L1: 'AI NOVICE',
-  L2: 'AI USER',
-  L3: 'AI PRACTITIONER',
-  L4: 'AI COLLABORATOR',
-  L5: 'AI ORCHESTRATOR',
-};
 
 /** 與 METRIC_LABELS 相同的鍵序（雷達五軸的順序）。 */
 const ORDER: (keyof Report['scores'])[] = [
