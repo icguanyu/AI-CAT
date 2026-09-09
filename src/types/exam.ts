@@ -88,11 +88,16 @@ export interface ScenarioVariant {
 
 /**
  * 情境題定義（system / injectionText 為機密，存 Supabase scenarios 表）。
+ * 題庫來源（本機 json / Supabase）都是 `Scenario[]`，以 `id` 為唯一鍵。
  * 舊格式 `{ brief, system, injectionText }` 由載入器自動轉為單一 variant。
  */
 export interface Scenario {
+  /** 唯一鍵；一場測驗跨輪次靠它接回同一題。動態產題時是實例 id。 */
+  id: string;
   /** 領域分類（封閉詞彙）。彙總 / 自評 / 動態產題的穩定分組單位。 */
   category: Category;
+  /** 給人看的中文標題（歷史列表 / log 用）。 */
+  titleZh: string;
   /** 給受測者看的任務說明與限制條件（變體可覆寫）。 */
   brief: string;
   /** 沙盒模型的 system 指令（機密）。 */
@@ -105,6 +110,7 @@ export interface Scenario {
 export interface ResolvedScenario {
   scenarioId: string;
   category: Category;
+  titleZh: string;
   variantIndex: number;
   brief: string;
   system: string;

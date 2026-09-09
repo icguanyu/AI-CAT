@@ -1,9 +1,10 @@
 /**
  * 檔案：scripts/import-scenarios.ts
  * 角色：開發工具 — 把本機題庫檔（scenarios.local.json）匯入 Supabase `scenarios` 表
- * 功能：讀 JSON → 逐題 upsert（以 id 為主鍵）到 Supabase PostgREST。用 service_role
- *       金鑰，繞過 RLS。變體陣列（含 injectionText / correction / verifyHint …）原樣
- *       寫入 jsonb。直接打 REST，不經 @supabase/supabase-js（省得踩 Node 的 WebSocket）。
+ * 功能：讀 JSON 陣列（每筆 { id, category, titleZh, brief, system, variants }）→ 逐題
+ *       upsert（以 id 為主鍵）到 Supabase PostgREST。用 service_role 金鑰繞過 RLS。
+ *       變體陣列（含 injectionText / correction / verifyHint …）原樣寫入 jsonb。
+ *       直接打 REST，不經 @supabase/supabase-js（省得踩 Node 的 WebSocket）。
  *
  * 用法：
  *   npm run scenarios:import                       # 匯入 scenarios.local.json
@@ -38,6 +39,8 @@ function loadEnvLocal() {
 
 type RawVariant = { injectionText?: unknown };
 type RawScenario = {
+  id?: unknown;
+  titleZh?: unknown;
   brief?: unknown;
   system?: unknown;
   variants?: unknown;
@@ -47,6 +50,7 @@ type RawScenario = {
 
 interface Row {
   id: string;
+  title_zh: string;
   brief: string;
   system: string;
   variants: unknown[];
@@ -55,7 +59,13 @@ interface Row {
   note: string | null;
 }
 
-function toRow(id: string, raw: RawScenario): Row {
+function toRow(raw: RawScenario): Row {
+  const id =
+    typeof raw.id === 'string' && raw.id.trim() !== '' ? raw.id : undefined;
+  if (!id) throw new Error(`題目缺少 id：${JSON.stringify(raw).slice(0, 80)}`);
+  if (typeof raw.titleZh !== 'string' || raw.titleZh.trim() === '') {
+    throw new Error(`題目 ${id}：titleZh 缺少或非字串`);
+  }
   if (!isCategory(raw.category)) {
     throw new Error(
       `題目 ${id}：category 缺少或非法（「${String(raw.category)}」，見 src/types/exam.ts CATEGORY_LABEL）`,
@@ -77,6 +87,7 @@ function toRow(id: string, raw: RawScenario): Row {
   });
   return {
     id,
+    title_zh: raw.titleZh,
     brief: raw.brief,
     system: raw.system,
     variants: raw.variants,
@@ -107,16 +118,17 @@ async function main() {
     'Content-Type': 'application/json',
   };
 
-  const parsed = JSON.parse(readFileSync(path, 'utf8')) as Record<
-    string,
-    RawScenario
-  >;
-  const rows = Object.entries(parsed).map(([id, raw]) => toRow(id, raw));
+  const parsed = JSON.parse(readFileSync(path, 'utf8')) as unknown;
+  if (!Array.isArray(parsed)) {
+    console.error(`${path} 的 root 應為陣列 [ {...} ]`);
+    process.exit(1);
+  }
+  const rows = (parsed as RawScenario[]).map(toRow);
 
   console.log(`來源：${path}  →  ${new URL(base).host}`);
   for (const r of rows) {
     console.log(
-      `  ${r.id}  變體 ${r.variants.length}  category=${r.category ?? '-'}` +
+      `  ${r.id}  「${r.title_zh}」  ${r.category}  變體 ${r.variants.length}` +
         `  brief ${r.brief.length} 字  system ${r.system.length} 字`,
     );
   }

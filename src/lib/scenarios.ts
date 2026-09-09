@@ -5,9 +5,9 @@
  *       → 改題不用 redeploy。**沒有 env fallback**：載入失敗或無題目一律丟錯，
  *       由呼叫端回明確錯誤給前端。支援每題多個隨機變體。題目內容機密，不進版控。
  *
- * scenario 形狀（DB 欄位）：
- *   { category, brief, system, variants: [ { injectionText, correction?, brief?, verifyHint? }, ... ] }
- * category 必填且須在 CATEGORY_LABEL（見 types/exam.ts）內，否則載入丟錯。
+ * 題庫來源都是 `Scenario[]`（本機 json 的 root、Supabase 的資料列），以 `id` 為唯一鍵。
+ * 每筆：{ id, category, titleZh, brief, system, variants: [ { injectionText, correction?, brief?, verifyHint? } ] }
+ * id / category / titleZh 缺一不可；category 須在 CATEGORY_LABEL（見 types/exam.ts）內，否則載入丟錯。
  * 舊形狀 { brief, system, injectionText } 仍相容（自動轉成單一 variant）。
  */
 import { readFileSync } from 'node:fs';
@@ -19,16 +19,24 @@ const TTL_MS = 60_000;
 let cache: { at: number; data: Record<string, Scenario> } | null = null;
 
 type RawScenario = {
+  id?: unknown;
   category?: unknown;
+  titleZh?: unknown;
   brief?: unknown;
   system?: unknown;
   injectionText?: unknown;
   variants?: unknown;
 };
 
-function normalize(id: string, raw: RawScenario): Scenario {
+function normalize(raw: RawScenario): Scenario {
+  const id =
+    typeof raw.id === 'string' && raw.id.trim() !== '' ? raw.id : undefined;
+  if (!id) throw new Error(`情境題缺少 id：${JSON.stringify(raw).slice(0, 80)}`);
   if (typeof raw.brief !== 'string' || typeof raw.system !== 'string') {
     throw new Error(`情境題 ${id} 缺少 brief 或 system`);
+  }
+  if (typeof raw.titleZh !== 'string' || raw.titleZh.trim() === '') {
+    throw new Error(`情境題 ${id} 缺少 titleZh`);
   }
   if (!isCategory(raw.category)) {
     throw new Error(
@@ -70,7 +78,25 @@ function normalize(id: string, raw: RawScenario): Scenario {
   } else {
     throw new Error(`情境題 ${id} 需要 injectionText 或非空的 variants`);
   }
-  return { category: raw.category, brief: raw.brief, system: raw.system, variants };
+  return {
+    id,
+    category: raw.category,
+    titleZh: raw.titleZh,
+    brief: raw.brief,
+    system: raw.system,
+    variants,
+  };
+}
+
+/** `Scenario[]` → 以 id 為鍵的 Record；重複 id 丟錯。 */
+function toRecord(list: RawScenario[]): Record<string, Scenario> {
+  const out: Record<string, Scenario> = {};
+  for (const raw of list) {
+    const s = normalize(raw);
+    if (out[s.id]) throw new Error(`情境題 id 重複：${s.id}`);
+    out[s.id] = s;
+  }
+  return out;
 }
 
 /** 題庫載入失敗（可與「題庫為空」區分）。 */
@@ -78,7 +104,7 @@ export class ScenarioLoadError extends Error {}
 
 /**
  * 本機開發覆寫：專案根目錄有 scenarios.local.json（已 gitignore）時，
- * 開發模式下「只用這個檔」，完全不碰 Supabase。形狀同 { [id]: Scenario }。
+ * 開發模式下「只用這個檔」，完全不碰 Supabase。root 為 `Scenario[]`。
  */
 function loadLocalOverride(): Record<string, Scenario> | null {
   if (process.env.NODE_ENV === 'production') return null;
@@ -91,15 +117,16 @@ function loadLocalOverride(): Record<string, Scenario> | null {
       `讀取 scenarios.local.json 失敗：${(e as Error).message}`,
     );
   }
-  let parsed: Record<string, RawScenario>;
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(raw) as Record<string, RawScenario>;
+    parsed = JSON.parse(raw);
   } catch {
     throw new ScenarioLoadError('scenarios.local.json 不是合法的 JSON');
   }
-  return Object.fromEntries(
-    Object.entries(parsed).map(([id, r]) => [id, normalize(id, r)]),
-  );
+  if (!Array.isArray(parsed)) {
+    throw new ScenarioLoadError('scenarios.local.json 的 root 應為陣列 [ {...} ]');
+  }
+  return toRecord(parsed as RawScenario[]);
 }
 
 async function load(): Promise<Record<string, Scenario>> {
@@ -110,7 +137,7 @@ async function load(): Promise<Record<string, Scenario>> {
   try {
     const { data, error } = await getSupabaseAdmin()
       .from('scenarios')
-      .select('id, category, brief, system, variants')
+      .select('id, category, titleZh:title_zh, brief, system, variants')
       .eq('active', true);
     if (error) {
       throw new ScenarioLoadError(`題庫載入失敗：${error.message}`);
@@ -126,13 +153,7 @@ async function load(): Promise<Record<string, Scenario>> {
   if (!Array.isArray(rows)) {
     throw new ScenarioLoadError('題庫載入失敗：回應格式異常');
   }
-
-  return Object.fromEntries(
-    rows.map((row) => {
-      const r = row as { id: string } & RawScenario;
-      return [r.id, normalize(r.id, r)];
-    }),
-  );
+  return toRecord(rows as RawScenario[]);
 }
 
 export async function getScenarios(): Promise<Record<string, Scenario>> {
@@ -153,16 +174,13 @@ export async function listScenarioIds(): Promise<string[]> {
   return Object.keys(await getScenarios());
 }
 
-function flatten(
-  id: string,
-  scenario: Scenario,
-  variantIndex: number,
-): ResolvedScenario {
+function flatten(scenario: Scenario, variantIndex: number): ResolvedScenario {
   const idx = scenario.variants[variantIndex] ? variantIndex : 0;
   const variant = scenario.variants[idx];
   return {
-    scenarioId: id,
+    scenarioId: scenario.id,
     category: scenario.category,
+    titleZh: scenario.titleZh,
     variantIndex: idx,
     brief: variant.brief ?? scenario.brief,
     system: scenario.system,
@@ -176,7 +194,7 @@ function flatten(
 export async function resolveScenario(id: string): Promise<ResolvedScenario> {
   const scenario = await getScenario(id);
   const variantIndex = Math.floor(Math.random() * scenario.variants.length);
-  return flatten(id, scenario, variantIndex);
+  return flatten(scenario, variantIndex);
 }
 
 /** 後續回合 / 評分時呼叫：用 ExamState 存的 variantIndex 還原同一個變體。 */
@@ -184,5 +202,5 @@ export async function getScenarioVariant(
   id: string,
   variantIndex: number,
 ): Promise<ResolvedScenario> {
-  return flatten(id, await getScenario(id), variantIndex);
+  return flatten(await getScenario(id), variantIndex);
 }

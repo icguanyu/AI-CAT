@@ -111,7 +111,7 @@ async function handle(req: Request): Promise<Response> {
   const debug =
     process.env.NODE_ENV !== 'production'
       ? {
-          label: `${state.scenarioId} · 變體#${state.variantIndex} · ${level} · ${new Date()
+          label: `${scenario.titleZh} · 變體#${state.variantIndex} · ${level} · ${new Date()
             .toISOString()
             .slice(0, 16)}`,
           scenarioId: state.scenarioId,
@@ -148,8 +148,9 @@ async function handle(req: Request): Promise<Response> {
       exemplar,
       // 受測者顯示名稱快照（Google 登入當下的 full_name）；結果卡片用。
       user_name: auth.name,
-      // 情境的領域分類快照；個人統整頁以此為分組單位（轉動態題目後仍固定）。
+      // 情境的領域分類 + 中文標題快照；個人統整頁以 category 為分組單位、titleZh 顯示。
       category: state.category ?? scenario.category,
+      titleZh: scenario.titleZh,
       // 看到 brief 後自評的領域熟悉度；報告頁顯示為分數的脈絡。
       familiarity,
       // 存進 jsonb，讓 /exam/result/:examId 重新整理後能還原陷阱對照；
