@@ -39,20 +39,30 @@ export function toFamiliarity(v: unknown): Familiarity {
  * 新增分類：加一個 id + label，別重用或改動舊 id（會讓歷史報告對不上）。
  */
 export type Category =
-  | 'customer_comms'
-  | 'interpersonal'
-  | 'data_summary'
-  | 'quality_ops'
-  | 'code_debug'
-  | 'life_planning';
+  | 'creative_marketing'
+  | 'finance_invest'
+  | 'healthcare'
+  | 'media_arts'
+  | 'it_software'
+  | 'academia_edu'
+  | 'manufacturing'
+  | 'customer_service'
+  | 'business_ops'
+  | 'daily_life'
+  | 'personal_finance';
 
 export const CATEGORY_LABEL: Record<Category, string> = {
-  customer_comms: '客戶溝通',
-  interpersonal: '人際溝通',
-  data_summary: '數據整理',
-  quality_ops: '品質與流程改善',
-  code_debug: '程式除錯',
-  life_planning: '生活規劃',
+  creative_marketing: '創意行銷',
+  finance_invest: '金融投資',
+  healthcare: '醫療保健',
+  media_arts: '傳播藝術',
+  it_software: '資訊軟體',
+  academia_edu: '學術教育',
+  manufacturing: '生產製造',
+  customer_service: '客戶服務',
+  business_ops: '商業營運',
+  daily_life: '生活與人際',
+  personal_finance: '個人理財',
 };
 
 export const CATEGORY_IDS = Object.keys(CATEGORY_LABEL) as Category[];
