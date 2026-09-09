@@ -56,6 +56,7 @@ export function ReportView({
   familiarity = null,
   debug = null,
   share,
+  trial = false,
 }: {
   report: Report;
   trap: TrapReveal | null;
@@ -66,6 +67,8 @@ export function ReportView({
   familiarity?: Familiarity | null;
   debug?: FixtureDebug | null;
   share?: ShareControls;
+  /** 免登入試用：隱藏「截圖分享」提示（改由外層的登入卡承擔訊息）。 */
+  trial?: boolean;
 }) {
   const [orient, setOrient] = useState<CardOrientation>('portrait');
   const [copied, setCopied] = useState(false);
@@ -184,7 +187,7 @@ export function ReportView({
               </>
             )}
           </div>
-        ) : (
+        ) : trial ? null : (
           <p className="result-hint">截圖這張卡片即可分享到社群。</p>
         )}
       </section>

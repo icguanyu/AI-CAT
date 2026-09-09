@@ -2,12 +2,15 @@
  * 檔案：src/app/auth/callback/page.tsx  →  路由 /auth/callback
  * 角色：前端層 — Google OAuth 導回落點
  * 功能：Supabase client（detectSessionInUrl）會自動用網址上的 code 換 session，
- *       這裡等 session 就緒後導向 next（預設 /exam）；逾時則回首頁。
+ *       這裡等 session 就緒後：若剛剛有免登入試用結果待認領，先呼叫 /claim 收好，
+ *       再導向 next（預設 /exam）；逾時則回首頁。
  */
 'use client';
 
 import { useEffect } from 'react';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
+import { claimTrial } from '@/lib/client-api';
+import { CLAIM_KEY } from '@/components/LoginToSaveCard';
 
 /** 只允許站內相對路徑，擋開放重導。 */
 function safeNext(): string {
@@ -30,15 +33,47 @@ export default function AuthCallbackPage() {
       window.location.replace('/exam'); // /exam 會顯示設定錯誤說明
       return;
     }
-    const goNext = () => window.location.replace(dest);
+
+    let done = false;
+    const finish = async () => {
+      if (done) return;
+      done = true;
+      // 有待認領的試用結果 → 先收進帳號，再進結果頁
+      let claimId: string | null = null;
+      try {
+        claimId = sessionStorage.getItem(CLAIM_KEY);
+      } catch {
+        /* ignore */
+      }
+      if (claimId) {
+        try {
+          sessionStorage.removeItem(CLAIM_KEY);
+        } catch {
+          /* ignore */
+        }
+        try {
+          await claimTrial(claimId);
+          window.location.replace(`/exam/result/${claimId}`);
+          return;
+        } catch {
+          // 認領失敗（cookie 不見等）→ 退回一般流程，不卡住登入
+          window.location.replace('/exam?claim=failed');
+          return;
+        }
+      }
+      window.location.replace(dest);
+    };
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) goNext();
+      if (session) void finish();
     });
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) goNext();
+      if (data.session) void finish();
     });
-    const timeout = setTimeout(() => window.location.replace('/?auth=failed'), 8000);
+    const timeout = setTimeout(
+      () => !done && window.location.replace('/?auth=failed'),
+      8000,
+    );
 
     return () => {
       sub.subscription.unsubscribe();

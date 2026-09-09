@@ -10,10 +10,10 @@
  */
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { PageLoading } from '@/components/PageLoading';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 import {
@@ -21,9 +21,11 @@ import {
   startExam,
   sendChat,
   evaluateExam,
+  getExamReport,
   ApiError,
   type Quota,
   type StartResult,
+  type EvalResult,
 } from '@/lib/client-api';
 import { readTextStream } from '@/lib/data-stream';
 import { useVoiceInput } from '@/lib/use-voice-input';
@@ -34,16 +36,36 @@ import {
 } from '@/types/exam';
 import { Markdown } from '@/components/Markdown';
 import { AccountMenu } from '@/components/AccountMenu';
+import { ReportView } from '@/components/ReportView';
+import { LoginToSaveCard } from '@/components/LoginToSaveCard';
 import { ThinkingCat } from '@/components/ThinkingCat';
 import { EvaluatingCat } from '@/components/EvaluatingCat';
 import { GoogleIcon } from '@/components/GoogleIcon';
 import { AiCatMark } from '@/components/AiCatMark';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
-type Phase = 'idle' | 'brief' | 'chatting' | 'evaluating';
+type Phase = 'idle' | 'brief' | 'chatting' | 'evaluating' | 'result';
+type TrialResult = EvalResult & { familiarity: Familiarity };
 
 export default function ExamPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="exam-wrap">
+          <div className="center-card">
+            <PageLoading />
+          </div>
+        </main>
+      }
+    >
+      <ExamPageInner />
+    </Suspense>
+  );
+}
+
+function ExamPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const sbRef = useRef<SupabaseClient | null>(null);
   const getSb = useCallback(() => {
     if (!sbRef.current) sbRef.current = createSupabaseBrowser();
@@ -77,6 +99,10 @@ export default function ExamPage() {
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
   const [quota, setQuota] = useState<Quota | null>(null);
+  // 免登入試用：start 失敗代碼（PUBLIC_POOL_EXHAUSTED / TRIAL_USED）與試用結果
+  const [startCode, setStartCode] = useState<string | null>(null);
+  const [trialResult, setTrialResult] = useState<TrialResult | null>(null);
+  const [trialExamId, setTrialExamId] = useState<string | null>(null);
   // 開場自評的領域熟悉度（給裁判校準 task_completion）
   const [familiarity, setFamiliarity] = useState<Familiarity>('mid');
   // 視窗是否為窄版（手機）：Enter 一律換行、輸入框改 sticky
@@ -132,6 +158,33 @@ export default function ExamPage() {
     if (session && phase === 'idle') refreshQuota();
   }, [phase, session, refreshQuota]);
 
+  // 免登入試用結果：帶 ?trial=<examId> 回來時，從 Redis 快照還原（重新整理不消失）
+  useEffect(() => {
+    const id = searchParams.get('trial');
+    if (!id || session || trialResult) return;
+    let alive = true;
+    getExamReport(id)
+      .then((b) => {
+        if (!alive || !b.trial) return;
+        setTrialExamId(id);
+        setTrialResult({
+          report: b.report,
+          trap: b.trap,
+          exemplar: b.exemplar,
+          debug: b.debug,
+          persisted: false,
+          familiarity: b.familiarity ?? 'mid',
+        });
+        setPhase('result');
+      })
+      .catch(() => {
+        /* 逾時或找不到 → 留在一般畫面 */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [searchParams, session, trialResult]);
+
   useEffect(() => {
     // 用哨兵捲到底，桌機捲 .chat-log、手機捲整頁都適用
     logEndRef.current?.scrollIntoView({ block: 'end' });
@@ -178,6 +231,7 @@ export default function ExamPage() {
 
   const begin = useCallback(async () => {
     setError(null);
+    setStartCode(null);
     setBusy(true);
     try {
       const r = await startExam();
@@ -188,6 +242,7 @@ export default function ExamPage() {
       setFamiliarity('mid');
       setPhase('brief'); // 先看題目 → 自評熟悉度 → 開始對話
     } catch (e) {
+      if (e instanceof ApiError && e.code) setStartCode(e.code);
       handleErr(e);
     } finally {
       setBusy(false);
@@ -242,10 +297,18 @@ export default function ExamPage() {
     setBusy(true);
     setPhase('evaluating');
     try {
-      await evaluateExam(exam.examId, familiarity);
-      // 報告已寫入 Supabase；結果頁自行從 /api/exam/:examId/report 撈回，
-      // 重新整理不會消失。
-      router.push(`/exam/result/${exam.examId}`);
+      const res = await evaluateExam(exam.examId, familiarity);
+      if (res.persisted) {
+        // 登入版：報告已寫入 Supabase，轉結果頁（重新整理不消失）
+        router.push(`/exam/result/${exam.examId}`);
+      } else {
+        // 免登入試用：結果只在 Redis，就地顯示 + 引導登入保存
+        setTrialResult({ ...res, familiarity });
+        setTrialExamId(exam.examId);
+        setPhase('result');
+        setBusy(false);
+        router.replace(`/exam?trial=${exam.examId}`);
+      }
     } catch (e) {
       handleErr(e);
       setPhase('chatting');
@@ -276,31 +339,112 @@ export default function ExamPage() {
     );
   }
 
-  // ── 未登入 / 登入失效 ──
-  if (session === null || authExpired) {
+  // ── 登入已失效 ──
+  if (authExpired) {
     return (
       <main className="exam-wrap">
         <div className="center-card panel">
-          <h2>{authExpired ? '登入已失效' : '開始檢測前請先登入'}</h2>
+          <h2>登入已失效</h2>
           <p className="section-sub">
-            {authExpired
-              ? '你的登入狀態已過期或無效，請重新登入。'
-              : '使用 Google 登入即可開始。每日 3 場免費、隔日重置。'}
+            你的登入狀態已過期或無效，請重新登入。
           </p>
-          <button
-            type="button"
-            className="btn"
-            onClick={authExpired ? reLogin : signIn}
-          >
-            {!authExpired && <GoogleIcon />}
-            {authExpired ? '重新登入' : '使用 Google 登入'}
+          <button type="button" className="btn" onClick={reLogin}>
+            重新登入
           </button>
-          {authExpired && (
-            <p className="signed-in">
-              <button type="button" className="linkbtn" onClick={signOut}>
-                只登出
+          <p className="signed-in">
+            <button type="button" className="linkbtn" onClick={signOut}>
+              只登出
+            </button>
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  // ── 免登入試用：就地顯示結果 + 引導登入保存（登入 / 未登入都可能走到）──
+  if (phase === 'result' && trialResult && trialExamId) {
+    return (
+      <main className="exam-wrap">
+        <header className="result-topbar">
+          <Link href="/" className="topbar-brand" aria-label="AI-CAT 首頁">
+            <AiCatMark size={24} />
+          </Link>
+          <AccountMenu />
+        </header>
+        <LoginToSaveCard examId={trialExamId} />
+        <ReportView
+          report={trialResult.report}
+          trap={trialResult.trap}
+          exemplar={trialResult.exemplar}
+          familiarity={trialResult.familiarity}
+          debug={trialResult.debug}
+          trial
+        />
+        <div className="trial-again">
+          <Link className="btn ghost" href="/exam">
+            回到開始
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // ── 未登入且還在開始畫面：免費試用一次（試用開始後 phase 會前進，就走下方一般流程）──
+  if (session === null && phase === 'idle') {
+    const poolMsg =
+      startCode === 'PUBLIC_POOL_EXHAUSTED'
+        ? '這個月的免費公開試用額度太熱門、已被用完。登入即可立刻用你自己的免費額度（每日 3 場）。'
+        : startCode === 'TRIAL_USED'
+          ? '你已用過一次免費試用了。登入即可繼續使用（每日 3 場免費，隔日重置）。'
+          : null;
+    return (
+      <main className="exam-wrap">
+        <div className="topbar">
+          <Link href="/" className="topbar-brand" aria-label="AI-CAT 首頁">
+            <AiCatMark size={18} />
+          </Link>
+          <AccountMenu />
+        </div>
+        <div className="center-card panel">
+          <h2>AI 能力檢測</h2>
+          {searchParams.get('claim') === 'failed' && (
+            <div className="notice notice-error" role="alert">
+              <span>沒能接回剛剛的試用結果（可能換了瀏覽器或清了 Cookie）。直接再測一場吧。</span>
+            </div>
+          )}
+          {poolMsg ? (
+            <>
+              <p className="section-sub">{poolMsg}</p>
+              <button type="button" className="btn" onClick={signIn}>
+                <GoogleIcon />
+                使用 Google 登入
               </button>
-            </p>
+            </>
+          ) : (
+            <>
+              <p className="section-sub">
+                不用註冊，先免費試一場（約 5–10 分鐘）。試用結果需登入才會保存。
+              </p>
+              {error && (
+                <div className="notice notice-error" role="alert">
+                  <strong>無法開始</strong>
+                  <span>{error}</span>
+                </div>
+              )}
+              <button
+                type="button"
+                className="btn"
+                onClick={begin}
+                disabled={busy}
+              >
+                {busy ? '抽題中…' : '免費試用一次（不需登入）'}
+              </button>
+              <p className="signed-in">
+                <button type="button" className="linkbtn" onClick={signIn}>
+                  或登入後開始（每日 3 場免費）
+                </button>
+              </p>
+            </>
           )}
         </div>
       </main>
@@ -325,7 +469,11 @@ export default function ExamPage() {
       <Link href="/" className="topbar-brand" aria-label="AI-CAT 首頁">
         <AiCatMark size={18} />
       </Link>
-      {quotaText && <span>{quotaText}</span>}
+      {exam?.trial ? (
+        <span className="trial-tag">試用模式 · 結果需登入保存</span>
+      ) : (
+        quotaText && <span>{quotaText}</span>
+      )}
       <AccountMenu />
     </div>
   );

@@ -121,6 +121,26 @@ export interface ResolvedScenario {
   verifyHint: string;
 }
 
+/**
+ * 免登入試用場評分後、只放 Redis（key `anonrpt:{examId}`）的結果快照。
+ * 登入後由 /api/exam/:id/claim 讀出、寫成正式 exam_reports 列。
+ */
+export interface AnonReportBlob {
+  /** 綁定的 anon 身分，認領時要和 cookie 對得上。 */
+  anonId: string;
+  scenarioId: string;
+  variantIndex: number;
+  category: Category;
+  titleZh: string;
+  familiarity: Familiarity;
+  report: Report;
+  weightedAverage: number;
+  trap: TrapReveal | null;
+  ruleChallenged: boolean;
+  injected: boolean;
+  createdAt: number;
+}
+
 /** 提交評分後，回給前端揭露的陷阱資訊（僅在陷阱生效時有值）。 */
 export interface TrapReveal {
   injectionText: string;
@@ -131,7 +151,12 @@ export interface TrapReveal {
 
 /** 一場測驗的完整狀態，存於 Redis key `exam:{examId}`。 */
 export interface ExamState {
+  /** 登入者的 user id；免登入試用場為空字串（改用 anonId 認場）。 */
   userId: string;
+  /** 免登入試用場的 anon 身分（簽章 cookie 的裸 id）；登入場為 undefined。 */
+  anonId?: string;
+  /** 這場的對話輪次上限；未填視為 MAX_USER_TURNS（試用場會填較小值）。 */
+  maxTurns?: number;
   scenarioId: string;
   /** 抽中情境的領域分類；快照下來，之後改題不影響已開場的場次。 */
   category: Category;

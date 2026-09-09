@@ -3102,3 +3102,57 @@ footer {
     font-size: 15px;
   }
 }
+
+/* ══ 免登入試用（anon trial）════════════════════════════ */
+.trial-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--accent-fg);
+  background: var(--accent);
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.save-card {
+  max-width: 620px;
+  margin: 0 auto 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.save-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.save-card-lead {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.save-card-benefits {
+  margin: 0;
+  padding-left: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+}
+.save-card .btn {
+  align-self: flex-start;
+}
+.save-card-fine {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--fg-faint);
+}
+.trial-again {
+  max-width: 620px;
+  margin: 20px auto 0;
+  display: flex;
+  justify-content: center;
+}

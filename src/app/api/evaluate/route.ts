@@ -9,12 +9,19 @@
  *   5. 寫入 Supabase、扣次數、清 Redis session
  */
 import { getExam, deleteExam } from '@/lib/redis';
-import { requireAuth, getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { resolveActor, ownsExam } from '@/lib/actor';
+import { setAnonReport } from '@/lib/public-pool';
 import { consumeQuota } from '@/lib/quota';
 import { getScenarioVariant } from '@/lib/scenarios';
 import { computeLevel } from '@/lib/scoring';
 import { detectChallenge, runJudge, runExemplar } from '@/lib/judge';
-import { toFamiliarity, type Report, type TrapReveal } from '@/types/exam';
+import {
+  toFamiliarity,
+  type AnonReportBlob,
+  type Report,
+  type TrapReveal,
+} from '@/types/exam';
 import { errJson } from '@/lib/api-error';
 
 export const runtime = 'nodejs';
@@ -24,9 +31,9 @@ export async function POST(req: Request) {
 }
 
 async function handle(req: Request): Promise<Response> {
-  const auth = await requireAuth(req);
-  if ('error' in auth) {
-    return Response.json({ error: auth.error }, { status: auth.status });
+  const actor = await resolveActor(req);
+  if ('error' in actor) {
+    return Response.json({ error: actor.error }, { status: actor.status });
   }
 
   const body = (await req.json()) as {
@@ -44,9 +51,10 @@ async function handle(req: Request): Promise<Response> {
   if (!state) {
     return Response.json({ error: '找不到該場次的對話紀錄' }, { status: 404 });
   }
-  if (state.userId !== auth.userId) {
+  if (!ownsExam(state, actor)) {
     return Response.json({ error: '無權存取此場次' }, { status: 403 });
   }
+  const isAnon = actor.kind === 'anon';
 
   const userTurns = state.history.filter((m) => m.role === 'user').length;
   if (userTurns < 1) {
@@ -65,7 +73,7 @@ async function handle(req: Request): Promise<Response> {
     : false;
   const trapEffective = state.injected && state.injectionLanded;
 
-  // 裁判評分與「L5 示範」平行跑，省來回時間
+  // 裁判評分（登入 / 試用都用正式版裁判模型）；「L5 示範」只給登入版（省 token）。
   const [judged, exemplar] = await Promise.all([
     runJudge({
       brief: scenario.brief,
@@ -77,16 +85,18 @@ async function handle(req: Request): Promise<Response> {
       familiarity,
       ruleChallenged,
     }),
-    runExemplar({
-      brief: scenario.brief,
-      trapEffective,
-      injectionText: state.injectionText,
-      correction: scenario.correction,
-      verifyHint: scenario.verifyHint,
-    }).catch((e) => {
-      console.error('runExemplar 失敗', e);
-      return '';
-    }),
+    isAnon
+      ? Promise.resolve('')
+      : runExemplar({
+          brief: scenario.brief,
+          trapEffective,
+          injectionText: state.injectionText,
+          correction: scenario.correction,
+          verifyHint: scenario.verifyHint,
+        }).catch((e) => {
+          console.error('runExemplar 失敗', e);
+          return '';
+        }),
   ]);
 
   // 關鍵字漏判時，以裁判在對話裡實際看到的為準
@@ -136,10 +146,42 @@ async function handle(req: Request): Promise<Response> {
       }
     : null;
 
+  // ── 免登入試用：不寫 DB、不扣次數，結果只放 Redis（TTL），登入後由 /claim 認領 ──
+  if (isAnon) {
+    const blob: AnonReportBlob = {
+      anonId: actor.anonId,
+      scenarioId: state.scenarioId,
+      variantIndex: state.variantIndex,
+      category: state.category ?? scenario.category,
+      titleZh: scenario.titleZh,
+      familiarity,
+      report,
+      weightedAverage: average,
+      trap,
+      ruleChallenged: challenged,
+      injected: state.injected,
+      createdAt: Date.now(),
+    };
+    await setAnonReport(examId, blob);
+    await deleteExam(examId).catch(() => {});
+    return Response.json({
+      success: true,
+      report,
+      trap,
+      exemplar: '',
+      debug,
+      persisted: false,
+    });
+  }
+
+  // 登入 actor 一定有 userId / name
+  const userId = actor.userId;
+  const userName = actor.name;
+
   // Redis 僅為短期 session；正式報告寫入 Supabase 留存
   const { error } = await getSupabaseAdmin().from('exam_reports').insert({
     exam_id: examId,
-    user_id: auth.userId,
+    user_id: userId,
     scenario_id: state.scenarioId,
     report: {
       ...report,
@@ -147,7 +189,7 @@ async function handle(req: Request): Promise<Response> {
       variant_index: state.variantIndex,
       exemplar,
       // 受測者顯示名稱快照（Google 登入當下的 full_name）；結果卡片用。
-      user_name: auth.name,
+      user_name: userName,
       // 情境的領域分類 + 中文標題快照；個人統整頁以 category 為分組單位、titleZh 顯示。
       category: state.category ?? scenario.category,
       titleZh: scenario.titleZh,
@@ -176,7 +218,7 @@ async function handle(req: Request): Promise<Response> {
 
   // 提交成功才扣一次免費次數；扣點失敗不影響已產生的報告
   try {
-    await consumeQuota(auth.userId);
+    await consumeQuota(userId);
   } catch (e) {
     console.error('扣減 user_quota 失敗', e);
   }

@@ -45,6 +45,21 @@ export const MAX_ATTEMPTS = Number(process.env.MAX_ATTEMPTS) || 21;
 /** 沙盒對話模型（回答受測者）。可用 SANDBOX_MODEL 環境變數覆寫。 */
 export const SANDBOX_MODEL = process.env.SANDBOX_MODEL || 'gpt-5-mini';
 
+// ── 免登入公開試用（anon trial）───────────────────────────────
+/** 試用的沙盒對話模型：走最便宜的一支（裁判仍用正式版 JUDGE_MODEL）。 */
+export const PUBLIC_SANDBOX_MODEL =
+  process.env.PUBLIC_SANDBOX_MODEL || 'gpt-4o-mini';
+/** 公開試用池每月上限（台北時間跨月重置）；用完就只給登入。 */
+export const PUBLIC_TRIAL_MONTHLY_LIMIT =
+  Number(process.env.PUBLIC_TRIAL_MONTHLY_LIMIT) || 300;
+/** 試用場的對話輪次上限（比登入版短，壓成本）。 */
+export const PUBLIC_TRIAL_MAX_TURNS =
+  Number(process.env.PUBLIC_TRIAL_MAX_TURNS) || 6;
+/** 試用結果只放 Redis 的存活秒數（登入前回訪可續看 / 認領）。 */
+export const ANON_RESULT_TTL_SEC = 60 * 60 * 72;
+/** anon 身分 cookie 的存活秒數（一輩子一次的旗標同壽）。 */
+export const ANON_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 400;
+
 /**
  * 裁判模型（評分，一場一次）。可用 JUDGE_MODEL 環境變數覆寫。
  * 值以 "claude" 開頭 → 走 Anthropic（`resolveModel`，需 ANTHROPIC_API_KEY），

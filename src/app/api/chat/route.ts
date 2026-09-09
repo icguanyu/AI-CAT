@@ -13,14 +13,15 @@
  *       或錯誤時的 JSON + 對應 HTTP 狀態碼。
  */
 import { streamText } from 'ai';
-import { openai } from '@/lib/openai';
+import { openai, publicOpenai } from '@/lib/openai';
 import { getExam, setExam } from '@/lib/redis';
-import { requireAuth } from '@/lib/supabase';
+import { resolveActor, ownsExam } from '@/lib/actor';
 import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit';
 import { getScenarioVariant } from '@/lib/scenarios';
 import {
   MAX_INPUT_CHARS,
   MAX_USER_TURNS,
+  PUBLIC_SANDBOX_MODEL,
   SANDBOX_MODEL,
 } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
@@ -56,12 +57,15 @@ function injectionLanded(reply: string, injectionText: string): boolean {
 }
 
 async function handle(req: Request): Promise<Response> {
-  const auth = await requireAuth(req);
-  if ('error' in auth) {
-    return Response.json({ error: auth.error }, { status: auth.status });
+  const actor = await resolveActor(req);
+  if ('error' in actor) {
+    return Response.json({ error: actor.error }, { status: actor.status });
   }
 
-  const rl = await checkRateLimit(req, auth.userId);
+  const rl = await checkRateLimit(
+    req,
+    actor.kind === 'user' ? actor.userId : `anon:${actor.anonId}`,
+  );
   if (!rl.ok) return rateLimitResponse(rl);
 
   const { examId, message } = (await req.json()) as {
@@ -86,14 +90,15 @@ async function handle(req: Request): Promise<Response> {
   if (!state) {
     return Response.json({ error: '測驗場次不存在或已過期' }, { status: 404 });
   }
-  if (state.userId !== auth.userId) {
+  if (!ownsExam(state, actor)) {
     return Response.json({ error: '無權存取此場次' }, { status: 403 });
   }
 
+  const maxTurns = state.maxTurns ?? MAX_USER_TURNS;
   const userTurns = state.history.filter((m) => m.role === 'user').length;
-  if (userTurns >= MAX_USER_TURNS) {
+  if (userTurns >= maxTurns) {
     return Response.json(
-      { error: `已達最高對話輪次上限（${MAX_USER_TURNS} 輪），請提交評分` },
+      { error: `已達最高對話輪次上限（${maxTurns} 輪），請提交評分` },
       { status: 400 },
     );
   }
@@ -119,7 +124,9 @@ async function handle(req: Request): Promise<Response> {
   }
 
   const result = streamText({
-    model: openai(SANDBOX_MODEL),
+    model: state.anonId
+      ? publicOpenai(PUBLIC_SANDBOX_MODEL)
+      : openai(SANDBOX_MODEL),
     system,
     messages: state.history,
     onFinish: async ({ text }) => {

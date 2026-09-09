@@ -17,10 +17,13 @@ import { createSupabaseBrowser } from '@/lib/supabase-browser';
 
 export class ApiError extends Error {
   readonly status: number;
-  constructor(message: string, status: number) {
+  /** 後端給的機器可讀代碼，例如 PUBLIC_POOL_EXHAUSTED / TRIAL_USED。 */
+  readonly code?: string;
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
   }
   /** 登入憑證問題，UI 應引導重新登入。 */
   get isAuth(): boolean {
@@ -35,6 +38,22 @@ async function bearer(): Promise<string> {
   return token;
 }
 
+/** 有登入就回 token，沒有回 null（免登入試用流程用）。 */
+async function bearerOrNull(): Promise<string | null> {
+  try {
+    const { data } = await createSupabaseBrowser().auth.getSession();
+    return data.session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** 有登入帶 Authorization；沒登入回空物件（後端會改看 anon cookie）。 */
+async function authHeader(): Promise<Record<string, string>> {
+  const t = await bearerOrNull();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
 /** 容錯解析：空 body / 非 JSON（例如 Next 的 500 HTML）不會炸，改回可讀訊息。 */
 async function parseBody(res: Response): Promise<Record<string, unknown>> {
   const text = await res.text();
@@ -47,7 +66,11 @@ async function parseBody(res: Response): Promise<Record<string, unknown>> {
 }
 
 function fail(json: Record<string, unknown>, res: Response, fallback: string): never {
-  throw new ApiError((json.error as string) ?? fallback, res.status);
+  throw new ApiError(
+    (json.error as string) ?? fallback,
+    res.status,
+    typeof json.code === 'string' ? json.code : undefined,
+  );
 }
 
 export interface Quota {
@@ -63,7 +86,10 @@ export interface StartResult {
   examId: string;
   brief: string;
   limits: { maxUserTurns: number; maxInputChars: number };
-  quota: Quota;
+  /** true = 免登入試用場（結果不保存、輪次較少、模型較便宜）。 */
+  trial: boolean;
+  /** 試用場為 null（沒有帳號配額概念）。 */
+  quota: Quota | null;
 }
 
 export async function getQuota(): Promise<Quota> {
@@ -78,7 +104,7 @@ export async function getQuota(): Promise<Quota> {
 export async function startExam(): Promise<StartResult> {
   const res = await fetch('/api/exam/start', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${await bearer()}` },
+    headers: await authHeader(),
   });
   const json = await parseBody(res);
   if (!res.ok) fail(json, res, '開始測驗失敗');
@@ -90,7 +116,7 @@ export async function sendChat(examId: string, message: string): Promise<Respons
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${await bearer()}`,
+      ...(await authHeader()),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ examId, message }),
@@ -120,10 +146,12 @@ export interface FixtureDebug {
 export interface EvalResult {
   report: Report;
   trap: TrapReveal | null;
-  /** 「L5 高手會怎麼做」的教學示範（Markdown）；產生失敗時為空字串。 */
+  /** 「L5 高手會怎麼做」的教學示範（Markdown）；試用場 / 產生失敗時為空字串。 */
   exemplar: string;
   /** 僅本地開發：可下載成 fixture 的完整場次資料；正式環境為 null。 */
   debug: FixtureDebug | null;
+  /** false = 免登入試用，結果只在 Redis（登入才會保存）。 */
+  persisted: boolean;
 }
 
 export async function evaluateExam(
@@ -133,7 +161,7 @@ export async function evaluateExam(
   const res = await fetch('/api/evaluate', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${await bearer()}`,
+      ...(await authHeader()),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ examId, familiarity }),
@@ -145,6 +173,7 @@ export async function evaluateExam(
     trap: (json.trap as TrapReveal | null) ?? null,
     exemplar: (json.exemplar as string) ?? '',
     debug: (json.debug as FixtureDebug | undefined) ?? null,
+    persisted: json.persisted !== false,
   };
 }
 
@@ -155,12 +184,14 @@ export interface ReportBundle extends EvalResult {
   familiarity: import('@/types/exam').Familiarity | null;
   /** 這份報告是否已開啟公開分享（/s/:examId）。 */
   shared: boolean;
+  /** true = 免登入試用結果（來自 Redis 快照，未保存）。 */
+  trial: boolean;
 }
 
-/** 取回「已提交」測驗的完整報告（本人限定；用於 /exam/result/:examId 還原）。 */
+/** 取回一場測驗的完整報告（登入：本人 DB；未登入：anon cookie + Redis 快照）。 */
 export async function getExamReport(examId: string): Promise<ReportBundle> {
   const res = await fetch(`/api/exam/${examId}/report`, {
-    headers: { Authorization: `Bearer ${await bearer()}` },
+    headers: await authHeader(),
   });
   const json = await parseBody(res);
   if (!res.ok) fail(json, res, '讀取報告失敗');
@@ -173,6 +204,24 @@ export async function getExamReport(examId: string): Promise<ReportBundle> {
     exemplar: (json.exemplar as string) ?? '',
     debug: (json.debug as FixtureDebug | undefined) ?? null,
     shared: Boolean(json.shared),
+    trial: json.trial === true,
+    persisted: json.persisted !== false,
+  };
+}
+
+/** 登入後把剛剛的免登入試用結果收進帳號。需已登入。 */
+export async function claimTrial(
+  examId: string,
+): Promise<{ examId: string; duplicate?: boolean }> {
+  const res = await fetch(`/api/exam/${examId}/claim`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${await bearer()}` },
+  });
+  const json = await parseBody(res);
+  if (!res.ok) fail(json, res, '認領試用結果失敗');
+  return {
+    examId: (json.examId as string) ?? examId,
+    duplicate: json.duplicate === true,
   };
 }
 
