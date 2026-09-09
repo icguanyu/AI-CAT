@@ -590,18 +590,14 @@ function ExamPageInner() {
               <EvaluatingCat />
             </div>
           )}
-          <div className="meta-row">
+          <div className="meta-row chat-head">
+            <strong className="chat-head-title">
+              <AiCatMark size={16} />
+              AI 助手
+            </strong>
             <span>
               第 {Math.min(userTurns + 1, maxTurns)} / {maxTurns} 輪
             </span>
-            <button
-              type="button"
-              className="btn"
-              onClick={submit}
-              disabled={busy || messages.length === 0}
-            >
-              提交評分
-            </button>
           </div>
 
           <div className="chat-log">
@@ -716,6 +712,15 @@ function ExamPageInner() {
                 想用語音？直接點手機鍵盤上的麥克風即可口述輸入
               </p>
             )}
+            <button
+              type="button"
+              className="btn chat-submit"
+              onClick={submit}
+              disabled={busy || messages.length === 0}
+            >
+              <AiCatMark size={15} />
+              提交評分，交給 AI 裁判
+            </button>
           </div>
           {voiceListening && (
             <p className="voice-hint" aria-live="polite">

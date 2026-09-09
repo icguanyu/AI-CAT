@@ -898,6 +898,34 @@ footer {
   color: var(--fg-muted);
 }
 
+/* 對話面板標頭：貓咪標記 + 「AI 助手」，讓下方的聊天室明確是「AI 助手」 */
+.chat-head {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.chat-head-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.95rem;
+  color: var(--fg);
+}
+.chat-head-title svg {
+  color: var(--accent-ink);
+  flex: none;
+}
+
+/* 提交評分：對話面板最下面的主要動作，帶主視覺貓咪 */
+.btn.chat-submit {
+  width: 100%;
+  margin-top: 14px;
+  gap: 9px;
+}
+.btn.chat-submit svg {
+  color: currentColor;
+  flex: none;
+}
+
 .chat {
   position: relative;
   display: flex;
