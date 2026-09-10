@@ -1,8 +1,10 @@
 /**
  * 檔案：src/app/page.tsx  →  路由 /
- * 角色：前端層 — 產品著陸頁（對齊 AI-CAT Hero.dc）
- * 功能：Hero 一屏（header / 左文案 + 右能力模型 sample panel / 底部五大維度），
- *       其後接運作方式、最終 CTA、頁尾。純靜態 Server Component，CTA 連 /exam。
+ * 角色：前端層 — 產品著陸頁（對齊 AI-CAT 首頁方向.dc）
+ * 功能：單張 hairline 檔案卡：header（不變）→ hero split（左文案 + 右能力模型）
+ *       → §01 我們測什麼（大字維度列表）→ §02 運作方式（五步）→ §03 你會拿到什麼
+ *       （真實 brief + 範例成績單）→ 螢光綠翻轉「一次分數只是切片」→ 準備好了嗎
+ *       + 本站平均。CTA 連 /exam。「本站平均」走 ISR。
  */
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -26,7 +28,8 @@ export const metadata: Metadata = {
 // 「本站平均」要抓 DB，但不必即時——每 30 分鐘重新產生一次即可。
 export const revalidate = 1800;
 
-const METRICS = [
+/** §01 我們測什麼——五個評分維度。 */
+const DIMENSIONS = [
   { i: '01', t: '提示詞結構', d: '角色、脈絡與輸出格式限制' },
   { i: '02', t: '問題拆解力', d: '分階段引導而非一次全丟' },
   { i: '03', t: '對話效率', d: '產出品質 ÷ 有效輪次' },
@@ -34,26 +37,27 @@ const METRICS = [
   { i: '05', t: '任務達成率', d: '字數、格式、必含內容' },
 ];
 
+/** §02 運作方式——五個步驟。 */
 const STEPS = [
   {
     title: '選一題、先自評熟悉度',
-    desc: '隨機抽一個真實職場情境（附任務與限制條件）；你先自評對這個領域有多熟，讓評分更公平。',
+    desc: '隨機抽真實職場情境，附任務與限制；你先自評對這領域多熟，讓評分更公平。',
   },
   {
-    title: '在雙欄沙盒裡指揮 AI',
-    desc: '查看任務與限制，與本平台提供之 AI 助手對話。下提示詞、追問、修正——過程中系統會悄悄埋入一則錯誤資訊。',
+    title: '在雙欄沙盒指揮 AI',
+    desc: '看任務與限制，與平台 AI 助手對話、追問、修正——過程中系統會悄悄埋入一則錯誤資訊。',
   },
   {
-    title: '提交給 AI 裁判盲審',
+    title: '提交 AI 裁判盲審',
     desc: '高階裁判模型依 rubric 審查完整對話歷程，輸出五維度結構化評分，不看你是誰。',
   },
   {
     title: '取得能力報告',
-    desc: '五角雷達圖 + 綜合分級（L1–L5）+ 做得好／可以更好 + L5 高手示範，並可一鍵產生公開分享連結。',
+    desc: '五角雷達圖 + 綜合分級 L1–L5 + 做得好／可以更好 + L5 高手示範，可一鍵產生分享連結。',
   },
   {
     title: '多做幾場，看真實水準',
-    desc: '每場自動存進「我的檢測紀錄」，跨情境彙總出綜合分級與分數趨勢——做越多，估得越準。',
+    desc: '每場自動存進「我的檢測紀錄」，跨情境彙總綜合分級與分數趨勢——做越多，估得越準。',
   },
 ];
 
@@ -81,6 +85,14 @@ const SAMPLE_REPORT = {
   summary:
     '你會主動質疑 AI 給的補償金額、要它說明依據，這點做得好；但第一則提示詞把角色、格式、字數、語氣一次全丟，前兩輪偏離字數限制，來回多花了兩輪。',
 };
+
+/** 螢光綠翻轉區右側：檢測完之後留下什麼。 */
+const AFTER = [
+  { t: '逐場分數與 L 分級', k: 'AUTO' },
+  { t: '綜合能力雷達', k: '3 分類解鎖' },
+  { t: '一鍵公開分享連結', k: '題目不外流' },
+  { t: 'L5 高手示範', k: '逐點回饋' },
+];
 
 const FEATURES = [
   '真實職場情境的動態沙盒對話（非選擇題）',
@@ -141,196 +153,206 @@ export default async function HomePage() {
       />
       <div className="lp">
         <CatDecor className="cat-watermark" />
-        <header className="lp-header">
-          <div className="lp-brand">
-            <AiCatMark size={24} />
-            <span className="wordmark">AI-CAT</span>
-            <span className="mono-label">AI 能力檢測工具</span>
-          </div>
-          <div className="right">
-            <span className="mono-label">AI COMPETENCY ASSESSMENT TOOL</span>
-            <AccountMenu />
-          </div>
-        </header>
 
-        <main className="lp-main">
-          <section className="lp-hero">
-            <span className="eyebrow">
-              <span className="dot" />
-              <span>ASSESSMENT · NOT A QUIZ</span>
-            </span>
-            <h1>
-              你會<span className="hl">「用 AI」</span>嗎？
-              <br />
-              <span className="sub">來實測一次。</span>
-            </h1>
-            <p>
-              不是測你知不知道 AI，而是測你能不能駕馭 AI。
-              真實職場情境、動態沙盒實作、AI 自動盲審。
-            </p>
-            <div className="lp-cta">
-              <Link className="cta" href="/exam">
-                開始檢測 →
-              </Link>
-              <a className="cta-link" href="#how">
-                先看評分方法
-              </a>
+        <div className="lp-card">
+          <header className="lp-header">
+            <div className="lp-brand">
+              <AiCatMark size={24} />
+              <span className="wordmark">AI-CAT</span>
+              <span className="mono-label">AI 能力檢測工具</span>
             </div>
-            <div className="lp-metrics">
-              <div>
-                <div className="n">
-                  5–10 <span>MIN</span>
+            <div className="right">
+              <span className="mono-label">AI COMPETENCY ASSESSMENT TOOL</span>
+              <AccountMenu />
+            </div>
+          </header>
+
+          {/* ── Hero split ─────────────────────────────── */}
+          <div className="lp-hero-split">
+            <section className="lp-hero">
+              <span className="eyebrow">
+                <span className="dot" />
+                <span>ASSESSMENT · NOT A QUIZ</span>
+              </span>
+              <h1>
+                你會<span className="hl">「用 AI」</span>嗎？
+                <br />
+                <span className="sub">來實測一次。</span>
+              </h1>
+              <p>
+                不是測你知不知道 AI，而是測你能不能駕馭 AI。
+                真實職場情境、動態沙盒實作、AI 自動盲審。
+              </p>
+              <div className="lp-cta">
+                <Link className="cta" href="/exam">
+                  開始檢測 →
+                </Link>
+                <a className="cta-link" href="#dims">
+                  先看評分方法
+                </a>
+              </div>
+              <div className="lp-metrics">
+                <div>
+                  <div className="n">
+                    5–10 <span>MIN</span>
+                  </div>
+                  <div className="k">單次檢測</div>
                 </div>
-                <div className="k">單次檢測</div>
-              </div>
-              <div>
-                <div className="n">
-                  多種 <span>SCENARIOS</span>
+                <div>
+                  <div className="n">
+                    多種 <span>SCENARIOS</span>
+                  </div>
+                  <div className="k">隨機職場情境</div>
                 </div>
-                <div className="k">隨機職場情境</div>
+                <div>
+                  <div className="n">L1 – L5</div>
+                  <div className="k">能力分級</div>
+                </div>
               </div>
-              <div>
-                <div className="n">L1 – L5</div>
-                <div className="k">能力分級</div>
+            </section>
+
+            <aside className="lp-panel">
+              <div className="lp-panel-head">
+                <span>CAPABILITY MODEL</span>
+                <span>SAMPLE REPORT</span>
               </div>
-            </div>
-          </section>
+              <HeroRadar />
+            </aside>
+          </div>
 
-          <section className="lp-panel">
-            <div className="lp-panel-head">
-              <span>CAPABILITY MODEL</span>
-              <span>SAMPLE REPORT</span>
-            </div>
-            <HeroRadar />
-          </section>
-        </main>
-
-        <div className="lp-foot">
-          {METRICS.map((m) => (
-            <div key={m.i}>
-              <span className="i">{m.i}</span>
-              <span className="t">{m.t}</span>
-              <span className="d">{m.d}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <section id="sample">
-        <div className="wrap">
-          <h2>你會拿到什麼</h2>
-          <p className="section-sub">
-            像這樣的動態情境題、一場完全由你主導的對話、能力檢測結果。
-          </p>
-          <div className="sample-io">
-            <div className="sample-brief">
-              <div className="sample-tag">你會拿到的題目</div>
-              <div className="brief">{SAMPLE_BRIEF}</div>
-            </div>
-            <div className="sample-result">
-              <div className="sample-tag">完成後你會拿到的成績單</div>
-              <ResultCard
-                level={SAMPLE_REPORT.level}
-                scores={SAMPLE_REPORT.scores}
-                summary={SAMPLE_REPORT.summary}
-                orientation="portrait"
-              />
-              <p className="sample-note">
-                此為範例，實際分數與總評依你的對話生成。完整報告另附「做得好／可以更好」與 L5 示範。
+          {/* ── §01 我們測什麼 ─────────────────────────── */}
+          <section className="lp-sec lp-sec--split" id="dims">
+            <div className="lp-sec-head">
+              <span className="sec-num">§ 01</span>
+              <h2>
+                我們測
+                <br />
+                什麼
+              </h2>
+              <p>
+                五個維度、一次檢測全部覆蓋。由高階裁判模型依 rubric 盲審評分。
               </p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="how">
-        <div className="wrap">
-          <h2>運作方式</h2>
-          <p className="section-sub">一場檢測約 5–10 分鐘，最多 10 輪對話。</p>
-          <div className="steps">
-            {STEPS.map((s) => (
-              <div className="step" key={s.title}>
-                <div>
-                  <h3>{s.title}</h3>
-                  <p>{s.desc}</p>
+            <div className="dim-list">
+              {DIMENSIONS.map((m) => (
+                <div className="dim-row" key={m.i}>
+                  <span className="dim-n">{m.i}</span>
+                  <span className="dim-t">{m.t}</span>
+                  <span className="dim-d">{m.d}</span>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              ))}
+            </div>
+          </section>
 
-      <section id="after">
-        <div className="wrap">
-          <h2>檢測完之後</h2>
-          <p className="section-sub">
-            一次分數只是切片，多做幾場才看得出真實水準。
-          </p>
-          <div className="steps">
-            <div className="step">
-              <div>
-                <h3>我的檢測紀錄</h3>
-                <p>
-                  每次對話自動記錄：逐場分數、L 分級與情境分類一目了然，
-                  跨情境彙整綜合能力雷達與綜合分級——完成 3 種不同分類立即解鎖，做越多越準。
+          {/* ── §02 運作方式 ──────────────────────────── */}
+          <section className="lp-sec" id="how">
+            <div className="lp-sec-bar">
+              <span className="sec-num">§ 02</span>
+              <h2>運作方式</h2>
+              <span className="sec-aside">
+                一場約 5–10 分鐘，最多 10 輪對話
+              </span>
+            </div>
+            <div className="flow-grid">
+              {STEPS.map((s, i) => (
+                <div className="flow-cell" key={s.title}>
+                  <span
+                    className="flow-n"
+                    data-last={i === STEPS.length - 1 ? 'true' : undefined}
+                  >
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <span className="flow-t">{s.title}</span>
+                  <span className="flow-d">{s.desc}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── §03 你會拿到什麼（真實 brief + 範例成績單）── */}
+          <section className="lp-sec" id="sample">
+            <div className="lp-sec-bar">
+              <span className="sec-num">§ 03</span>
+              <h2>你會拿到什麼</h2>
+              <span className="sec-aside">
+                真實情境題 · 一場你主導的對話 · 能力檢測結果
+              </span>
+            </div>
+            <div className="sample-io">
+              <div className="sample-brief">
+                <div className="sample-tag">你會拿到的題目</div>
+                <div className="brief">{SAMPLE_BRIEF}</div>
+              </div>
+              <div className="sample-result">
+                <div className="sample-tag">完成後你會拿到的成績單</div>
+                <ResultCard
+                  level={SAMPLE_REPORT.level}
+                  scores={SAMPLE_REPORT.scores}
+                  summary={SAMPLE_REPORT.summary}
+                  orientation="portrait"
+                />
+                <p className="sample-note">
+                  此為範例，實際分數與總評依你的對話生成。完整報告另附「做得好／可以更好」與 L5 示範。
                 </p>
               </div>
             </div>
-            <div className="step">
-              <div>
-                <h3>與好友分享你的成績</h3>
-                <p>
-                  一鍵產生公開連結，顯示雷達圖、分級、分數與一句總評；
-                  題目內容與逐點回饋不會外流。
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      <section id="start">
-        <CatDecor className="cat-peek" animated />
-        <div className="wrap">
-          <h2>準備好了嗎？</h2>
-          <p className="section-sub">
-            不用註冊，先免費體驗。若想保存結果、追蹤進步，可用 Google 登入——
-            登入後每日 3 場免費（隔日重置），免費帳號累計上限 21 次。
-          </p>
-          <SiteBenchmark stats={siteStats} />
-          <div className="highlight">
-            <ul>
-              <li>
-                多種職場情境題，每次隨機抽選（行銷文案、行政數據、工程除錯、財務金融、日常生活…）
-              </li>
-              <li>真實沙盒對話，非訪間常見選擇題題庫</li>
-              <li>檢測結果即時產生，可參考高手示範與逐點回饋</li>
-              <li>歷次紀錄留存於「我的檢測紀錄」，可跨情境看綜合分級與趨勢</li>
-              <li>
-                對話內容會送交 AI 模型評分，詳見{' '}
-                <Link href="/privacy">隱私政策</Link>
-              </li>
-            </ul>
-            <p style={{ marginTop: 24 }}>
+          {/* ── 螢光綠翻轉：一次分數只是切片 ───────────── */}
+          <section className="lp-flip">
+            <div className="lp-flip-lead">
+              <h2>
+                一次分數
+                <br />
+                只是切片。
+              </h2>
+              <p>
+                多做幾場才看得出真實水準。每場自動存進「我的檢測紀錄」，跨情境彙總綜合分級與趨勢。
+              </p>
+            </div>
+            <div className="lp-flip-list">
+              {AFTER.map((a) => (
+                <div className="flip-row" key={a.t}>
+                  <span className="flip-t">{a.t}</span>
+                  <span className="flip-k">{a.k}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── 準備好了嗎 + 本站平均 ─────────────────── */}
+          <section className="lp-sec lp-sec--cta" id="start">
+            <CatDecor className="cat-peek" animated />
+            <div className="lp-cta-lead">
+              <h2>準備好了嗎？</h2>
+              <p>
+                不用註冊，先免費體驗。想保存結果、追蹤進步，可用 Google 登入——
+                登入後每日 3 場免費（隔日重置），免費帳號累計上限 21 次。
+              </p>
               <Link className="cta" href="/exam">
                 免費體驗 →
               </Link>
-            </p>
-          </div>
+              <p className="lp-cta-fine">
+                對話內容會送交 AI 模型評分，詳見{' '}
+                <Link href="/privacy">隱私政策</Link>。
+              </p>
+            </div>
+            <SiteBenchmark stats={siteStats} />
+          </section>
         </div>
-      </section>
 
-      <footer>
-        <CatDecor className="cat-foot" />
-        <p className="footer-links">
-          <Link href="/privacy">隱私政策</Link>
-          <span>·</span>
-          <Link href="/ip">智慧財產權宣告</Link>
-        </p>
-        <p style={{ marginTop: 10 }}>
-          © 2026 icguanyu. 版權所有，保留一切權利。
-        </p>
-      </footer>
+        <footer>
+          <CatDecor className="cat-foot" />
+          <p className="footer-links">
+            <Link href="/privacy">隱私政策</Link>
+            <span>·</span>
+            <Link href="/ip">智慧財產權宣告</Link>
+          </p>
+          <p style={{ marginTop: 10 }}>
+            © 2026 icguanyu. 版權所有，保留一切權利。
+          </p>
+        </footer>
+      </div>
     </>
   );
 }

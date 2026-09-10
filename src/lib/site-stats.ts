@@ -24,6 +24,8 @@ export interface SiteStats {
   avgLevelNumeric: number;
   /** avgScore 落點對應的分級桶，例如 'L2' */
   avgLevel: string;
+  /** 分數分佈：依 L1–L5 分桶的實際場次數（著陸頁的分佈長條圖用） */
+  dist: [number, number, number, number, number];
 }
 
 function bucketLevel(score: number): string {
@@ -55,6 +57,9 @@ export async function getSiteStats(): Promise<SiteStats | null> {
       })
       .filter((n): n is number => Number.isFinite(n));
 
+    const dist: [number, number, number, number, number] = [0, 0, 0, 0, 0];
+    for (const s of scores) dist[LEVEL_NUM[bucketLevel(s)] - 1] += 1;
+
     const avgScore = Math.round(
       scores.reduce((a, b) => a + b, 0) / scores.length,
     );
@@ -69,6 +74,7 @@ export async function getSiteStats(): Promise<SiteStats | null> {
       avgScore,
       avgLevelNumeric,
       avgLevel: bucketLevel(avgScore),
+      dist,
     };
   } catch {
     return null;
