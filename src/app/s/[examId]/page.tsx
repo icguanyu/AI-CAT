@@ -9,6 +9,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSharedCard } from '@/lib/exam-reports';
+import { weightedAverage } from '@/lib/scoring';
 import { ResultCard } from '@/components/ResultCard';
 import { AiCatMark } from '@/components/AiCatMark';
 
@@ -16,18 +17,14 @@ export const dynamic = 'force-dynamic'; // 依 DB 即時資料，不預先靜態
 
 type Params = { params: Promise<{ examId: string }> };
 
-function mean(scores: Record<string, number>): number {
-  const v = Object.values(scores);
-  return Math.round(v.reduce((a, b) => a + b, 0) / v.length);
-}
-
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { examId } = await params;
   const card = await getSharedCard(examId);
   // 分享頁是使用者個人結果、內容量薄且網址無上限 → 不進搜尋索引（連結照樣可分享）。
   const robots = { index: false, follow: false };
   if (!card) return { title: 'AI-CAT 檢測結果', robots };
-  const m = mean(card.scores);
+  // 與卡片、L 分級同一個公式（加權平均），不用算術平均。
+  const m = weightedAverage(card.scores);
   const title = `我的 AI 應用能力：${card.suggested_level}（AI SCORE ${m}）`;
   return {
     title: `${title}｜AI-CAT`,

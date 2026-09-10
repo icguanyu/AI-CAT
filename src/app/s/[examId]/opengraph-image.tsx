@@ -6,6 +6,7 @@
  */
 import { ImageResponse } from 'next/og';
 import { getSharedCard } from '@/lib/exam-reports';
+import { weightedAverage } from '@/lib/scoring';
 
 export const runtime = 'nodejs';
 export const size = { width: 1200, height: 630 };
@@ -36,12 +37,8 @@ export default async function Image({
   const name = card
     ? LEVEL_NAME[card.suggested_level] ?? ''
     : 'AI COMPETENCY ASSESSMENT';
-  const score = card
-    ? Math.round(
-        Object.values(card.scores).reduce((a, b) => a + b, 0) /
-          Object.values(card.scores).length,
-      )
-    : 0;
+  // 與卡片、L 分級同一個公式（加權平均）。
+  const score = card ? weightedAverage(card.scores) : 0;
 
   return new ImageResponse(
     (

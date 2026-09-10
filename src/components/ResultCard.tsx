@@ -8,6 +8,7 @@
 'use client';
 
 import { LEVEL_NAME, type Report } from '@/types/exam';
+import { weightedAverage } from '@/lib/scoring';
 import { AiCatMark } from '@/components/AiCatMark';
 import { ScoreRadar } from '@/components/ScoreRadar';
 
@@ -37,7 +38,9 @@ export function ResultCard({
   name?: string | null;
 }) {
   const arr = ORDER.map((k) => scores[k]);
-  const overall = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+  // 與 L 分級、個人紀錄列同一個公式：固定權重加權平均（見 lib/scoring.ts）。
+  // 不用五維的算術平均，否則 AI SCORE 會和自己的 L 分級對不上。
+  const overall = weightedAverage(scores);
 
   return (
     <div className="result-card portrait">
