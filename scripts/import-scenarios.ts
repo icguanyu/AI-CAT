@@ -3,7 +3,8 @@
  * 角色：開發工具 — 把本機題庫檔（scenarios.local.json）匯入 Supabase `scenarios` 表
  * 功能：讀 JSON 陣列（每筆 { id, category, titleZh, brief, system, variants }）→ 逐題
  *       upsert（以 id 為主鍵）到 Supabase PostgREST。用 service_role 金鑰繞過 RLS。
- *       變體陣列（含 injectionText / correction / verifyHint …）原樣寫入 jsonb。
+ *       變體陣列（含 injectionText / correction / verifyHint / trapType / verifyDifficulty，
+ *       或無陷阱變體 { noTrap: true }）原樣寫入 jsonb。
  *       直接打 REST，不經 @supabase/supabase-js（省得踩 Node 的 WebSocket）。
  *
  * 用法：
@@ -37,7 +38,7 @@ function loadEnvLocal() {
   }
 }
 
-type RawVariant = { injectionText?: unknown };
+type RawVariant = { injectionText?: unknown; noTrap?: unknown };
 type RawScenario = {
   id?: unknown;
   titleZh?: unknown;
@@ -81,8 +82,11 @@ function toRow(raw: RawScenario): Row {
     throw new Error(`題目 ${id}：variants 需為非空陣列`);
   }
   raw.variants.forEach((v, i) => {
-    if (typeof (v as RawVariant).injectionText !== 'string') {
-      throw new Error(`題目 ${id} 變體 #${i}：injectionText 缺少或非字串`);
+    const vv = v as RawVariant;
+    if (vv.noTrap !== true && typeof vv.injectionText !== 'string') {
+      throw new Error(
+        `題目 ${id} 變體 #${i}：injectionText 缺少或非字串（若為無陷阱變體請標 "noTrap": true）`,
+      );
     }
   });
   return {

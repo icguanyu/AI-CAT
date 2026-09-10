@@ -67,6 +67,10 @@ async function handle(
       familiarity: blob.familiarity,
       trap: blob.trap,
       noTrap: blob.noTrap ?? false,
+      // 抽中變體的陷阱型別 / 察覺難度 / 注入輪次（舊 blob 沒有 → null）。
+      trapType: blob.trapType ?? null,
+      verifyDifficulty: blob.verifyDifficulty ?? null,
+      injectAtTurn: blob.injectAtTurn ?? null,
       // 來源標記：免登入試用認領而來（不佔配額）。
       origin: 'public_trial',
     },

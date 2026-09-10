@@ -156,6 +156,14 @@ async function handle(req: Request): Promise<Response> {
       }
     : null;
 
+  // 給後續裁判校準 / 分層分析用：這場抽中變體的陷阱型別、察覺難度、擲中的注入輪次。
+  // no-trap 場：trapType / verifyDifficulty 為 null、injectAtTurn 為 0。
+  const trapMeta = {
+    trapType: scenario.trapType,
+    verifyDifficulty: scenario.verifyDifficulty,
+    injectAtTurn: state.injectAtTurn ?? 2,
+  };
+
   // ── 免登入試用：不寫 DB、不扣次數，結果只放 Redis（TTL），登入後由 /claim 認領 ──
   if (isAnon) {
     const blob: AnonReportBlob = {
@@ -169,6 +177,7 @@ async function handle(req: Request): Promise<Response> {
       weightedAverage: average,
       trap,
       noTrap,
+      ...trapMeta,
       ruleChallenged: challenged,
       injected: state.injected,
       history: state.history,
@@ -215,6 +224,8 @@ async function handle(req: Request): Promise<Response> {
       trap,
       // 這題本身就沒有陷阱（no-trap 題）；用來和「有陷阱但沒觸發」區分。
       noTrap,
+      // 抽中變體的陷阱型別 / 察覺難度 / 擲中的注入輪次；給後續裁判校準 / 分層分析。
+      ...trapMeta,
       ...(debug ? { debug } : {}),
     },
     rule_challenged: challenged,

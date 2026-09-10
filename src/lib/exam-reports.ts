@@ -17,6 +17,8 @@ import type {
   Category,
   ChatMessage,
   ExamListItem,
+  TrapType,
+  VerifyDifficulty,
 } from '@/types/exam';
 
 export type { ExamListItem };
@@ -35,6 +37,12 @@ interface StoredReport extends Report {
   category?: Category;
   /** 情境的中文標題快照；舊報告可能沒有。 */
   titleZh?: string;
+  /** 這題本身就沒有陷阱（no-trap 題）；用來和「有陷阱但沒觸發」區分。舊報告可能沒有。 */
+  noTrap?: boolean;
+  /** 抽中變體的陷阱型別 / 察覺難度 / 擲中的注入輪次；給後續裁判校準 / 分層分析。舊報告可能沒有。 */
+  trapType?: TrapType | null;
+  verifyDifficulty?: VerifyDifficulty | null;
+  injectAtTurn?: number | null;
   /** 僅本地開發寫入；型別留寬鬆，前端 client-api 有精確型別。 */
   debug?: unknown;
 }

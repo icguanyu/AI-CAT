@@ -203,6 +203,12 @@ export interface AnonReportBlob {
   trap: TrapReveal | null;
   /** 這題本身就沒有陷阱（no-trap 題），非「有陷阱但沒觸發」。 */
   noTrap: boolean;
+  /** 抽中變體的陷阱型別（no-trap 場為 null）；給後續裁判校準 / 分層分析用。 */
+  trapType: TrapType | null;
+  /** 抽中變體的察覺難度（no-trap 場為 null）。 */
+  verifyDifficulty: VerifyDifficulty | null;
+  /** 這場擲中的注入輪次（0 = 整場不注入 / no-trap）。 */
+  injectAtTurn: number;
   ruleChallenged: boolean;
   injected: boolean;
   /** 完整對話逐字稿；認領時一起寫進 exam_reports.transcript。 */
