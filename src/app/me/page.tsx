@@ -18,6 +18,7 @@ import { aggregateExams } from '@/lib/aggregate';
 import { AccountMenu } from '@/components/AccountMenu';
 import { AiCatMark } from '@/components/AiCatMark';
 import { ScoreTrend, type TrendPoint } from '@/components/ScoreTrend';
+import { ProfilePrompt } from '@/components/ProfilePrompt';
 import {
   CATEGORY_LABEL,
   FAMILIARITY_LABEL,
@@ -238,6 +239,8 @@ export default function MyExamsPage() {
             {exams.length} 場 · {agg.distinctCategories} / 3 種分類
           </span> */}
         </div>
+
+        <ProfilePrompt />
 
         {exams.length === 0 ? (
           <div className="center-card panel">

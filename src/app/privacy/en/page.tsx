@@ -46,9 +46,15 @@ export default function PrivacyEnPage() {
       <h2>1. What we collect</h2>
       <ul>
         <li>
-          <strong>Account data</strong>: the email address, display name, avatar
-          URL, and Google account identifier obtained when you sign in with
-          Google.
+          <strong>Account data</strong>: the email address, display name (given /
+          family name), locale, avatar URL, and Google account identifier
+          obtained when you sign in with Google.
+        </li>
+        <li>
+          <strong>Optional profile data</strong>: on &ldquo;My records&rdquo; you
+          may voluntarily provide an age band, education level, and gender. You
+          can skip or change these at any time; they are used only for aggregate
+          analysis and never shown on your report or share card.
         </li>
         <li>
           <strong>Assessment data</strong>: the messages you enter in the

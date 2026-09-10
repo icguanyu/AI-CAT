@@ -231,6 +231,35 @@ export async function claimTrial(
 
 export type { ExamListItem };
 
+/** 本人自填的分群資料（年齡區間 / 學歷 / 性別）；未填為 null。 */
+export async function getMyProfile(): Promise<
+  import('@/types/profile').ProfileExtras
+> {
+  const res = await fetch('/api/me/profile', {
+    headers: { Authorization: `Bearer ${await bearer()}` },
+  });
+  const json = await parseBody(res);
+  if (!res.ok) fail(json, res, '讀取個人資料失敗');
+  return json as unknown as import('@/types/profile').ProfileExtras;
+}
+
+/** 部分更新自填分群資料；回傳寫入後的完整值。 */
+export async function saveMyProfile(
+  input: Partial<import('@/types/profile').ProfileExtras>,
+): Promise<import('@/types/profile').ProfileExtras> {
+  const res = await fetch('/api/me/profile', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${await bearer()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  const json = await parseBody(res);
+  if (!res.ok) fail(json, res, '儲存個人資料失敗');
+  return json as unknown as import('@/types/profile').ProfileExtras;
+}
+
 /** 本人的檢測歷史（新到舊）。 */
 export async function getMyExams(): Promise<ExamListItem[]> {
   const res = await fetch('/api/me/exams', {

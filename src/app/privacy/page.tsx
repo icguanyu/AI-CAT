@@ -41,8 +41,12 @@ export default function PrivacyPage() {
       <h2>一、我們蒐集哪些資料</h2>
       <ul>
         <li>
-          <strong>帳號資料</strong>：透過 Google 登入時取得的電子郵件、顯示名稱、頭像網址，以及
+          <strong>帳號資料</strong>：透過 Google 登入時取得的電子郵件、顯示名稱（含名 / 姓）、語系、頭像網址，以及
           Google 帳號識別碼。
+        </li>
+        <li>
+          <strong>自填分群資料（選填）</strong>：你可在「我的檢測紀錄」自願提供年齡區間、學歷、性別。
+          可隨時跳過或修改；僅用於整體數據分析，不會顯示在你的報告或分享卡上。
         </li>
         <li>
           <strong>檢測資料</strong>：你在測驗沙盒中輸入的訊息、AI 助手的回覆（提交後會與評分報告一起保存為
