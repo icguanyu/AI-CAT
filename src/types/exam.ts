@@ -187,6 +187,21 @@ export interface ResolvedScenario {
 }
 
 /**
+ * 這場的投入程度訊號；不影響評分，供事後分析過濾「暖身 / 一輪就送出在刷數字」用。
+ * 存進 report jsonb 的 `engagement`。
+ */
+export interface Engagement {
+  /** 開場到提交的牆上秒數（含讀題、思考、閒置，不是純作答時間）。 */
+  elapsedSec: number;
+  /** 受測者發話輪次。 */
+  userTurns: number;
+  /** 受測者所有輸入的字數加總。 */
+  userCharsTotal: number;
+  /** 對話是否長到走到「排定的注入輪次」；injectAtTurn = 0（no-trap / 跳過）時為 null。 */
+  reachedInjection: boolean | null;
+}
+
+/**
  * 免登入試用場評分後、只放 Redis（key `anonrpt:{examId}`）的結果快照。
  * 登入後由 /api/exam/:id/claim 讀出、寫成正式 exam_reports 列。
  */
@@ -209,6 +224,8 @@ export interface AnonReportBlob {
   verifyDifficulty: VerifyDifficulty | null;
   /** 這場擲中的注入輪次（0 = 整場不注入 / no-trap）。 */
   injectAtTurn: number;
+  /** 這場的投入程度訊號（耗時 / 輪數 / 輸入字數 / 有無走到注入輪）。 */
+  engagement: Engagement;
   /** 裁判「未加工」的原始輸出（含它自己判的 user_challenged）；給稽核 / 訓練用。 */
   judgeRaw: Judged;
   /** 產出這份評分的裁判版本標記（`模型·準則版本`）。 */

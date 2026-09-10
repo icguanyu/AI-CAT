@@ -61,7 +61,8 @@ async function handle(req: Request): Promise<Response> {
   }
   const isAnon = actor.kind === 'anon';
 
-  const userTurns = state.history.filter((m) => m.role === 'user').length;
+  const userMsgs = state.history.filter((m) => m.role === 'user');
+  const userTurns = userMsgs.length;
   if (userTurns < 1) {
     return Response.json(
       { error: '尚未開始對話，無法評估。' },
@@ -169,6 +170,18 @@ async function handle(req: Request): Promise<Response> {
     injectAtTurn: state.injectAtTurn ?? 2,
   };
 
+  // 投入程度訊號；不影響評分，供事後分析過濾「暖身 / 一輪就送出在刷數字」用。
+  // elapsedSec 需要開場時間（state.createdAt），Redis session 評分後即刪，只能在此刻算。
+  const engagement = {
+    elapsedSec: Math.max(0, Math.round((Date.now() - state.createdAt) / 1000)),
+    userTurns,
+    userCharsTotal: userMsgs.reduce((n, m) => n + m.content.length, 0),
+    reachedInjection:
+      (state.injectAtTurn ?? 0) > 0
+        ? userTurns >= (state.injectAtTurn ?? 0)
+        : null,
+  };
+
   // ── 免登入試用：不寫 DB、不扣次數，結果只放 Redis（TTL），登入後由 /claim 認領 ──
   if (isAnon) {
     const blob: AnonReportBlob = {
@@ -183,6 +196,7 @@ async function handle(req: Request): Promise<Response> {
       trap,
       noTrap,
       ...trapMeta,
+      engagement,
       judgeRaw: judged,
       judgeVersion: JUDGE_VERSION,
       ruleChallenged: challenged,
@@ -233,6 +247,8 @@ async function handle(req: Request): Promise<Response> {
       noTrap,
       // 抽中變體的陷阱型別 / 察覺難度 / 擲中的注入輪次；給後續裁判校準 / 分層分析。
       ...trapMeta,
+      // 投入程度訊號（耗時 / 輪數 / 輸入字數 / 有無走到注入輪）；供事後過濾暖身 / 刷數字。
+      engagement,
       // 裁判「未加工」的原始輸出（含它自己判的 user_challenged）+ 裁判版本標記；
       // 上面的 report.user_challenged / suggested_level 是後端加工過的，這裡留原話供稽核。
       judge_raw: judged,
