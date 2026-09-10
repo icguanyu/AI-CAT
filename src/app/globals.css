@@ -1643,6 +1643,11 @@ footer {
   transform: rotate(-8deg);
   animation: catDrift 15s ease-in-out infinite;
 }
+/* 背景浮水印貓：除了緩慢漂移，眼睛也偶爾眨一下 */
+.cat-watermark .cat-decor__eyes {
+  transform-origin: 50px 50px;
+  animation: catBlink 6.5s ease-in-out infinite;
+}
 @media (min-width: 900px) {
   .cat-watermark {
     right: auto;
@@ -1686,6 +1691,7 @@ footer {
 
 @media (prefers-reduced-motion: reduce) {
   .cat-watermark,
+  .cat-watermark .cat-decor__eyes,
   .cat-decor--alive,
   .cat-decor--alive .cat-decor__eyes,
   .cat-decor--alive .cat-decor__ear-l,
