@@ -38,8 +38,8 @@
   --radar-base: #f6f5f1;
   --radar-fill: rgba(216, 255, 79, 0.55);
   --radar-stroke: #16181a;
-  /* 卡內「內嵌面板」底色（hero 右欄 / 本站平均盒）——比 --card 再深一階 */
-  --card-inset: #e5e2d8;
+  /* 著陸頁面板底色（hero 右欄 / 本站平均盒 / 範例題目框）——在頁底色上浮起一階 */
+  --card-inset: #e7e4db;
   --radius: 2px;
   --panel-radius: 2px;
   --ok: #1e874b;
@@ -67,7 +67,7 @@
   --radar-base: transparent;
   --radar-fill: rgba(216, 255, 79, 0.19);
   --radar-stroke: #d8ff4f;
-  --card-inset: #0e1012;
+  --card-inset: #191c1f;
   --radius: 6px;
   --panel-radius: 10px;
   --ok: #4ade80;
@@ -95,7 +95,7 @@
     --radar-base: transparent;
     --radar-fill: rgba(216, 255, 79, 0.19);
     --radar-stroke: #d8ff4f;
-    --card-inset: #0e1012;
+    --card-inset: #191c1f;
     --radius: 6px;
     --panel-radius: 10px;
     --ok: #4ade80;
@@ -308,22 +308,19 @@ h2 {
   margin-bottom: 36px;
 }
 
-/* ══ 著陸頁：單張 hairline 檔案卡（對齊 AI-CAT 首頁方向.dc）══════ */
+/* ══ 著陸頁：hairline 檔案風各區塊（對齊 AI-CAT 首頁方向.dc）══════
+   內容置中收在欄寬內、各區塊依序全寬排下來（不用整頁外框卡片）。 */
 .lp {
-  min-height: 100vh;
-  padding: clamp(16px, 3vw, 40px) clamp(12px, 3vw, 40px);
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  color: var(--fg);
 }
 
-/* 整頁包在一張卡裡：header + hero + 各 §區塊 + 螢光綠翻轉 + 本站平均 */
+/* 過渡用的內層包裝——不再有外框 / 圓角 / 底色，純傳遞。 */
 .lp-card {
   width: 100%;
-  max-width: 1180px;
-  margin-inline: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--panel-radius);
-  overflow: hidden;
-  background: var(--card);
-  color: var(--fg);
+  min-width: 0;
 }
 
 .lp-header {
@@ -361,7 +358,7 @@ h2 {
 /* ── Hero split：左文案 | 右能力模型（硬分隔線、無 gap）── */
 .lp-hero-split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.32fr 1fr;
   border-bottom: 1px solid var(--border);
 }
 
@@ -446,10 +443,10 @@ h2 {
 /* 右側：能力模型 sample panel（內嵌底色、無外框） */
 .lp-panel {
   min-width: 0;
-  padding: clamp(24px, 3vw, 36px);
+  padding: clamp(20px, 2.4vw, 28px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   background: var(--card-inset);
 }
 .lp-panel-head {
@@ -462,7 +459,7 @@ h2 {
 }
 .lp-panel svg {
   width: 100%;
-  max-width: 300px;
+  max-width: 380px;
   margin-inline: auto;
   height: auto;
   overflow: visible;
@@ -529,7 +526,7 @@ h2 {
   color: var(--fg-faint);
 }
 
-/* ── 卡內 §區塊：共用外距與分隔線 ── */
+/* ── 著陸頁區塊：共用外距與分隔線 ── */
 .lp-sec {
   padding: clamp(32px, 4vw, 52px) clamp(20px, 4vw, 36px);
   position: relative;
@@ -538,14 +535,7 @@ h2 {
   border-top: 1px solid var(--border);
 }
 
-.sec-num {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  color: var(--fg-faint);
-}
-
-/* §01：左標題直排、右大字列表 */
+/* 「我們測什麼」：左標題直排、右大字列表 */
 .lp-sec--split {
   display: grid;
   grid-template-columns: 0.62fr 1.38fr;
@@ -605,7 +595,7 @@ h2 {
   line-height: 1.7;
 }
 
-/* §區塊橫向標頭：§NN + h2 + 附註（§02 / §03） */
+/* 區塊橫向標頭：h2 + 附註（運作方式 / 你會拿到什麼） */
 .lp-sec-bar {
   display: flex;
   align-items: baseline;
@@ -624,7 +614,7 @@ h2 {
   color: var(--fg-faint);
 }
 
-/* §02：五步流程網格 */
+/* 運作方式：五步流程網格 */
 .flow-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -649,7 +639,7 @@ h2 {
   font-size: 22px;
   color: var(--fg-faint);
 }
-.flow-n[data-last='true'] {
+.flow-n[data-last="true"] {
   color: var(--accent-ink);
 }
 .flow-t {
@@ -724,6 +714,8 @@ h2 {
   gap: clamp(24px, 3.4vw, 36px);
   align-items: stretch;
   overflow: hidden;
+  /* 標題上方留一條給探頭貓咪的帶狀留白，避免壓到標題或本站平均盒 */
+  padding-top: clamp(80px, 7vw, 100px);
 }
 .lp-cta-lead {
   display: flex;
@@ -759,7 +751,7 @@ h2 {
   text-underline-offset: 2px;
 }
 
-/* ── 手機 / 窄視窗：卡內所有多欄網格改單欄 ── */
+/* ── 手機 / 窄視窗：著陸頁所有多欄網格改單欄 ── */
 @media (max-width: 860px) {
   .lp-hero-split,
   .lp-sec--split,
@@ -772,7 +764,13 @@ h2 {
   }
   .lp-sec--cta {
     gap: 28px;
+    padding-top: clamp(64px, 16vw, 80px);
   }
+  /* .cat-peek {
+    top: clamp(8px, 3vw, 14px);
+    left: clamp(-2px, 3vw, 16px);
+    width: clamp(46px, 13vw, 60px);
+  } */
   .flow-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -1010,7 +1008,7 @@ h2 {
   background: color-mix(in srgb, var(--fg) 22%, transparent);
   display: block;
 }
-.benchmark-bar[data-peak='true'] {
+.benchmark-bar[data-peak="true"] {
   background: var(--accent-ink);
 }
 .benchmark-cta {
@@ -1662,20 +1660,20 @@ footer {
   }
 }
 
-/* 最終 CTA 區：一隻小貓從標題後方探頭 */
+/* 最終 CTA 區：一隻小貓從「準備好了嗎？」標題上方的留白帶探頭。
+   疊在最上層、pointer-events:none 不吃點擊；靠 .lp-sec--cta 的 padding-top
+   讓出的帶狀空間，不壓標題也不碰本站平均盒。手機另有較窄的一組值。 */
 .lp-sec--cta > .lp-cta-lead,
 .lp-sec--cta > .benchmark {
   position: relative;
   z-index: 1;
 }
 .cat-peek {
-  position: absolute;
-  z-index: 0;
-  top: 30px;
-  right: clamp(-6px, 4vw, 40px);
-  width: clamp(76px, 12vw, 128px);
+  margin-top: 10px;
+  pointer-events: none;
+  width: clamp(52px, 5vw, 66px);
   color: var(--accent-ink);
-  opacity: 0.14;
+  opacity: 0.5;
 }
 
 /* 頁尾：置中的小標記 */
@@ -2204,10 +2202,12 @@ footer {
   background: var(--card);
   color: var(--fg-muted);
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 .acct-trigger:hover,
-.acct-trigger[aria-expanded='true'] {
+.acct-trigger[aria-expanded="true"] {
   border-color: var(--accent-ink);
   color: var(--fg);
 }
@@ -2328,14 +2328,16 @@ footer {
   border-radius: var(--radius);
   border: 1px solid transparent;
   border-left: 3px solid transparent;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
-.familiarity-pick .fp-opts > div[data-on='true'] {
+.familiarity-pick .fp-opts > div[data-on="true"] {
   border-color: color-mix(in srgb, var(--accent-ink) 45%, var(--border));
   border-left-color: var(--accent-ink);
   background: color-mix(in srgb, var(--accent) 18%, var(--card));
 }
-.familiarity-pick .fp-opts > div:not([data-on='true']) {
+.familiarity-pick .fp-opts > div:not([data-on="true"]) {
   opacity: 0.6;
 }
 .familiarity-pick .fp-opts dt {
@@ -2344,7 +2346,7 @@ footer {
   font-weight: 700;
   color: var(--fg);
 }
-.familiarity-pick .fp-opts > div[data-on='true'] dt {
+.familiarity-pick .fp-opts > div[data-on="true"] dt {
   color: var(--accent-ink);
 }
 .familiarity-pick .fp-opts dd {
@@ -3090,7 +3092,9 @@ footer {
   font-size: 11px;
   color: var(--fg-faint);
   border-bottom: 1px solid var(--fg-faint);
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 .me-catrow-go:hover {
   color: var(--fg);
@@ -3309,7 +3313,10 @@ footer {
   color: var(--fg-faint);
   cursor: pointer;
   border-radius: var(--panel-radius);
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 .me-fchip:hover {
   color: var(--fg);
@@ -3441,7 +3448,9 @@ footer {
   padding: 13px 30px;
   cursor: pointer;
   border-radius: var(--panel-radius);
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 .me-more:hover {
   color: var(--fg);

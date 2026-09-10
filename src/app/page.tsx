@@ -1,9 +1,9 @@
 /**
  * 檔案：src/app/page.tsx  →  路由 /
  * 角色：前端層 — 產品著陸頁（對齊 AI-CAT 首頁方向.dc）
- * 功能：單張 hairline 檔案卡：header（不變）→ hero split（左文案 + 右能力模型）
- *       → §01 我們測什麼（大字維度列表）→ §02 運作方式（五步）→ §03 你會拿到什麼
- *       （真實 brief + 範例成績單）→ 螢光綠翻轉「一次分數只是切片」→ 準備好了嗎
+ * 功能：hairline 檔案風全寬區塊：header（不變）→ hero split（左文案 + 右能力模型）
+ *       → 我們測什麼（大字維度列表）→ 運作方式（五步）→ 你會拿到什麼
+ *       （真實 brief + 範例成績單）→ 螢光綠翻轉「測一次不代表你」→ 準備好了嗎
  *       + 本站平均。CTA 連 /exam。「本站平均」走 ISR。
  */
 import type { Metadata } from 'next';
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 // 「本站平均」要抓 DB，但不必即時——每 30 分鐘重新產生一次即可。
 export const revalidate = 1800;
 
-/** §01 我們測什麼——五個評分維度。 */
+/** 「我們測什麼」——五個評分維度。 */
 const DIMENSIONS = [
   { i: '01', t: '提示詞結構', d: '角色、脈絡與輸出格式限制' },
   { i: '02', t: '問題拆解力', d: '分階段引導而非一次全丟' },
@@ -37,7 +37,7 @@ const DIMENSIONS = [
   { i: '05', t: '任務達成率', d: '字數、格式、必含內容' },
 ];
 
-/** §02 運作方式——五個步驟。 */
+/** 「運作方式」——五個步驟。 */
 const STEPS = [
   {
     title: '選一題、先自評熟悉度',
@@ -142,6 +142,9 @@ const jsonLd = {
   ],
 };
 
+/** 先隱藏「你會拿到什麼」區塊——改回 true 即恢復。 */
+const SHOW_SAMPLE = false;
+
 export default async function HomePage() {
   const siteStats = await getSiteStats();
 
@@ -220,10 +223,9 @@ export default async function HomePage() {
             </aside>
           </div>
 
-          {/* ── §01 我們測什麼 ─────────────────────────── */}
+          {/* ── 我們測什麼 ─────────────────────────────── */}
           <section className="lp-sec lp-sec--split" id="dims">
             <div className="lp-sec-head">
-              <span className="sec-num">§ 01</span>
               <h2>
                 我們測
                 <br />
@@ -244,10 +246,9 @@ export default async function HomePage() {
             </div>
           </section>
 
-          {/* ── §02 運作方式 ──────────────────────────── */}
+          {/* ── 運作方式 ──────────────────────────────── */}
           <section className="lp-sec" id="how">
             <div className="lp-sec-bar">
-              <span className="sec-num">§ 02</span>
               <h2>運作方式</h2>
               <span className="sec-aside">
                 一場約 5–10 分鐘，最多 10 輪對話
@@ -269,45 +270,47 @@ export default async function HomePage() {
             </div>
           </section>
 
-          {/* ── §03 你會拿到什麼（真實 brief + 範例成績單）── */}
-          <section className="lp-sec" id="sample">
-            <div className="lp-sec-bar">
-              <span className="sec-num">§ 03</span>
-              <h2>你會拿到什麼</h2>
-              <span className="sec-aside">
-                真實情境題 · 一場你主導的對話 · 能力檢測結果
-              </span>
-            </div>
-            <div className="sample-io">
-              <div className="sample-brief">
-                <div className="sample-tag">你會拿到的題目</div>
-                <div className="brief">{SAMPLE_BRIEF}</div>
+          {/* ── 你會拿到什麼（真實 brief + 範例成績單）── 先隱藏 ── */}
+          {SHOW_SAMPLE && (
+            <section className="lp-sec" id="sample">
+              <div className="lp-sec-bar">
+                <h2>你會拿到什麼</h2>
+                <span className="sec-aside">
+                  真實情境題 · 一場你主導的對話 · 能力檢測結果
+                </span>
               </div>
-              <div className="sample-result">
-                <div className="sample-tag">完成後你會拿到的成績單</div>
-                <ResultCard
-                  level={SAMPLE_REPORT.level}
-                  scores={SAMPLE_REPORT.scores}
-                  summary={SAMPLE_REPORT.summary}
-                  orientation="portrait"
-                />
-                <p className="sample-note">
-                  此為範例，實際分數與總評依你的對話生成。完整報告另附「做得好／可以更好」與 L5 示範。
-                </p>
+              <div className="sample-io">
+                <div className="sample-brief">
+                  <div className="sample-tag">你會拿到的題目</div>
+                  <div className="brief">{SAMPLE_BRIEF}</div>
+                </div>
+                <div className="sample-result">
+                  <div className="sample-tag">完成後你會拿到的成績單</div>
+                  <ResultCard
+                    level={SAMPLE_REPORT.level}
+                    scores={SAMPLE_REPORT.scores}
+                    summary={SAMPLE_REPORT.summary}
+                    orientation="portrait"
+                  />
+                  <p className="sample-note">
+                    此為範例，實際分數與總評依你的對話生成。完整報告另附「做得好／可以更好」與 L5 示範。
+                  </p>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          )}
 
-          {/* ── 螢光綠翻轉：一次分數只是切片 ───────────── */}
+          {/* ── 螢光綠翻轉：一次分數不代表你 ───────────── */}
           <section className="lp-flip">
             <div className="lp-flip-lead">
               <h2>
                 一次分數
                 <br />
-                只是切片。
+                不代表你。
               </h2>
               <p>
-                多做幾場才看得出真實水準。每場自動存進「我的檢測紀錄」，跨情境彙總綜合分級與趨勢。
+                同一個人，換個情境分數可能差很多。多測幾場，每場都會自動存進「我的檢測紀錄」，
+                幫你整理出跨情境的綜合分級和分數變化——測越多次，越接近你真正的實力。
               </p>
             </div>
             <div className="lp-flip-list">
@@ -322,11 +325,11 @@ export default async function HomePage() {
 
           {/* ── 準備好了嗎 + 本站平均 ─────────────────── */}
           <section className="lp-sec lp-sec--cta" id="start">
-            <CatDecor className="cat-peek" animated />
+           
             <div className="lp-cta-lead">
-              <h2>準備好了嗎？</h2>
+              <h2>準備好了嗎？ <CatDecor className="cat-peek" animated /></h2>
               <p>
-                不用註冊，先免費體驗。想保存結果、追蹤進步，可用 Google 登入——
+                無需註冊，免費體驗。想保存結果、追蹤進步，可用 Google 登入——
                 登入後每日 3 場免費（隔日重置），免費帳號累計上限 21 次。
               </p>
               <Link className="cta" href="/exam">
