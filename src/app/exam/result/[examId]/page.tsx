@@ -177,7 +177,7 @@ export default function ResultPage() {
           onToggle: toggleShare,
         }}
       />
-      <div className="report-view" style={{ marginTop: 4 }}>
+      <div className="report-view" style={{ marginTop: 16 }}>
         <Link className="btn ghost" href="/exam">
           再測一次
         </Link>

@@ -62,7 +62,6 @@ export default async function SharePage({ params }: Params) {
         level={card.suggested_level}
         scores={card.scores}
         summary={card.overall_summary}
-        orientation="portrait"
         name={card.name}
       />
 

@@ -290,7 +290,6 @@ export default async function HomePage() {
                     level={SAMPLE_REPORT.level}
                     scores={SAMPLE_REPORT.scores}
                     summary={SAMPLE_REPORT.summary}
-                    orientation="portrait"
                   />
                   <p className="sample-note">
                     此為範例，實際分數與總評依你的對話生成。完整報告另附「做得好／可以更好」與 L5 示範。

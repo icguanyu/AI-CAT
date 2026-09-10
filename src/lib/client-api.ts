@@ -12,6 +12,7 @@ import type {
   TrapReveal,
   ChatMessage,
   ExamListItem,
+  Category,
 } from '@/types/exam';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 
@@ -85,6 +86,8 @@ export interface Quota {
 export interface StartResult {
   examId: string;
   brief: string;
+  /** 情境所屬的任務類型（看題目時顯示）。 */
+  category: Category;
   limits: { maxUserTurns: number; maxInputChars: number };
   /** true = 免登入試用場（結果不保存、輪次較少、模型較便宜）。 */
   trial: boolean;

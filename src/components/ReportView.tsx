@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { Markdown } from '@/components/Markdown';
-import { ResultCard, type CardOrientation } from '@/components/ResultCard';
+import { ResultCard } from '@/components/ResultCard';
 import {
   FAMILIARITY_LABEL,
   type Report,
@@ -74,7 +74,6 @@ export function ReportView({
   /** 完整對話逐字稿；有值才顯示「查看對話紀錄」摺疊區。 */
   transcript?: ChatMessage[] | null;
 }) {
-  const [orient, setOrient] = useState<CardOrientation>('portrait');
   const [copied, setCopied] = useState(false);
   const keys = Object.keys(METRIC_LABELS) as (keyof Report['scores'])[];
 
@@ -104,37 +103,19 @@ export function ReportView({
 
   return (
     <div className="report-view">
+      <div className="result-head">
+        <div className="result-head-titles">
+          <span className="mono-label">RESULT</span>
+          <h2 className="result-title">檢測完成</h2>
+        </div>
+      </div>
+
       {/* ── 完成 · 可分享的結果卡片 ── */}
       <section className="result-section">
-        <div className="result-head">
-          <h2 className="result-title">檢測完成</h2>
-          <div
-            className="pill-toggle orient-toggle"
-            role="group"
-            aria-label="結果卡片版面"
-          >
-            <button
-              type="button"
-              data-on={orient === 'portrait'}
-              onClick={() => setOrient('portrait')}
-            >
-              直式
-            </button>
-            <button
-              type="button"
-              data-on={orient === 'landscape'}
-              onClick={() => setOrient('landscape')}
-            >
-              橫式
-            </button>
-          </div>
-        </div>
-
         <ResultCard
           level={report.suggested_level}
           scores={report.scores}
           summary={report.overall_summary}
-          orientation={orient}
           name={name}
         />
 
@@ -215,35 +196,44 @@ export function ReportView({
               : '任務達成率以較高標準檢視。'}
           </p>
         )}
-        {keys.map((k) => (
-          <div className="score-row" key={k}>
-            <span>{METRIC_LABELS[k]}</span>
-            <span className="score-bar">
-              <span style={{ width: `${report.scores[k]}%` }} />
-            </span>
-            <span className="score-num">{report.scores[k]}</span>
-          </div>
-        ))}
+        <p className="report-section-label">五維度分數</p>
+        <div className="score-list">
+          {keys.map((k) => (
+            <div className="score-row" key={k}>
+              <span>{METRIC_LABELS[k]}</span>
+              <span className="score-bar">
+                <span style={{ width: `${report.scores[k]}%` }} />
+              </span>
+              <span className="score-num">{report.scores[k]}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="report-section-label">總評</p>
         <p className="report-summary">{report.overall_summary}</p>
 
-        {report.did_well.length > 0 && (
-          <div className="fb-block">
-            <h4>做得好</h4>
-            <ul>
-              {report.did_well.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {report.to_improve.length > 0 && (
-          <div className="fb-block improve">
-            <h4>可以更好</h4>
-            <ul>
-              {report.to_improve.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
+        {(report.did_well.length > 0 || report.to_improve.length > 0) && (
+          <div className="fb-grid">
+            {report.did_well.length > 0 && (
+              <div className="fb-block">
+                <h4>做得好</h4>
+                <ul>
+                  {report.did_well.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {report.to_improve.length > 0 && (
+              <div className="fb-block improve">
+                <h4>可以更好</h4>
+                <ul>
+                  {report.to_improve.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 

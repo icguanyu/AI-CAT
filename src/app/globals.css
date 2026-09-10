@@ -1218,6 +1218,26 @@ footer {
   color: var(--fg-muted);
 }
 
+/* 看題目時的「任務類型」標籤：標題 + 類型小徽章 */
+.task-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.task-cat {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-alt);
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
 /* 對話面板標頭：貓咪標記 + 「AI 助手」，讓下方的聊天室明確是「AI 助手」 */
 .chat-head {
   padding-bottom: 12px;
@@ -2627,19 +2647,25 @@ footer {
   gap: 14px;
 }
 .result-head {
-  width: 100%;
-  max-width: 460px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 12px 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.result-head-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .result-title {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   color: var(--fg);
 }
 .result-hint {
@@ -2647,6 +2673,30 @@ footer {
   color: var(--fg-faint);
   text-align: center;
   margin: 0;
+}
+
+/* 分析面板內的小節標題（mono 標籤） */
+.report-section-label {
+  margin: 18px 0 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.report-section-label:first-of-type {
+  margin-top: 8px;
+}
+.score-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.score-list .score-row {
+  margin: 6px 0;
+}
+.fb-grid {
+  margin: 16px 0;
 }
 
 /* 兩區之間的標示分隔線 */
@@ -2681,9 +2731,6 @@ footer {
 .result-card.portrait {
   max-width: 420px;
 }
-.result-card.landscape {
-  max-width: 100%;
-}
 
 .rc-brand {
   display: flex;
@@ -2707,10 +2754,6 @@ footer {
   flex-direction: column;
   gap: 16px;
 }
-.result-card.landscape .rc-body {
-  flex-direction: row;
-  align-items: center;
-}
 
 .rc-radar {
   flex: 0 0 auto;
@@ -2722,9 +2765,6 @@ footer {
   max-width: 300px;
   height: auto;
   pointer-events: none; /* 純裝飾雷達，不吃上層點擊 */
-}
-.result-card.landscape .rc-radar svg {
-  width: 280px;
 }
 
 .rc-meta {
@@ -2798,16 +2838,6 @@ footer {
 }
 
 @media (max-width: 560px) {
-  .result-card.landscape {
-    max-width: 420px;
-  }
-  .result-card.landscape .rc-body {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .result-card.landscape .rc-radar svg {
-    width: 100%;
-  }
   .rc-foot {
     flex-direction: column;
     align-items: flex-start;
@@ -2915,8 +2945,7 @@ footer {
   .result-card {
     padding: 16px;
   }
-  .result-card.portrait,
-  .result-card.landscape {
+  .result-card.portrait {
     max-width: 100%;
   }
   .report-card {
@@ -2938,6 +2967,58 @@ footer {
   }
   .rc-level b {
     font-size: 1.7rem;
+  }
+}
+
+/* ── 報告畫面：PC 兩欄（結果卡片側欄 sticky ｜ 詳細分析） ── */
+@media (min-width: 940px) {
+  /* :has(.report-card) 只作用在完整報告，排除頁尾那個只有「再測一次」的 .report-view */
+  .report-view:has(.report-card) {
+    max-width: 1080px;
+    display: grid;
+    grid-template-columns: minmax(360px, 400px) 1fr;
+    column-gap: 44px;
+    row-gap: 24px;
+    align-items: start;
+  }
+  .result-head {
+    grid-column: 1 / -1;
+  }
+  .result-title {
+    font-size: 1.75rem;
+  }
+  .result-section {
+    grid-column: 1;
+    position: sticky;
+    top: 24px;
+  }
+  .report-card {
+    grid-column: 2;
+    padding: 28px 30px;
+  }
+  /* 兩欄版不需要中間「分析報告」分隔線 */
+  .report-divider {
+    display: none;
+  }
+  /* dev fixture 按鈕擺回左欄下方 */
+  .report-view > .btn.ghost {
+    grid-column: 1;
+  }
+
+  .report-summary {
+    font-size: 1rem;
+  }
+  .fb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px 26px;
+  }
+  .fb-grid .fb-block {
+    margin: 0;
+  }
+
+  .result-topbar {
+    max-width: 1080px;
   }
 }
 

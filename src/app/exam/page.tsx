@@ -32,6 +32,7 @@ import { useVoiceInput } from '@/lib/use-voice-input';
 import {
   FAMILIARITY_LABEL,
   FAMILIARITY_DESC,
+  CATEGORY_LABEL,
   type Familiarity,
 } from '@/types/exam';
 import { Markdown } from '@/components/Markdown';
@@ -552,7 +553,10 @@ function ExamPageInner() {
         {TopBar}
         <div className="center-card panel brief-gate">
           <div className="meta-row">
-            <strong>你的任務</strong>
+            <span className="task-head">
+              <strong>你的任務</strong>
+              <span className="task-cat">{CATEGORY_LABEL[exam.category]}</span>
+            </span>
             <button
               type="button"
               className="linkbtn"
@@ -616,7 +620,12 @@ function ExamPageInner() {
       <div className="exam-grid">
         <aside className="panel">
           <div className="meta-row">
-            <strong>任務說明</strong>
+            <span className="task-head">
+              <strong>任務說明</strong>
+              {exam?.category && (
+                <span className="task-cat">{CATEGORY_LABEL[exam.category]}</span>
+              )}
+            </span>
           </div>
           <div className="brief">{exam?.brief}</div>
         </aside>
