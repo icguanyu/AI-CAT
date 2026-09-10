@@ -2559,6 +2559,53 @@ footer {
   padding: 14px 18px 16px;
 }
 
+/* ── 對話紀錄（結果頁摺疊區，簡易版）── */
+.transcript-log {
+  margin: 16px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  overflow: hidden;
+}
+.transcript-log[open] .exemplar-head {
+  border-bottom: 1px solid var(--border);
+}
+.transcript-log:not([open]) .transcript-body {
+  display: none;
+}
+.transcript-body {
+  padding: 14px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.tr-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tr-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--fg-faint);
+}
+.tr-msg.tr-user .tr-role {
+  color: var(--accent-ink);
+}
+.tr-content {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.tr-msg.tr-assistant .tr-content {
+  white-space: normal;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+}
+
 /* ══ 報告畫面：完成頁（結果卡片）＋ 分析報告 兩區隔 ══ */
 .report-view {
   max-width: 560px;

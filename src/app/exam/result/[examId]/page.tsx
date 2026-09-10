@@ -169,6 +169,7 @@ export default function ResultPage() {
         name={bundle.name ?? sessionName}
         familiarity={bundle.familiarity}
         debug={bundle.debug}
+        transcript={bundle.transcript}
         share={{
           shared: bundle.shared,
           url: shareUrl,

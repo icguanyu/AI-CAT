@@ -46,6 +46,7 @@ async function handle(
       exemplar: '',
       debug: null,
       shared: false,
+      transcript: blob.history ?? null,
       trial: true,
       persisted: false,
     });
@@ -67,6 +68,7 @@ async function handle(
     exemplar: res.data.exemplar,
     debug: dev ? res.data.debug : null,
     shared: res.data.shared,
+    transcript: res.data.transcript,
     trial: false,
     persisted: true,
   });

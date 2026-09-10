@@ -15,6 +15,7 @@ import type {
   TrapReveal,
   Familiarity,
   Category,
+  ChatMessage,
   ExamListItem,
 } from '@/types/exam';
 
@@ -46,6 +47,8 @@ export interface OwnerReport {
   exemplar: string;
   debug: unknown | null;
   shared: boolean;
+  /** 完整對話逐字稿；舊報告（此欄上線前）為 null。 */
+  transcript: ChatMessage[] | null;
 }
 
 type Fail = { ok: false; status: 403 | 404 };
@@ -67,7 +70,7 @@ export async function getOwnerReport(
 ): Promise<{ ok: true; data: OwnerReport } | Fail> {
   const { data, error } = await getSupabaseAdmin()
     .from('exam_reports')
-    .select('user_id, report, shared')
+    .select('user_id, report, shared, transcript')
     .eq('exam_id', examId)
     .maybeSingle();
   if (error || !data) return { ok: false, status: 404 };
@@ -83,6 +86,7 @@ export async function getOwnerReport(
       exemplar: r.exemplar ?? '',
       debug: r.debug ?? null,
       shared: Boolean(data.shared),
+      transcript: (data.transcript as ChatMessage[] | null) ?? null,
     },
   };
 }

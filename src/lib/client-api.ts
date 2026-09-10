@@ -187,6 +187,8 @@ export interface ReportBundle extends EvalResult {
   shared: boolean;
   /** true = 免登入試用結果（來自 Redis 快照，未保存）。 */
   trial: boolean;
+  /** 完整對話逐字稿；此欄上線前的舊報告為 null。 */
+  transcript: ChatMessage[] | null;
 }
 
 /** 取回一場測驗的完整報告（登入：本人 DB；未登入：anon cookie + Redis 快照）。 */
@@ -207,6 +209,7 @@ export async function getExamReport(examId: string): Promise<ReportBundle> {
     shared: Boolean(json.shared),
     trial: json.trial === true,
     persisted: json.persisted !== false,
+    transcript: (json.transcript as ChatMessage[] | null) ?? null,
   };
 }
 

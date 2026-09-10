@@ -49,7 +49,10 @@ import { AiCatMark } from '@/components/AiCatMark';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type Phase = 'idle' | 'brief' | 'chatting' | 'evaluating' | 'result';
-type TrialResult = EvalResult & { familiarity: Familiarity };
+type TrialResult = EvalResult & {
+  familiarity: Familiarity;
+  transcript: Msg[] | null;
+};
 
 export default function ExamPage() {
   return (
@@ -183,6 +186,7 @@ function ExamPageInner() {
           debug: b.debug,
           persisted: false,
           familiarity: b.familiarity ?? 'mid',
+          transcript: b.transcript,
         });
         setPhase('result');
       })
@@ -325,7 +329,7 @@ function ExamPageInner() {
         router.push(`/exam/result/${exam.examId}`);
       } else {
         // 免登入試用：結果只在 Redis，就地顯示 + 引導登入保存
-        setTrialResult({ ...res, familiarity });
+        setTrialResult({ ...res, familiarity, transcript: messages });
         setTrialExamId(exam.examId);
         setPhase('result');
         setBusy(false);
@@ -336,7 +340,7 @@ function ExamPageInner() {
       setPhase('chatting');
       setBusy(false);
     }
-  }, [exam, handleErr, router, voiceStop, familiarity]);
+  }, [exam, handleErr, router, voiceStop, familiarity, messages]);
 
   // ── 設定未完成 ──
   if (configError) {
@@ -400,6 +404,7 @@ function ExamPageInner() {
           exemplar={trialResult.exemplar}
           familiarity={trialResult.familiarity}
           debug={trialResult.debug}
+          transcript={trialResult.transcript}
           trial
         />
         <div className="trial-again">

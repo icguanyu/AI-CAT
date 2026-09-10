@@ -15,6 +15,7 @@ import {
   type Report,
   type TrapReveal,
   type Familiarity,
+  type ChatMessage,
 } from '@/types/exam';
 import type { FixtureDebug } from '@/lib/client-api';
 
@@ -57,6 +58,7 @@ export function ReportView({
   debug = null,
   share,
   trial = false,
+  transcript = null,
 }: {
   report: Report;
   trap: TrapReveal | null;
@@ -69,6 +71,8 @@ export function ReportView({
   share?: ShareControls;
   /** 免登入試用：隱藏「截圖分享」提示（改由外層的登入卡承擔訊息）。 */
   trial?: boolean;
+  /** 完整對話逐字稿；有值才顯示「查看對話紀錄」摺疊區。 */
+  transcript?: ChatMessage[] | null;
 }) {
   const [orient, setOrient] = useState<CardOrientation>('portrait');
   const [copied, setCopied] = useState(false);
@@ -270,6 +274,29 @@ export function ReportView({
             </summary>
             <div className="exemplar-body">
               <Markdown>{exemplar}</Markdown>
+            </div>
+          </details>
+        )}
+
+        {transcript && transcript.length > 0 && (
+          <details className="transcript-log">
+            <summary className="exemplar-head">
+              查看對話紀錄（{transcript.filter((m) => m.role === 'user').length}{' '}
+              輪）
+            </summary>
+            <div className="transcript-body">
+              {transcript.map((m, i) => (
+                <div key={i} className={`tr-msg tr-${m.role}`}>
+                  <span className="tr-role">{m.role === 'user' ? '你' : 'AI'}</span>
+                  {m.role === 'assistant' ? (
+                    <div className="tr-content">
+                      <Markdown>{m.content}</Markdown>
+                    </div>
+                  ) : (
+                    <p className="tr-content">{m.content}</p>
+                  )}
+                </div>
+              ))}
             </div>
           </details>
         )}
