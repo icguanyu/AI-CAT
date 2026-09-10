@@ -54,6 +54,8 @@ async function handle(
     exam_id: examId,
     user_id: auth.userId,
     scenario_id: blob.scenarioId,
+    // 認領時把試用場的對話逐字稿一起帶進正式紀錄。
+    transcript: blob.history ?? null,
     report: {
       ...blob.report,
       weighted_average: blob.weightedAverage,

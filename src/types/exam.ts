@@ -138,6 +138,8 @@ export interface AnonReportBlob {
   trap: TrapReveal | null;
   ruleChallenged: boolean;
   injected: boolean;
+  /** 完整對話逐字稿；認領時一起寫進 exam_reports.transcript。 */
+  history: ChatMessage[];
   createdAt: number;
 }
 

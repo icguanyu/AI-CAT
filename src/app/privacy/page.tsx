@@ -32,7 +32,7 @@ export default function PrivacyPage() {
         </Link>
       </div>
       <h1>隱私政策</h1>
-      <p className="updated">最後更新：2026-09-08</p>
+      <p className="updated">最後更新：2026-09-10</p>
 
       <p>
         AI-CAT（以下稱「本服務」）是一個 AI 能力檢測工具。使用本服務即表示你已閱讀並同意本政策。
@@ -45,7 +45,9 @@ export default function PrivacyPage() {
           Google 帳號識別碼。
         </li>
         <li>
-          <strong>檢測資料</strong>：你在測驗沙盒中輸入的訊息、AI 助手的回覆、提交後產生的評分報告與能力分級。
+          <strong>檢測資料</strong>：你在測驗沙盒中輸入的訊息、AI 助手的回覆（提交後會與評分報告一起保存為
+          <strong>完整對話逐字稿</strong>）、以及提交後產生的評分報告與能力分級。逐字稿用於顯示與還原你的結果、
+          分析題目難易，以及改進評分模型。
         </li>
         <li>
           <strong>用量資料</strong>：每個帳號的免費檢測次數計數。
@@ -96,9 +98,11 @@ export default function PrivacyPage() {
       <h2>四、保存期限</h2>
       <ul>
         <li>
-          測驗進行中的對話暫存（Upstash）於該場結束或閒置約 1 小時後自動刪除。
+          測驗進行中的即時暫存（Upstash）於該場結束或閒置約 1 小時後自動刪除。免登入試用的結果暫存約 72 小時後刪除。
         </li>
-        <li>評分報告與帳號 / 個人資料，保存至你刪除帳號或提出刪除請求為止。</li>
+        <li>
+          提交後的評分報告、對話逐字稿與帳號 / 個人資料，保存至你刪除帳號或提出刪除請求為止。
+        </li>
       </ul>
 
       <h2>五、你的權利</h2>

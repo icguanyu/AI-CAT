@@ -160,6 +160,7 @@ async function handle(req: Request): Promise<Response> {
       trap,
       ruleChallenged: challenged,
       injected: state.injected,
+      history: state.history,
       createdAt: Date.now(),
     };
     await setAnonReport(examId, blob);
@@ -184,6 +185,8 @@ async function handle(req: Request): Promise<Response> {
     exam_id: examId,
     user_id: userId,
     scenario_id: state.scenarioId,
+    // 完整對話逐字稿：之前只活在 Redis，評分完即刪；留一份供日後分析與裁判評測 / 微調。
+    transcript: state.history,
     report: {
       ...report,
       weighted_average: average,

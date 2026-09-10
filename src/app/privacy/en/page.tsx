@@ -33,7 +33,7 @@ export default function PrivacyEnPage() {
         </Link>
       </div>
       <h1>Privacy Policy</h1>
-      <p className="updated">Last updated: 2026-09-08</p>
+      <p className="updated">Last updated: 2026-09-10</p>
 
       <p>
         AI-CAT (the &ldquo;Service&rdquo;) is an AI competency assessment tool. By
@@ -52,8 +52,12 @@ export default function PrivacyEnPage() {
         </li>
         <li>
           <strong>Assessment data</strong>: the messages you enter in the
-          assessment sandbox, the AI assistant&rsquo;s replies, and the scoring
-          report and competency level generated after you submit.
+          assessment sandbox and the AI assistant&rsquo;s replies (retained after
+          you submit as the <strong>full conversation transcript</strong>,
+          alongside the scoring report), plus the scoring report and competency
+          level generated after you submit. The transcript is used to display and
+          restore your result, analyse scenario difficulty, and improve the
+          scoring model.
         </li>
         <li>
           <strong>Usage data</strong>: the free-assessment count for each
@@ -118,12 +122,14 @@ export default function PrivacyEnPage() {
       <h2>4. Retention</h2>
       <ul>
         <li>
-          Transient conversation state during an assessment (Upstash) is deleted
+          Transient in-session state during an assessment (Upstash) is deleted
           automatically after the session ends or is idle for about 1 hour.
+          Results of a no-login trial are deleted after about 72 hours.
         </li>
         <li>
-          Scoring reports and account / personal data are retained until you
-          delete your account or submit a deletion request.
+          Submitted scoring reports, conversation transcripts, and account /
+          personal data are retained until you delete your account or submit a
+          deletion request.
         </li>
       </ul>
 
