@@ -1638,8 +1638,8 @@ footer {
   width: clamp(220px, 30vw, 420px);
   color: var(--fg);
   opacity: 0.06;
-  top: 8%;
-  right: -10%;
+  top: 3%;
+  right: -3%;
   transform: rotate(-8deg);
   animation: catDrift 15s ease-in-out infinite;
 }
@@ -1649,7 +1649,7 @@ footer {
   .cat-watermark {
     right: auto;
     left: 28%;
-    top: 16%;
+    top: 4%;
   }
 }
 @keyframes catDrift {
