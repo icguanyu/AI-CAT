@@ -66,6 +66,7 @@ async function handle(
       titleZh: blob.titleZh,
       familiarity: blob.familiarity,
       trap: blob.trap,
+      noTrap: blob.noTrap ?? false,
       // 來源標記：免登入試用認領而來（不佔配額）。
       origin: 'public_trial',
     },

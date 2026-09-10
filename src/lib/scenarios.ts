@@ -6,14 +6,22 @@
  *       由呼叫端回明確錯誤給前端。支援每題多個隨機變體。題目內容機密，不進版控。
  *
  * 題庫來源都是 `Scenario[]`（本機 json 的 root、Supabase 的資料列），以 `id` 為唯一鍵。
- * 每筆：{ id, category, titleZh, brief, system, variants: [ { injectionText, correction?, brief?, verifyHint? } ] }
+ * 每筆：{ id, category, titleZh, brief, system,
+ *        variants: [ { injectionText, correction?, brief?, verifyHint?, trapType?, verifyDifficulty? }
+ *                    | { noTrap: true, brief? } ] }   // noTrap 變體不埋錯誤、整場不注入
  * id / category / titleZh 缺一不可；category 須在 CATEGORY_LABEL（見 types/exam.ts）內，否則載入丟錯。
  * 舊形狀 { brief, system, injectionText } 仍相容（自動轉成單一 variant）。
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { isCategory, type Scenario, type ResolvedScenario } from '@/types/exam';
+import {
+  isCategory,
+  isTrapType,
+  isVerifyDifficulty,
+  type Scenario,
+  type ResolvedScenario,
+} from '@/types/exam';
 
 const TTL_MS = 60_000;
 let cache: { at: number; data: Record<string, Scenario> } | null = null;
@@ -51,18 +59,44 @@ function normalize(raw: RawScenario): Scenario {
         brief?: unknown;
         correction?: unknown;
         verifyHint?: unknown;
+        trapType?: unknown;
+        verifyDifficulty?: unknown;
+        noTrap?: unknown;
       };
-      if (typeof vv.injectionText !== 'string') {
-        throw new Error(`情境題 ${id} 變體 #${i} 缺少 injectionText`);
+      const noTrap = vv.noTrap === true;
+      if (!noTrap && typeof vv.injectionText !== 'string') {
+        throw new Error(
+          `情境題 ${id} 變體 #${i} 缺少 injectionText（若為無陷阱變體請標 "noTrap": true）`,
+        );
+      }
+      if (vv.trapType !== undefined && !isTrapType(vv.trapType)) {
+        throw new Error(
+          `情境題 ${id} 變體 #${i} 的 trapType 非法：「${String(vv.trapType)}」（見 TRAP_TYPE_LABEL）`,
+        );
+      }
+      if (
+        vv.verifyDifficulty !== undefined &&
+        !isVerifyDifficulty(vv.verifyDifficulty)
+      ) {
+        throw new Error(
+          `情境題 ${id} 變體 #${i} 的 verifyDifficulty 非法：「${String(vv.verifyDifficulty)}」（easy / medium / hard）`,
+        );
       }
       return {
-        injectionText: vv.injectionText,
+        ...(noTrap ? { noTrap: true } : {}),
+        ...(typeof vv.injectionText === 'string'
+          ? { injectionText: vv.injectionText }
+          : {}),
         ...(typeof vv.brief === 'string' ? { brief: vv.brief } : {}),
         ...(typeof vv.correction === 'string'
           ? { correction: vv.correction }
           : {}),
         ...(typeof vv.verifyHint === 'string'
           ? { verifyHint: vv.verifyHint }
+          : {}),
+        ...(isTrapType(vv.trapType) ? { trapType: vv.trapType } : {}),
+        ...(isVerifyDifficulty(vv.verifyDifficulty)
+          ? { verifyDifficulty: vv.verifyDifficulty }
           : {}),
       };
     });
@@ -177,6 +211,7 @@ export async function listScenarioIds(): Promise<string[]> {
 function flatten(scenario: Scenario, variantIndex: number): ResolvedScenario {
   const idx = scenario.variants[variantIndex] ? variantIndex : 0;
   const variant = scenario.variants[idx];
+  const noTrap = variant.noTrap === true;
   return {
     scenarioId: scenario.id,
     category: scenario.category,
@@ -184,9 +219,12 @@ function flatten(scenario: Scenario, variantIndex: number): ResolvedScenario {
     variantIndex: idx,
     brief: variant.brief ?? scenario.brief,
     system: scenario.system,
-    injectionText: variant.injectionText,
-    correction: variant.correction ?? '',
-    verifyHint: variant.verifyHint ?? '',
+    noTrap,
+    injectionText: noTrap ? '' : (variant.injectionText ?? ''),
+    correction: noTrap ? '' : (variant.correction ?? ''),
+    verifyHint: noTrap ? '' : (variant.verifyHint ?? ''),
+    trapType: noTrap ? null : (variant.trapType ?? null),
+    verifyDifficulty: noTrap ? null : (variant.verifyDifficulty ?? null),
   };
 }
 

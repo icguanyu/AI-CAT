@@ -71,12 +71,66 @@ export function isCategory(v: unknown): v is Category {
   return typeof v === 'string' && v in CATEGORY_LABEL;
 }
 
+/**
+ * 陷阱型別（封閉詞彙）。決定「面對這種錯誤，怎樣的查證才算數」——
+ * 傳給裁判當 critical_thinking 的判分依據（見 judge.ts criticalThinkingRule）。
+ */
+export type TrapType =
+  | 'knowledge_error'
+  | 'calculation_error'
+  | 'logic_error'
+  | 'concept_confusion'
+  | 'hidden_assumption'
+  | 'strategy_flaw';
+
+export const TRAP_TYPE_LABEL: Record<TrapType, string> = {
+  knowledge_error: '知識性錯誤（AI 講錯或編造事實／知識）',
+  calculation_error: '計算錯誤（加總、平均、比例等算錯）',
+  logic_error: '邏輯錯誤（推理跳步、把「沒結論」當結論、自相矛盾）',
+  concept_confusion: '概念混淆（把兩個相似的概念／做法混為一談）',
+  hidden_assumption: '隱含假設（沒看到限制條件，或擅自假設未提供的資訊）',
+  strategy_flaw: '策略瑕疵（做法在實務上不可行或有副作用）',
+};
+
+/** 針對每種陷阱，「有效的查證行為」大概長什麼樣（給裁判判 critical_thinking 用）。 */
+export const TRAP_TYPE_VERIFY_MOVE: Record<TrapType, string> = {
+  knowledge_error: '要求 AI 給出處／依據，或自己查證',
+  calculation_error: '自己重算一次，或要求 AI 逐步列出算式再核對',
+  logic_error: '追問推理的每一步，或直接指出前後矛盾之處',
+  concept_confusion: '要求 AI 說清楚兩個概念的差別，或自己點出它混用了',
+  hidden_assumption: '逐項對照限制條件，或追問「這個數字／前提你是哪裡來的」',
+  strategy_flaw: '追問這個做法的實務後果與可行性',
+};
+
+export function isTrapType(v: unknown): v is TrapType {
+  return typeof v === 'string' && v in TRAP_TYPE_LABEL;
+}
+
+/** 這個陷阱「一般人要多容易才察覺得到」——校準 critical_thinking 的公平性。 */
+export type VerifyDifficulty = 'easy' | 'medium' | 'hard';
+
+export const VERIFY_DIFFICULTY_LABEL: Record<VerifyDifficulty, string> = {
+  easy: '一般人不需背景知識、用手上資訊就能察覺',
+  medium: '要一點常識推理或簡單查證才看得出',
+  hard: '要專業知識或高成本查證才可能發現',
+};
+
+export function isVerifyDifficulty(v: unknown): v is VerifyDifficulty {
+  return v === 'easy' || v === 'medium' || v === 'hard';
+}
+
 /** 情境題的一個隨機變體。 */
 export interface ScenarioVariant {
   /** 選填：覆寫該場的任務說明（用來變動限制條件）。 */
   brief?: string;
-  /** 這個變體要注入的蓄意錯誤敘述（機密）；注入輪次每場隨機，見 rollInjectAtTurn()。 */
-  injectionText: string;
+  /**
+   * 這個變體「不埋任何錯誤資訊」。noTrap 時 injectionText / correction /
+   * trapType / verifyDifficulty 可省略，開場一律 injectAtTurn = 0（整場不注入）。
+   * 用來讓受測者無法假設「每題都有陷阱」，並測「校準過的信任」。
+   */
+  noTrap?: boolean;
+  /** trap 變體必填、noTrap 變體省略：要注入的蓄意錯誤敘述（機密）；注入輪次每場隨機。 */
+  injectionText?: string;
   /** 選填：對 injectionText 的正解，報告畫面用來做「錯誤 vs 正確」對照。 */
   correction?: string;
   /**
@@ -84,6 +138,10 @@ export interface ScenarioVariant {
    * 用來校準 critical_thinking——沒察覺一個「本來就好查」的錯才算批判力弱。
    */
   verifyHint?: string;
+  /** 選填：陷阱型別（封閉詞彙）。傳給裁判當「該留意哪種錯誤」的提示。 */
+  trapType?: TrapType;
+  /** 選填：一般人要多容易才察覺得到這個錯誤。校準 critical_thinking 的公平性。 */
+  verifyDifficulty?: VerifyDifficulty;
 }
 
 /**
@@ -114,11 +172,18 @@ export interface ResolvedScenario {
   variantIndex: number;
   brief: string;
   system: string;
+  /** 這個變體不埋錯誤資訊；true 時下列 injectionText / correction / trapType / verifyDifficulty 都是空值。 */
+  noTrap: boolean;
+  /** noTrap 時為空字串。 */
   injectionText: string;
-  /** 正解說明；沒填就是空字串。 */
+  /** 正解說明；沒填 / noTrap 就是空字串。 */
   correction: string;
   /** 一般人不需背景知識就能察覺此錯誤的方式；沒填就是空字串。 */
   verifyHint: string;
+  /** 陷阱型別；沒填 / noTrap 就是 null。 */
+  trapType: TrapType | null;
+  /** 察覺難度；沒填 / noTrap 就是 null。 */
+  verifyDifficulty: VerifyDifficulty | null;
 }
 
 /**
@@ -136,6 +201,8 @@ export interface AnonReportBlob {
   report: Report;
   weightedAverage: number;
   trap: TrapReveal | null;
+  /** 這題本身就沒有陷阱（no-trap 題），非「有陷阱但沒觸發」。 */
+  noTrap: boolean;
   ruleChallenged: boolean;
   injected: boolean;
   /** 完整對話逐字稿；認領時一起寫進 exam_reports.transcript。 */

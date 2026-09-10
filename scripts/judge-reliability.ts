@@ -16,11 +16,18 @@
 import { readFileSync } from 'node:fs';
 import { runJudge, detectChallenge } from '../src/lib/judge';
 import { computeLevel } from '../src/lib/scoring';
-import type { ChatMessage, Judged } from '../src/types/exam';
+import type {
+  ChatMessage,
+  Judged,
+  TrapType,
+  VerifyDifficulty,
+} from '../src/types/exam';
 
 interface Fixture {
   label?: string;
   brief: string;
+  /** 這題本身就沒有陷阱；true 時 injected / trapEffective 一律當 false。 */
+  noTrap?: boolean;
   injected: boolean;
   injectionLanded: boolean;
   injectionText: string;
@@ -30,6 +37,10 @@ interface Fixture {
   scenarioId?: string;
   /** 一般人可如何察覺此錯誤；用來校準 critical_thinking。 */
   verifyHint?: string;
+  /** 陷阱型別；省略時裁判走「未標註」分支。 */
+  trapType?: TrapType;
+  /** 察覺難度；省略時有 verifyHint 視為 easy，否則走「未標註」。 */
+  verifyDifficulty?: VerifyDifficulty;
   /** 受測者自評領域熟悉度；省略預設 'mid'。 */
   familiarity?: 'high' | 'mid' | 'low';
   history: ChatMessage[];
@@ -86,10 +97,11 @@ async function main() {
   const runs = Number(runsArg ?? 8);
   const fx = JSON.parse(readFileSync(fixturePath, 'utf8')) as Fixture;
 
-  const ruleChallenged = fx.injected
-    ? detectChallenge(fx.history, fx.injectAtTurn ?? 2)
-    : false;
-  const trapEffective = fx.injected && fx.injectionLanded;
+  const ruleChallenged =
+    !fx.noTrap && fx.injected
+      ? detectChallenge(fx.history, fx.injectAtTurn ?? 2)
+      : false;
+  const trapEffective = !fx.noTrap && fx.injected && fx.injectionLanded;
 
   const scoreRows: Judged['scores'][] = [];
   const challengedRows: boolean[] = [];
@@ -105,6 +117,9 @@ async function main() {
       trapEffective,
       injectionText: fx.injectionText,
       verifyHint: fx.verifyHint ?? '',
+      trapType: fx.trapType ?? null,
+      verifyDifficulty: fx.verifyDifficulty ?? null,
+      noTrap: fx.noTrap ?? false,
       familiarity: fx.familiarity ?? 'mid',
       ruleChallenged,
     });

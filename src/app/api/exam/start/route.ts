@@ -47,13 +47,15 @@ async function pickScenario() {
 function baseState(scenarioId: string, scenario: {
   category: ExamState['category'];
   variantIndex: number;
+  noTrap: boolean;
 }): Omit<ExamState, 'userId'> {
   return {
     scenarioId,
     category: scenario.category,
     variantIndex: scenario.variantIndex,
     history: [],
-    injectAtTurn: rollInjectAtTurn(),
+    // 無陷阱題整場不注入；其餘每場隨機擲一次。
+    injectAtTurn: scenario.noTrap ? 0 : rollInjectAtTurn(),
     injected: false,
     injectionLanded: false,
     injectionText: '',
@@ -100,6 +102,7 @@ async function handle(req: Request): Promise<Response> {
     return Response.json({
       examId,
       brief: picked.scenario.brief,
+      category: picked.scenario.category,
       limits: { maxUserTurns: MAX_USER_TURNS, maxInputChars: MAX_INPUT_CHARS },
       trial: false,
       quota: {
@@ -188,6 +191,7 @@ async function handle(req: Request): Promise<Response> {
     JSON.stringify({
       examId,
       brief: picked.scenario.brief,
+      category: picked.scenario.category,
       limits: {
         maxUserTurns: PUBLIC_TRIAL_MAX_TURNS,
         maxInputChars: MAX_INPUT_CHARS,

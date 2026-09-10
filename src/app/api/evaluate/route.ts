@@ -68,10 +68,12 @@ async function handle(req: Request): Promise<Response> {
     state.scenarioId,
     state.variantIndex,
   );
-  const ruleChallenged = state.injected
-    ? detectChallenge(state.history, state.injectAtTurn ?? 2)
-    : false;
-  const trapEffective = state.injected && state.injectionLanded;
+  const noTrap = scenario.noTrap;
+  const ruleChallenged =
+    !noTrap && state.injected
+      ? detectChallenge(state.history, state.injectAtTurn ?? 2)
+      : false;
+  const trapEffective = !noTrap && state.injected && state.injectionLanded;
 
   // 裁判評分（登入 / 試用都用正式版裁判模型）；「L5 示範」只給登入版（省 token）。
   const [judged, exemplar] = await Promise.all([
@@ -82,6 +84,9 @@ async function handle(req: Request): Promise<Response> {
       trapEffective,
       injectionText: state.injectionText,
       verifyHint: scenario.verifyHint,
+      trapType: scenario.trapType,
+      verifyDifficulty: scenario.verifyDifficulty,
+      noTrap,
       familiarity,
       ruleChallenged,
     }),
@@ -93,6 +98,8 @@ async function handle(req: Request): Promise<Response> {
           injectionText: state.injectionText,
           correction: scenario.correction,
           verifyHint: scenario.verifyHint,
+          trapType: scenario.trapType,
+          noTrap,
         }).catch((e) => {
           console.error('runExemplar 失敗', e);
           return '';
@@ -132,6 +139,9 @@ async function handle(req: Request): Promise<Response> {
           injectionText: state.injectionText,
           injectAtTurn: state.injectAtTurn ?? 2,
           verifyHint: scenario.verifyHint,
+          trapType: scenario.trapType,
+          verifyDifficulty: scenario.verifyDifficulty,
+          noTrap,
           familiarity,
           history: state.history,
         }
@@ -158,6 +168,7 @@ async function handle(req: Request): Promise<Response> {
       report,
       weightedAverage: average,
       trap,
+      noTrap,
       ruleChallenged: challenged,
       injected: state.injected,
       history: state.history,
@@ -202,6 +213,8 @@ async function handle(req: Request): Promise<Response> {
       // 存進 jsonb，讓 /exam/result/:examId 重新整理後能還原陷阱對照；
       // 公開分享頁 /s 讀不到這個欄位（見 getSharedCard 只挑非機密欄位）。
       trap,
+      // 這題本身就沒有陷阱（no-trap 題）；用來和「有陷阱但沒觸發」區分。
+      noTrap,
       ...(debug ? { debug } : {}),
     },
     rule_challenged: challenged,
