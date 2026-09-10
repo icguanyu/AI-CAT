@@ -155,7 +155,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="lp">
-        <CatDecor className="cat-watermark" />
+        <CatDecor className="cat-watermark" animated />
 
         <div className="lp-card">
           <header className="lp-header">
