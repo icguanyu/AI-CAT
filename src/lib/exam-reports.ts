@@ -19,6 +19,7 @@ import type {
   ExamListItem,
   TrapType,
   VerifyDifficulty,
+  Judged,
 } from '@/types/exam';
 
 export type { ExamListItem };
@@ -43,6 +44,9 @@ interface StoredReport extends Report {
   trapType?: TrapType | null;
   verifyDifficulty?: VerifyDifficulty | null;
   injectAtTurn?: number | null;
+  /** 裁判未加工的原始輸出（含它自己判的 user_challenged）+ 裁判版本標記。舊報告可能沒有。 */
+  judge_raw?: Judged | null;
+  judge_version?: string;
   /** 僅本地開發寫入；型別留寬鬆，前端 client-api 有精確型別。 */
   debug?: unknown;
 }

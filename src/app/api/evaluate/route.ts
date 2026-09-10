@@ -15,7 +15,12 @@ import { setAnonReport, bumpTrialMetric } from '@/lib/public-pool';
 import { consumeQuota } from '@/lib/quota';
 import { getScenarioVariant } from '@/lib/scenarios';
 import { computeLevel } from '@/lib/scoring';
-import { detectChallenge, runJudge, runExemplar } from '@/lib/judge';
+import {
+  detectChallenge,
+  runJudge,
+  runExemplar,
+  JUDGE_VERSION,
+} from '@/lib/judge';
 import {
   toFamiliarity,
   type AnonReportBlob,
@@ -178,6 +183,8 @@ async function handle(req: Request): Promise<Response> {
       trap,
       noTrap,
       ...trapMeta,
+      judgeRaw: judged,
+      judgeVersion: JUDGE_VERSION,
       ruleChallenged: challenged,
       injected: state.injected,
       history: state.history,
@@ -226,6 +233,10 @@ async function handle(req: Request): Promise<Response> {
       noTrap,
       // 抽中變體的陷阱型別 / 察覺難度 / 擲中的注入輪次；給後續裁判校準 / 分層分析。
       ...trapMeta,
+      // 裁判「未加工」的原始輸出（含它自己判的 user_challenged）+ 裁判版本標記；
+      // 上面的 report.user_challenged / suggested_level 是後端加工過的，這裡留原話供稽核。
+      judge_raw: judged,
+      judge_version: JUDGE_VERSION,
       ...(debug ? { debug } : {}),
     },
     rule_challenged: challenged,

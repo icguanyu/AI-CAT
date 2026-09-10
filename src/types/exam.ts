@@ -209,6 +209,10 @@ export interface AnonReportBlob {
   verifyDifficulty: VerifyDifficulty | null;
   /** 這場擲中的注入輪次（0 = 整場不注入 / no-trap）。 */
   injectAtTurn: number;
+  /** 裁判「未加工」的原始輸出（含它自己判的 user_challenged）；給稽核 / 訓練用。 */
+  judgeRaw: Judged;
+  /** 產出這份評分的裁判版本標記（`模型·準則版本`）。 */
+  judgeVersion: string;
   ruleChallenged: boolean;
   injected: boolean;
   /** 完整對話逐字稿；認領時一起寫進 exam_reports.transcript。 */

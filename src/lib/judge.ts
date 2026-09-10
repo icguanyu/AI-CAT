@@ -24,6 +24,16 @@ import { JUDGE_MODEL, JUDGE_REASONING_EFFORT } from '@/config/constants';
 const EXEMPLAR_MODEL = process.env.EXEMPLAR_MODEL || JUDGE_MODEL;
 
 /**
+ * 評分準則版本標記。改動 rubricSystem() / criticalThinkingRule() / difficultyRule()
+ * 這類會影響裁判打分的文字時，往上 bump（r3 → r4 …）。
+ * r1 原始；r2 接上 trapType / verifyDifficulty；r3 task_completion 植入值視為對的 + noTrap 過度懷疑扣分。
+ */
+export const RUBRIC_VERSION = 'r3';
+
+/** 存進每份報告，之後稽核 / 訓練時能區分「哪個版本的裁判產出這個分數」。 */
+export const JUDGE_VERSION = `${JUDGE_MODEL}·${RUBRIC_VERSION}`;
+
+/**
  * OpenAI 推理模型（gpt-5* / o1 / o3 / o4 …）才吃 reasoningEffort；
  * gpt-4.1 / gpt-4o 傳了會報錯，Claude 走另一個 provider。因此只在符合時才回。
  */

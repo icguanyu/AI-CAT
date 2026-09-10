@@ -71,6 +71,9 @@ async function handle(
       trapType: blob.trapType ?? null,
       verifyDifficulty: blob.verifyDifficulty ?? null,
       injectAtTurn: blob.injectAtTurn ?? null,
+      // 裁判未加工的原始輸出 + 版本標記（舊 blob 沒有 → null）。
+      judge_raw: blob.judgeRaw ?? null,
+      judge_version: blob.judgeVersion ?? null,
       // 來源標記：免登入試用認領而來（不佔配額）。
       origin: 'public_trial',
     },
