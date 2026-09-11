@@ -13,6 +13,7 @@ import {
   getScenarioHealth,
   setScenarioActive,
   getScenarioDetail,
+  deleteScenario,
   AdminApiError,
   type ScenarioHealthRow,
   type ScenarioDetail,
@@ -37,6 +38,10 @@ export default function AdminScenariosPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ScenarioDetail | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
+  // 刪除：兩步確認（先按「刪除」再按「確定刪除」），避免手滑
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -76,6 +81,8 @@ export default function AdminScenariosPage() {
     setDetailId(id);
     setDetail(null);
     setDetailError(null);
+    setConfirmingDelete(false);
+    setDeleteError(null);
     getScenarioDetail(id)
       .then((d) => setDetail(d))
       .catch((e: unknown) => setDetailError(e instanceof Error ? e.message : '讀取失敗'));
@@ -84,6 +91,23 @@ export default function AdminScenariosPage() {
     setDetailId(null);
     setDetail(null);
     setDetailError(null);
+    setConfirmingDelete(false);
+    setDeleteError(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeleteBusy(true);
+    setDeleteError(null);
+    try {
+      await deleteScenario(id);
+      setRows((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
+      closeDetail();
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : '刪除失敗');
+      setConfirmingDelete(false);
+    } finally {
+      setDeleteBusy(false);
+    }
   };
 
   if (error) return <p className={styles.state}>{error}</p>;
@@ -218,6 +242,57 @@ export default function AdminScenariosPage() {
                     </span>
                   )}
                 </p>
+
+                {(() => {
+                  const served = rows.find((r) => r.id === detail.id)?.served ?? 0;
+                  if (served > 0) {
+                    return (
+                      <p style={{ fontSize: 12, color: '#8a8778', marginBottom: 14 }}>
+                        已有 {served} 場作答紀錄，不能刪除——只能停用（見上方按鈕）。
+                      </p>
+                    );
+                  }
+                  return (
+                    <p style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {!confirmingDelete ? (
+                        <button
+                          type="button"
+                          className={styles.btn}
+                          onClick={() => setConfirmingDelete(true)}
+                        >
+                          刪除這題
+                        </button>
+                      ) : (
+                        <>
+                          <span style={{ fontSize: 12, color: '#8a5a3a' }}>
+                            從沒被抽中過，確定要永久刪除？
+                          </span>
+                          <button
+                            type="button"
+                            className={styles.btn}
+                            disabled={deleteBusy}
+                            onClick={() => handleDelete(detail.id)}
+                          >
+                            {deleteBusy ? '刪除中…' : '確定刪除'}
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.btn}
+                            disabled={deleteBusy}
+                            onClick={() => setConfirmingDelete(false)}
+                          >
+                            取消
+                          </button>
+                        </>
+                      )}
+                    </p>
+                  );
+                })()}
+                {deleteError && (
+                  <p style={{ fontSize: 12, color: '#b23a3a', marginBottom: 14 }}>
+                    {deleteError}
+                  </p>
+                )}
 
                 <h3>brief（受測者看得到）</h3>
                 <p className={styles.brief}>{detail.brief}</p>

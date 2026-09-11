@@ -74,6 +74,19 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return json as T;
 }
 
+async function del<T>(path: string): Promise<T> {
+  const res = await fetch(path, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${await bearer()}` },
+  });
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : {};
+  if (!res.ok) {
+    throw new AdminApiError(json.error ?? `伺服器錯誤（${res.status}）`, res.status);
+  }
+  return json as T;
+}
+
 /* ── 身分（完整管理員 / 標註員） ──────────────────────── */
 
 export interface WhoAmI {
@@ -242,6 +255,15 @@ export interface ScenarioDetail {
 
 export function getScenarioDetail(id: string): Promise<ScenarioDetail> {
   return get(`/api/admin/scenarios/${id}`);
+}
+
+/**
+ * 刪除一題；後端只在「從沒被任何人抽到過」（served = 0）時才真的允許刪除，
+ * 有歷史紀錄的題目一律拒絕（400），前端應該只讓 served = 0 的題目出現刪除按鈕，
+ * 但驗證邏輯不能只靠前端擋，見 admin-data.ts deleteScenario()。
+ */
+export function deleteScenario(id: string): Promise<{ ok: true }> {
+  return del(`/api/admin/scenarios/${id}`);
 }
 
 /* ── 使用者查詢 / 配額調整 ────────────────────────────── */

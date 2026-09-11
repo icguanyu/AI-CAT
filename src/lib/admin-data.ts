@@ -591,6 +591,32 @@ export async function getScenarioDetail(
   };
 }
 
+/** 這題目前被抽中過幾次（依 exam_reports.scenario_id 計數）。 */
+async function countScenarioServed(id: string): Promise<number> {
+  const { count, error } = await getSupabaseAdmin()
+    .from('exam_reports')
+    .select('exam_id', { count: 'exact', head: true })
+    .eq('scenario_id', id);
+  if (error) throw new Error(`確認歷史紀錄失敗：${error.message}`);
+  return count ?? 0;
+}
+
+/**
+ * 刪除一題——只有「從沒被任何人抽到過」（served = 0）才真的刪，否則丟錯。
+ * 有歷史的題目要退場請用 setScenarioActive(id, false)（停用，可逆、不影響已有的
+ * exam_reports），不要走這裡；exam_reports 永遠不會因為刪題目被連帶清掉。
+ */
+export async function deleteScenario(id: string): Promise<void> {
+  const served = await countScenarioServed(id);
+  if (served > 0) {
+    throw new Error(
+      `這題已經有 ${served} 場作答紀錄，不能刪除——請改用「停用」。`,
+    );
+  }
+  const { error } = await getSupabaseAdmin().from('scenarios').delete().eq('id', id);
+  if (error) throw new Error(`刪除題目失敗：${error.message}`);
+}
+
 /* ── 使用者查詢 / 配額調整 ────────────────────────────── */
 
 export interface AdminUserRow {
