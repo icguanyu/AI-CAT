@@ -201,6 +201,31 @@ export interface Engagement {
   reachedInjection: boolean | null;
 }
 
+/** 一次模型呼叫的 token 用量（對應 AI SDK 的 LanguageModelUsage）。 */
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
+export const ZERO_TOKEN_USAGE: TokenUsage = {
+  promptTokens: 0,
+  completionTokens: 0,
+  totalTokens: 0,
+};
+
+/**
+ * 一場測驗的 token 用量拆解：對話（可能多輪，累加自 ExamState.chatTokens）+
+ * 裁判（self-consistency 可能並行跑 N 次，加總）+ L5 示範（僅登入場有）。
+ * 存進 report jsonb 的 `token_usage`。
+ */
+export interface ExamTokenUsage {
+  chat: TokenUsage;
+  judge: TokenUsage;
+  exemplar: TokenUsage;
+  total: TokenUsage;
+}
+
 /**
  * 裁判 self-consistency 的一致性摘要（同一份對話並行跑 N 次、每個維度取中位數）。
  * 存進 report jsonb 的 `judgeConsistency`。
@@ -243,6 +268,8 @@ export interface AnonReportBlob {
   judgeVotes: Judged[];
   /** 這 N 次的一致性摘要。 */
   judgeConsistency: JudgeConsistency;
+  /** 這場的 token 用量拆解（對話 + 裁判 + 示範）。 */
+  tokenUsage: ExamTokenUsage;
   /** 產出這份評分的裁判版本標記（`模型·準則版本`）。 */
   judgeVersion: string;
   ruleChallenged: boolean;
@@ -282,6 +309,8 @@ export interface ExamState {
   injectionLanded: boolean;
   /** 實際注入的錯誤敘述（供裁判與規則判定比對）。 */
   injectionText: string;
+  /** 這場對話至今累加的 token 用量（每輪 streamText 的 onFinish 累加）；舊場次（欄位加入前）沒有這欄。 */
+  chatTokens?: TokenUsage;
   createdAt: number;
 }
 

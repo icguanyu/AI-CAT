@@ -10,8 +10,10 @@ import { createSupabaseBrowser } from '@/lib/supabase-browser';
 import type {
   Category,
   ChatMessage,
+  ExamTokenUsage,
   Familiarity,
   Judged,
+  JudgeConsistency,
   LevelCode,
   Report,
   TrapReveal,
@@ -166,7 +168,9 @@ export interface AdminExamDetail {
     userCharsTotal: number;
     reachedInjection: boolean | null;
   } | null;
-  judgeRaw: Judged | null;
+  judgeVotes: Judged[] | null;
+  judgeConsistency: JudgeConsistency | null;
+  tokenUsage: ExamTokenUsage | null;
   judgeVersion: string | null;
   exemplar: string;
   transcript: ChatMessage[] | null;

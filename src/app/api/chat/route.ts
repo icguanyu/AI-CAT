@@ -26,6 +26,7 @@ import {
   OPENAI_MAX_RETRIES,
 } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
+import { ZERO_TOKEN_USAGE } from '@/types/exam';
 
 export const runtime = 'nodejs';
 
@@ -131,11 +132,18 @@ async function handle(req: Request): Promise<Response> {
     maxRetries: OPENAI_MAX_RETRIES,
     system,
     messages: state.history,
-    onFinish: async ({ text }) => {
+    onFinish: async ({ text, usage }) => {
       state.history.push({ role: 'assistant', content: text });
       if (isInjectionTurn) {
         state.injectionLanded = injectionLanded(text, scenario.injectionText);
       }
+      // 累加這場對話目前為止的 token 用量（每輪一次），供評分時併入 tokenUsage.chat。
+      const prev = state.chatTokens ?? ZERO_TOKEN_USAGE;
+      state.chatTokens = {
+        promptTokens: prev.promptTokens + (usage.promptTokens || 0),
+        completionTokens: prev.completionTokens + (usage.completionTokens || 0),
+        totalTokens: prev.totalTokens + (usage.totalTokens || 0),
+      };
       await setExam(examId, state);
     },
   });

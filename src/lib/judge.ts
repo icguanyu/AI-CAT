@@ -2,10 +2,11 @@
  * 檔案：src/lib/judge.ts
  * 角色：領域層 — 裁判評分核心（給 /api/evaluate 與信度測試腳本共用）
  * 功能：detectChallenge() 規則判定；rubricSystem() 評分準則；
- *       runJudge() 單次呼叫，輸出五維度分數 + 總評（JudgeSchema，不含分級）——
+ *       runJudge() 單次呼叫，輸出五維度分數 + 總評（JudgeSchema，不含分級）＋這次呼叫的 token 用量——
  *       信度測試腳本直接呼叫這個，量單次跑分的原始變異；
  *       runJudgeConsistent() self-consistency 包裝：並行跑 N 次取中位數，/api/evaluate 用這個；
- *       runExemplar() 產一段「L5 高手會怎麼用 AI 完成這題」的示範（Markdown）。
+ *       usage 是 N 次加總（self-consistency 的代價：裁判這塊的 token 直接變 N 倍）；
+ *       runExemplar() 產一段「L5 高手會怎麼用 AI 完成這題」的示範（Markdown）＋這次呼叫的 token 用量。
  */
 import { generateObject, generateText } from 'ai';
 import { resolveModel } from '@/lib/model';
@@ -15,12 +16,14 @@ import {
   TRAP_TYPE_LABEL,
   TRAP_TYPE_VERIFY_MOVE,
   VERIFY_DIFFICULTY_LABEL,
+  ZERO_TOKEN_USAGE,
   type Judged,
   type ChatMessage,
   type Familiarity,
   type TrapType,
   type VerifyDifficulty,
   type JudgeConsistency,
+  type TokenUsage,
 } from '@/types/exam';
 import {
   JUDGE_MODEL,
@@ -248,8 +251,32 @@ function criticalThinkingRule(i: JudgeInput): string {
   return lines.join('\n  ');
 }
 
-export async function runJudge(input: JudgeInput): Promise<Judged> {
-  const { object } = await generateObject({
+function toTokenUsage(u: { promptTokens: number; completionTokens: number; totalTokens: number }): TokenUsage {
+  return {
+    promptTokens: u.promptTokens || 0,
+    completionTokens: u.completionTokens || 0,
+    totalTokens: u.totalTokens || 0,
+  };
+}
+
+export function sumTokenUsage(usages: TokenUsage[]): TokenUsage {
+  return usages.reduce(
+    (acc, u) => ({
+      promptTokens: acc.promptTokens + u.promptTokens,
+      completionTokens: acc.completionTokens + u.completionTokens,
+      totalTokens: acc.totalTokens + u.totalTokens,
+    }),
+    { ...ZERO_TOKEN_USAGE },
+  );
+}
+
+export interface JudgeResult {
+  judged: Judged;
+  usage: TokenUsage;
+}
+
+export async function runJudge(input: JudgeInput): Promise<JudgeResult> {
+  const { object, usage } = await generateObject({
     model: resolveModel(JUDGE_MODEL),
     maxRetries: OPENAI_MAX_RETRIES,
     ...reasoningOptions(JUDGE_MODEL),
@@ -279,7 +306,7 @@ export async function runJudge(input: JudgeInput): Promise<Judged> {
       .filter(Boolean)
       .join('\n'),
   });
-  return object;
+  return { judged: object, usage: toTokenUsage(usage) };
 }
 
 const SCORE_KEYS = [
@@ -316,6 +343,8 @@ export interface JudgeConsistentResult {
   votes: Judged[];
   /** 這 N 次的一致性摘要。 */
   consistency: JudgeConsistency;
+  /** N 次呼叫的 token 用量加總——self-consistency 的實際代價。 */
+  usage: TokenUsage;
 }
 
 /**
@@ -341,15 +370,18 @@ export async function runJudgeConsistent(
     JUDGE_CONSISTENCY_RUNS,
   );
   const runs = Math.max(1, Number(configuredRuns) || JUDGE_CONSISTENCY_RUNS);
-  const votes = await Promise.all(
+  const results = await Promise.all(
     Array.from({ length: runs }, () => runJudge(input)),
   );
+  const votes = results.map((r) => r.judged);
+  const usage = sumTokenUsage(results.map((r) => r.usage));
 
   if (runs === 1) {
     return {
       judged: votes[0],
       votes,
       consistency: { runs: 1, scoreSd: {}, flaggedDimensions: [] },
+      usage,
     };
   }
 
@@ -385,7 +417,12 @@ export async function runJudgeConsistent(
     to_improve: representative.to_improve,
   };
 
-  return { judged, votes, consistency: { runs, scoreSd, flaggedDimensions } };
+  return {
+    judged,
+    votes,
+    consistency: { runs, scoreSd, flaggedDimensions },
+    usage,
+  };
 }
 
 export interface ExemplarInput {
@@ -407,8 +444,13 @@ export interface ExemplarInput {
  * 背後參考 Anthropic「AI Fluency」的 4D 能力（委派 / 描述 / 辨別 / 審慎）當檢查清單，
  * 但輸出以具體做法為主，不逐段貼上 4D 標籤。
  */
-export async function runExemplar(input: ExemplarInput): Promise<string> {
-  const { text } = await generateText({
+export interface ExemplarResult {
+  text: string;
+  usage: TokenUsage;
+}
+
+export async function runExemplar(input: ExemplarInput): Promise<ExemplarResult> {
+  const { text, usage } = await generateText({
     model: resolveModel(EXEMPLAR_MODEL),
     maxRetries: OPENAI_MAX_RETRIES,
     ...reasoningOptions(EXEMPLAR_MODEL),
@@ -458,5 +500,5 @@ export async function runExemplar(input: ExemplarInput): Promise<string> {
       .filter(Boolean)
       .join('\n'),
   });
-  return text.trim();
+  return { text: text.trim(), usage: toTokenUsage(usage) };
 }

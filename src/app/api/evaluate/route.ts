@@ -20,11 +20,14 @@ import {
   detectChallenge,
   runJudgeConsistent,
   runExemplar,
+  sumTokenUsage,
   JUDGE_VERSION,
 } from '@/lib/judge';
 import {
   toFamiliarity,
+  ZERO_TOKEN_USAGE,
   type AnonReportBlob,
+  type ExamTokenUsage,
   type Report,
   type TrapReveal,
 } from '@/types/exam';
@@ -84,7 +87,7 @@ async function handle(req: Request): Promise<Response> {
 
   // 裁判評分（登入 / 試用都用正式版裁判模型，self-consistency 並行跑 N 次取中位數）；
   // 「L5 示範」只給登入版（省 token）。
-  const [judgeResult, exemplar] = await Promise.all([
+  const [judgeResult, exemplarResult] = await Promise.all([
     runJudgeConsistent({
       brief: scenario.brief,
       history: state.history,
@@ -99,7 +102,7 @@ async function handle(req: Request): Promise<Response> {
       ruleChallenged,
     }),
     isAnon
-      ? Promise.resolve('')
+      ? Promise.resolve({ text: '', usage: ZERO_TOKEN_USAGE })
       : runExemplar({
           brief: scenario.brief,
           trapEffective,
@@ -110,11 +113,24 @@ async function handle(req: Request): Promise<Response> {
           noTrap,
         }).catch((e) => {
           console.error('runExemplar 失敗', e);
-          return '';
+          return { text: '', usage: ZERO_TOKEN_USAGE };
         }),
   ]);
-  const { judged, votes: judgeVotes, consistency: judgeConsistency } =
-    judgeResult;
+  const {
+    judged,
+    votes: judgeVotes,
+    consistency: judgeConsistency,
+    usage: judgeUsage,
+  } = judgeResult;
+  const { text: exemplar, usage: exemplarUsage } = exemplarResult;
+
+  // 這場的 token 用量拆解：對話（累加自 ExamState.chatTokens）+ 裁判（self-consistency N 次加總）+ 示範。
+  const tokenUsage: ExamTokenUsage = {
+    chat: state.chatTokens ?? ZERO_TOKEN_USAGE,
+    judge: judgeUsage,
+    exemplar: exemplarUsage,
+    total: sumTokenUsage([state.chatTokens ?? ZERO_TOKEN_USAGE, judgeUsage, exemplarUsage]),
+  };
 
   // 關鍵字漏判時，以裁判在對話裡實際看到的為準
   const challenged = ruleChallenged || judged.user_challenged;
@@ -203,6 +219,7 @@ async function handle(req: Request): Promise<Response> {
       engagement,
       judgeVotes,
       judgeConsistency,
+      tokenUsage,
       judgeVersion: JUDGE_VERSION,
       ruleChallenged: challenged,
       injected: state.injected,
@@ -260,6 +277,9 @@ async function handle(req: Request): Promise<Response> {
       // 這裡留每一次的原話供稽核，之後也能拿 flaggedDimensions 篩「送人工複審」的場次。
       judge_votes: judgeVotes,
       judge_consistency: judgeConsistency,
+      // 這場的 token 用量拆解（對話 + 裁判 + 示範）；成本分析、抓異常消耗、
+      // 評估 self-consistency 的實際代價都靠這欄。
+      token_usage: tokenUsage,
       judge_version: JUDGE_VERSION,
       ...(debug ? { debug } : {}),
     },

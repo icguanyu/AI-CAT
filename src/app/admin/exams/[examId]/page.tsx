@@ -258,10 +258,58 @@ export default function AdminExamDetailPage() {
         </div>
       )}
 
-      {data.judgeRaw && (
+      {data.tokenUsage && (
         <div className={styles.section}>
-          <div className={styles.sectionTitle}>裁判原始輸出（未加工）</div>
-          <pre className={styles.pre}>{JSON.stringify(data.judgeRaw, null, 2)}</pre>
+          <div className={styles.sectionTitle}>Token 用量</div>
+          <div className={styles.detailGrid}>
+            <div className={styles.kv}>
+              <span className={styles.kvLabel}>對話</span>
+              <span>{data.tokenUsage.chat.totalTokens.toLocaleString()}</span>
+            </div>
+            <div className={styles.kv}>
+              <span className={styles.kvLabel}>裁判（self-consistency 加總）</span>
+              <span>{data.tokenUsage.judge.totalTokens.toLocaleString()}</span>
+            </div>
+            <div className={styles.kv}>
+              <span className={styles.kvLabel}>L5 示範</span>
+              <span>{data.tokenUsage.exemplar.totalTokens.toLocaleString()}</span>
+            </div>
+            <div className={styles.kv}>
+              <span className={styles.kvLabel}>總計</span>
+              <span style={{ fontWeight: 700 }}>
+                {data.tokenUsage.total.totalTokens.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {data.judgeConsistency && (
+        <div className={styles.section}>
+          <div className={styles.sectionTitle}>裁判一致性（self-consistency）</div>
+          <div className={styles.detailGrid}>
+            <div className={styles.kv}>
+              <span className={styles.kvLabel}>跑了幾次</span>
+              <span>{data.judgeConsistency.runs}</span>
+            </div>
+            <div className={styles.kv}>
+              <span className={styles.kvLabel}>標準差偏高的維度</span>
+              <span>
+                {data.judgeConsistency.flaggedDimensions.length > 0
+                  ? data.judgeConsistency.flaggedDimensions.join('、')
+                  : '—'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {data.judgeVotes && data.judgeVotes.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.sectionTitle}>
+            裁判原始輸出（{data.judgeVotes.length} 次 self-consistency 投票，未加工）
+          </div>
+          <pre className={styles.pre}>{JSON.stringify(data.judgeVotes, null, 2)}</pre>
         </div>
       )}
 

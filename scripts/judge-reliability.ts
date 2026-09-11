@@ -110,7 +110,7 @@ async function main() {
 
   process.stdout.write(`跑 ${runs} 次`);
   for (let i = 0; i < runs; i++) {
-    const judged = await runJudge({
+    const { judged } = await runJudge({
       brief: fx.brief,
       history: fx.history,
       injected: fx.injected,

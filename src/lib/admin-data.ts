@@ -17,8 +17,10 @@ import {
   type Category,
   type ChatMessage,
   type Engagement,
+  type ExamTokenUsage,
   type Familiarity,
   type Judged,
+  type JudgeConsistency,
   type LevelCode,
   type Report,
   type TrapReveal,
@@ -265,7 +267,12 @@ export interface AdminExamDetail {
   verifyDifficulty: VerifyDifficulty | null;
   injectAtTurn: number | null;
   engagement: Engagement | null;
-  judgeRaw: Judged | null;
+  /** self-consistency 每一次「未加工」的原始輸出（未跑 self-consistency 前的舊資料為 null）。 */
+  judgeVotes: Judged[] | null;
+  /** N 次之間的一致性摘要（每維度標準差、標準差偏高的維度）。 */
+  judgeConsistency: JudgeConsistency | null;
+  /** 這場的 token 用量拆解（對話 + 裁判 + 示範）；上線前的舊資料為 null。 */
+  tokenUsage: ExamTokenUsage | null;
   judgeVersion: string | null;
   exemplar: string;
   transcript: ChatMessage[] | null;
@@ -286,7 +293,9 @@ interface StoredReportLoose extends Report {
   verifyDifficulty?: VerifyDifficulty | null;
   injectAtTurn?: number | null;
   engagement?: Engagement | null;
-  judge_raw?: Judged | null;
+  judge_votes?: Judged[] | null;
+  judge_consistency?: JudgeConsistency | null;
+  token_usage?: ExamTokenUsage | null;
   judge_version?: string;
   exemplar?: string;
   user_name?: string | null;
@@ -351,7 +360,9 @@ export async function getAdminExamDetail(
     verifyDifficulty: r.verifyDifficulty ?? null,
     injectAtTurn: r.injectAtTurn ?? null,
     engagement: r.engagement ?? null,
-    judgeRaw: r.judge_raw ?? null,
+    judgeVotes: r.judge_votes ?? null,
+    judgeConsistency: r.judge_consistency ?? null,
+    tokenUsage: r.token_usage ?? null,
     judgeVersion: r.judge_version ?? null,
     exemplar: r.exemplar ?? '',
     transcript: (data.transcript as ChatMessage[] | null) ?? null,

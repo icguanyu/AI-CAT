@@ -75,6 +75,7 @@ async function handle(
       engagement: blob.engagement ?? null,
       judge_votes: blob.judgeVotes ?? null,
       judge_consistency: blob.judgeConsistency ?? null,
+      token_usage: blob.tokenUsage ?? null,
       judge_version: blob.judgeVersion ?? null,
       // 來源標記：免登入試用認領而來（不佔配額）。
       origin: 'public_trial',
