@@ -1,10 +1,10 @@
 /**
- * 檔案：src/app/api/admin/trial-stats/route.ts  →  GET /api/admin/trial-stats
- * 角色：API 層 — 免登入試用的即時數據（後台限定）
- * 功能：回本月的池用量與轉換漏斗（started / completed / claimed）。
+ * 檔案：src/app/api/admin/overview/route.ts  →  GET /api/admin/overview
+ * 角色：API 層 — 後台總覽數字（P1：可見性）
+ * 功能：測驗量（24h/7d/30d/全部）、帳號數、試用漏斗、配額分布、分類覆蓋率。
  */
 import { requireAdmin } from '@/lib/admin';
-import { getTrialStats } from '@/lib/public-pool';
+import { getAdminOverview } from '@/lib/admin-data';
 import { errJson } from '@/lib/api-error';
 
 export const runtime = 'nodejs';
@@ -18,5 +18,5 @@ async function handle(req: Request): Promise<Response> {
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
-  return Response.json(await getTrialStats());
+  return Response.json(await getAdminOverview());
 }

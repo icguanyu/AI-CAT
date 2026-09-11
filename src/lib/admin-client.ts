@@ -1,0 +1,163 @@
+/**
+ * 檔案：src/lib/admin-client.ts
+ * 角色：前端層 — /admin 頁面呼叫 /api/admin/* 的封裝
+ * 功能：獨立於 client-api.ts（避免跟主流程搶同一個檔），一樣是帶 Bearer + 統一錯誤。
+ *       403 一律視為「不是後台管理員」，頁面據此顯示無權限畫面。
+ */
+'use client';
+
+import { createSupabaseBrowser } from '@/lib/supabase-browser';
+import type {
+  Category,
+  ChatMessage,
+  Familiarity,
+  Judged,
+  LevelCode,
+  Report,
+  TrapReveal,
+  TrapType,
+  VerifyDifficulty,
+} from '@/types/exam';
+
+export class AdminApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'AdminApiError';
+    this.status = status;
+  }
+  get forbidden(): boolean {
+    return this.status === 403;
+  }
+  get unauthorized(): boolean {
+    return this.status === 401;
+  }
+}
+
+async function bearer(): Promise<string> {
+  const { data } = await createSupabaseBrowser().auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new AdminApiError('尚未登入', 401);
+  return token;
+}
+
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(path, {
+    headers: { Authorization: `Bearer ${await bearer()}` },
+  });
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : {};
+  if (!res.ok) {
+    throw new AdminApiError(json.error ?? `伺服器錯誤（${res.status}）`, res.status);
+  }
+  return json as T;
+}
+
+export interface QuotaBucket {
+  label: string;
+  count: number;
+}
+export interface TrialStatsView {
+  monthUsed: number;
+  monthLimit: number;
+  dayUsed: number;
+  dayLimit: number;
+  exhausted: boolean;
+  month: string;
+  started: number;
+  completed: number;
+  claimed: number;
+}
+export interface AdminOverview {
+  exams: { last24h: number; last7d: number; last30d: number; total: number };
+  users: number;
+  trial: TrialStatsView;
+  quotaBuckets: QuotaBucket[];
+  capHit: number;
+  categoryCoverage: { category: Category; label: string; count: number }[];
+}
+
+export function getAdminOverview(): Promise<AdminOverview> {
+  return get('/api/admin/overview');
+}
+
+export interface AdminExamRow {
+  examId: string;
+  createdAt: string;
+  userId: string;
+  email: string | null;
+  titleZh: string | null;
+  category: Category | null;
+  level: LevelCode;
+  weightedAverage: number;
+  challenged: boolean;
+  shared: boolean;
+  judgeVersion: string | null;
+  turns: number | null;
+}
+
+export function listAdminExams(params: {
+  q?: string;
+  category?: Category;
+  level?: LevelCode;
+  limit?: number;
+  offset?: number;
+}): Promise<{ rows: AdminExamRow[]; total: number }> {
+  const sp = new URLSearchParams();
+  if (params.q) sp.set('q', params.q);
+  if (params.category) sp.set('category', params.category);
+  if (params.level) sp.set('level', params.level);
+  sp.set('limit', String(params.limit ?? 50));
+  sp.set('offset', String(params.offset ?? 0));
+  return get(`/api/admin/exams?${sp.toString()}`);
+}
+
+export interface AdminExamDetail {
+  examId: string;
+  createdAt: string;
+  userId: string;
+  email: string | null;
+  ageBand: string | null;
+  education: string | null;
+  gender: string | null;
+  report: Report;
+  titleZh: string | null;
+  category: Category | null;
+  familiarity: Familiarity | null;
+  trap: TrapReveal | null;
+  noTrap: boolean;
+  trapType: TrapType | null;
+  verifyDifficulty: VerifyDifficulty | null;
+  injectAtTurn: number | null;
+  engagement: {
+    elapsedSec: number;
+    userTurns: number;
+    userCharsTotal: number;
+    reachedInjection: boolean | null;
+  } | null;
+  judgeRaw: Judged | null;
+  judgeVersion: string | null;
+  exemplar: string;
+  transcript: ChatMessage[] | null;
+  shared: boolean;
+  weightedAverage: number;
+}
+
+export function getAdminExamDetail(examId: string): Promise<AdminExamDetail> {
+  return get(`/api/admin/exams/${examId}`);
+}
+
+export interface ScenarioHealthRow {
+  id: string;
+  titleZh: string;
+  category: Category | null;
+  active: boolean;
+  served: number;
+  avgScore: number | null;
+  trapShown: number;
+  trapCaught: number;
+}
+
+export function getScenarioHealth(): Promise<ScenarioHealthRow[]> {
+  return get('/api/admin/scenarios');
+}

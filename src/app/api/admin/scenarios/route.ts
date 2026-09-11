@@ -1,10 +1,10 @@
 /**
- * 檔案：src/app/api/admin/trial-stats/route.ts  →  GET /api/admin/trial-stats
- * 角色：API 層 — 免登入試用的即時數據（後台限定）
- * 功能：回本月的池用量與轉換漏斗（started / completed / claimed）。
+ * 檔案：src/app/api/admin/scenarios/route.ts  →  GET /api/admin/scenarios
+ * 角色：API 層 — 題庫健檢（P1：可見性）
+ * 功能：每題被抽中次數、平均加權分、陷阱出現/被識破次數；用來抓「壞掉的題目」。
  */
 import { requireAdmin } from '@/lib/admin';
-import { getTrialStats } from '@/lib/public-pool';
+import { getScenarioHealth } from '@/lib/admin-data';
 import { errJson } from '@/lib/api-error';
 
 export const runtime = 'nodejs';
@@ -18,5 +18,5 @@ async function handle(req: Request): Promise<Response> {
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
-  return Response.json(await getTrialStats());
+  return Response.json(await getScenarioHealth());
 }
