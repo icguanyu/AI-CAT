@@ -317,7 +317,9 @@ const SCORE_KEYS = [
   'task_completion',
 ] as const;
 
-function median(nums: number[]): number {
+// export 只是為了讓 judge.test.ts 能直接測這兩個純函式，不用連帶跑整個 self-consistency
+// 流程（那個會真的呼叫 AI）。行為完全沒變。
+export function median(nums: number[]): number {
   const sorted = [...nums].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 === 0
@@ -325,7 +327,7 @@ function median(nums: number[]): number {
     : sorted[mid];
 }
 
-function stddev(nums: number[]): number {
+export function stddev(nums: number[]): number {
   const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
   return Math.sqrt(nums.reduce((a, b) => a + (b - mean) ** 2, 0) / nums.length);
 }
