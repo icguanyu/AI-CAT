@@ -302,3 +302,30 @@ export function saveReviewLabel(
 ): Promise<JudgeLabel> {
   return post(`/api/admin/review/${examId}`, input);
 }
+
+/* ── 後台可調參數 ─────────────────────────────────────── */
+
+export interface AppSettingRow {
+  key: string;
+  label: string;
+  description: string;
+  default: number;
+  min: number;
+  max: number;
+  value: number;
+  overridden: boolean;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+export function getAppSettings(): Promise<AppSettingRow[]> {
+  return get('/api/admin/settings');
+}
+
+export function setAppSetting(key: string, value: number): Promise<AppSettingRow> {
+  return post('/api/admin/settings', { key, value });
+}
+
+export function resetAppSetting(key: string): Promise<AppSettingRow> {
+  return post(`/api/admin/settings/${key}/reset`, {});
+}

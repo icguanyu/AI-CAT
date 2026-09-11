@@ -23,6 +23,7 @@ import {
   MAX_USER_TURNS,
   PUBLIC_SANDBOX_MODEL,
   SANDBOX_MODEL,
+  OPENAI_MAX_RETRIES,
 } from '@/config/constants';
 import { errJson } from '@/lib/api-error';
 
@@ -127,6 +128,7 @@ async function handle(req: Request): Promise<Response> {
     model: state.anonId
       ? publicOpenai(PUBLIC_SANDBOX_MODEL)
       : openai(SANDBOX_MODEL),
+    maxRetries: OPENAI_MAX_RETRIES,
     system,
     messages: state.history,
     onFinish: async ({ text }) => {

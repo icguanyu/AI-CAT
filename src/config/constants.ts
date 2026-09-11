@@ -8,6 +8,14 @@
 /** Redis 中 session 的存活時間（秒）。逾時視為棄考。 */
 export const EXAM_TTL_SEC = 60 * 60;
 
+/**
+ * 呼叫 OpenAI／Anthropic（沙盒對話、裁判、L5 示範）時的自動重試次數。
+ * Vercel AI SDK 對 429（速率限制）與 5xx 這類可重試錯誤會自動帶退避延遲重試；
+ * 這裡明確設定（而非依賴 SDK 預設值 2），三個呼叫點一致、行為可見。
+ * self-consistency 會同時並行打好幾個請求、更容易撞到瞬間限流，重試次數留寬一點。
+ */
+export const OPENAI_MAX_RETRIES = Number(process.env.OPENAI_MAX_RETRIES) || 3;
+
 /** 單場測驗最高使用者發話輪次（後端硬鎖）。 */
 export const MAX_USER_TURNS = 10;
 
@@ -65,9 +73,9 @@ export const ANON_RESULT_TTL_SEC = 60 * 60 * 72;
 export const ANON_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 400;
 
 /**
- * 裁判模型（評分，一場一次）。可用 JUDGE_MODEL 環境變數覆寫。
- * 值以 "claude" 開頭 → 走 Anthropic（`resolveModel`，需 ANTHROPIC_API_KEY），
- * 例：`claude-opus-5`、`claude-sonnet-5`；否則走 OpenAI。
+ * 裁判模型（評分）。一場評分實際會呼叫 JUDGE_CONSISTENCY_RUNS 次（見下）。
+ * 可用 JUDGE_MODEL 環境變數覆寫。值以 "claude" 開頭 → 走 Anthropic
+ * （`resolveModel`，需 ANTHROPIC_API_KEY），例：`claude-opus-5`、`claude-sonnet-5`；否則走 OpenAI。
  */
 export const JUDGE_MODEL = process.env.JUDGE_MODEL || 'gpt-5';
 
@@ -80,3 +88,12 @@ export const JUDGE_REASONING_EFFORT = ((): 'low' | 'medium' | 'high' => {
   const v = process.env.JUDGE_REASONING_EFFORT;
   return v === 'medium' || v === 'high' ? v : 'low';
 })();
+
+/**
+ * 裁判 self-consistency：同一份對話並行跑幾次、每個維度取中位數，
+ * 降低單次跑分飄動的風險（信度測試量到修規則前 sd 可達 14–16）。
+ * 1 = 關閉（跟以前一樣單次）。每加 1，該場評分的裁判 API 成本乘 1 倍。
+ * 可用 JUDGE_CONSISTENCY_RUNS 環境變數覆寫；建議維持奇數，避免 user_challenged 多數決平手。
+ */
+export const JUDGE_CONSISTENCY_RUNS =
+  Number(process.env.JUDGE_CONSISTENCY_RUNS) || 3;

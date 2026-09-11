@@ -2,7 +2,9 @@
  * 檔案：src/lib/judge.ts
  * 角色：領域層 — 裁判評分核心（給 /api/evaluate 與信度測試腳本共用）
  * 功能：detectChallenge() 規則判定；rubricSystem() 評分準則；
- *       runJudge() 輸出五維度分數 + 總評（JudgeSchema，不含分級）；
+ *       runJudge() 單次呼叫，輸出五維度分數 + 總評（JudgeSchema，不含分級）——
+ *       信度測試腳本直接呼叫這個，量單次跑分的原始變異；
+ *       runJudgeConsistent() self-consistency 包裝：並行跑 N 次取中位數，/api/evaluate 用這個；
  *       runExemplar() 產一段「L5 高手會怎麼用 AI 完成這題」的示範（Markdown）。
  */
 import { generateObject, generateText } from 'ai';
@@ -18,8 +20,16 @@ import {
   type Familiarity,
   type TrapType,
   type VerifyDifficulty,
+  type JudgeConsistency,
 } from '@/types/exam';
-import { JUDGE_MODEL, JUDGE_REASONING_EFFORT } from '@/config/constants';
+import {
+  JUDGE_MODEL,
+  JUDGE_REASONING_EFFORT,
+  JUDGE_CONSISTENCY_RUNS,
+  OPENAI_MAX_RETRIES,
+} from '@/config/constants';
+import { weightedAverage } from '@/lib/scoring';
+import { getSetting } from '@/lib/app-settings';
 
 const EXEMPLAR_MODEL = process.env.EXEMPLAR_MODEL || JUDGE_MODEL;
 
@@ -241,6 +251,7 @@ function criticalThinkingRule(i: JudgeInput): string {
 export async function runJudge(input: JudgeInput): Promise<Judged> {
   const { object } = await generateObject({
     model: resolveModel(JUDGE_MODEL),
+    maxRetries: OPENAI_MAX_RETRIES,
     ...reasoningOptions(JUDGE_MODEL),
     schema: JudgeSchema,
     system: rubricSystem(),
@@ -271,6 +282,112 @@ export async function runJudge(input: JudgeInput): Promise<Judged> {
   return object;
 }
 
+const SCORE_KEYS = [
+  'prompt_structure',
+  'decomposition',
+  'efficiency',
+  'critical_thinking',
+  'task_completion',
+] as const;
+
+function median(nums: number[]): number {
+  const sorted = [...nums].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? Math.round((sorted[mid - 1] + sorted[mid]) / 2)
+    : sorted[mid];
+}
+
+function stddev(nums: number[]): number {
+  const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+  return Math.sqrt(nums.reduce((a, b) => a + (b - mean) ** 2, 0) / nums.length);
+}
+
+/**
+ * self-consistency 標準差偏高的判定門檻。信度測試觀察到：規則有漏洞時 sd 可達 14–16，
+ * 規則補好後穩定案例的 sd 多半 < 5——12 是「明顯不對勁」和「正常波動」之間留了餘裕的分界。
+ */
+const CONSISTENCY_SD_ALERT = 12;
+
+export interface JudgeConsistentResult {
+  /** 給下游（task_completion / scoring / 前端）用的最終結果：分數取中位數，文字取代表輪。 */
+  judged: Judged;
+  /** N 次「未加工」的原始輸出，一次不漏；給稽核 / 訓練用。 */
+  votes: Judged[];
+  /** 這 N 次的一致性摘要。 */
+  consistency: JudgeConsistency;
+}
+
+/**
+ * self-consistency：對同一份輸入並行跑 N 次裁判，每個維度取中位數，降低單次跑分飄動的風險。
+ * N 優先讀後台可調設定 `app_settings.judge_consistency_runs`（/admin/settings 可改、不用 redeploy），
+ * 沒設過或讀取失敗才退回環境變數 `JUDGE_CONSISTENCY_RUNS`（`src/config/constants.ts`，預設 3）。
+ * N=1 等同直接呼叫 runJudge()。
+ *
+ * 分數可以取中位數，但 overall_summary / did_well / to_improve 是文字，沒辦法「取中位數」——
+ * 做法是挑「這一輪自己的加權平均分數，離中位數合成後的加權平均最近」的那一輪，用它的文字。
+ * 這樣文字描述的永遠是某一次真實發生的裁判判斷，不會變成語意兜不攏的拼接。
+ * user_challenged 用多數決（過半數 true 才算 true）。
+ *
+ * 注意：信度測試腳本（judge-reliability.ts）刻意繼續直接呼叫 runJudge()，不要改成呼叫這個——
+ * 那支工具就是要量「單次原始變異」，用 self-consistency 包過會把要抓的訊號蓋掉。
+ */
+export async function runJudgeConsistent(
+  input: JudgeInput,
+): Promise<JudgeConsistentResult> {
+  // 後台可調（app_settings.judge_consistency_runs）；沒設過或讀取失敗就退回這裡的環境變數/預設值。
+  const configuredRuns = await getSetting(
+    'judge_consistency_runs',
+    JUDGE_CONSISTENCY_RUNS,
+  );
+  const runs = Math.max(1, Number(configuredRuns) || JUDGE_CONSISTENCY_RUNS);
+  const votes = await Promise.all(
+    Array.from({ length: runs }, () => runJudge(input)),
+  );
+
+  if (runs === 1) {
+    return {
+      judged: votes[0],
+      votes,
+      consistency: { runs: 1, scoreSd: {}, flaggedDimensions: [] },
+    };
+  }
+
+  const medianScores = Object.fromEntries(
+    SCORE_KEYS.map((k) => [k, median(votes.map((v) => v.scores[k]))]),
+  ) as Judged['scores'];
+
+  const scoreSd = Object.fromEntries(
+    SCORE_KEYS.map((k) => [
+      k,
+      Math.round(stddev(votes.map((v) => v.scores[k])) * 10) / 10,
+    ]),
+  );
+  const flaggedDimensions = SCORE_KEYS.filter(
+    (k) => scoreSd[k] > CONSISTENCY_SD_ALERT,
+  );
+
+  const medianAvg = weightedAverage(medianScores);
+  const representative = votes.reduce((best, v) =>
+    Math.abs(weightedAverage(v.scores) - medianAvg) <
+    Math.abs(weightedAverage(best.scores) - medianAvg)
+      ? v
+      : best,
+  );
+
+  const challengedVotes = votes.filter((v) => v.user_challenged).length;
+
+  const judged: Judged = {
+    scores: medianScores,
+    overall_summary: representative.overall_summary,
+    user_challenged: challengedVotes * 2 > runs,
+    did_well: representative.did_well,
+    to_improve: representative.to_improve,
+  };
+
+  return { judged, votes, consistency: { runs, scoreSd, flaggedDimensions } };
+}
+
 export interface ExemplarInput {
   brief: string;
   trapEffective: boolean;
@@ -293,6 +410,7 @@ export interface ExemplarInput {
 export async function runExemplar(input: ExemplarInput): Promise<string> {
   const { text } = await generateText({
     model: resolveModel(EXEMPLAR_MODEL),
+    maxRetries: OPENAI_MAX_RETRIES,
     ...reasoningOptions(EXEMPLAR_MODEL),
     system: [
       '你是一位「AI 協作教練」。針對下面這個任務，示範「一個高手（能力分級 L5）會怎麼用 AI 完成」，',

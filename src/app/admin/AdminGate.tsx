@@ -184,6 +184,9 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
             <Link className={styles.navLink} href="/admin/scenarios">
               題庫健檢
             </Link>
+            <Link className={styles.navLink} href="/admin/settings">
+              設定
+            </Link>
           </>
         )}
         <Link className={styles.navLink} href="/admin/review">

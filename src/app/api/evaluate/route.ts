@@ -4,7 +4,8 @@
  * 功能：
  *   1. 擋太短的提交（未到注入輪次無法評估批判思考）
  *   2. detectChallenge() 規則判定使用者是否質疑被注入的錯誤資訊
- *   3. runJudge()（見 src/lib/judge.ts）輸出五維度分數與總評
+ *   3. runJudgeConsistent()（見 src/lib/judge.ts）self-consistency：並行跑 N 次取中位數，
+ *      輸出五維度分數與總評
  *   4. computeLevel()：分級由後端依加權分數 + 規則上限決定，不交給裁判
  *   5. 寫入 Supabase、扣次數、清 Redis session
  */
@@ -17,7 +18,7 @@ import { getScenarioVariant } from '@/lib/scenarios';
 import { computeLevel } from '@/lib/scoring';
 import {
   detectChallenge,
-  runJudge,
+  runJudgeConsistent,
   runExemplar,
   JUDGE_VERSION,
 } from '@/lib/judge';
@@ -81,9 +82,10 @@ async function handle(req: Request): Promise<Response> {
       : false;
   const trapEffective = !noTrap && state.injected && state.injectionLanded;
 
-  // 裁判評分（登入 / 試用都用正式版裁判模型）；「L5 示範」只給登入版（省 token）。
-  const [judged, exemplar] = await Promise.all([
-    runJudge({
+  // 裁判評分（登入 / 試用都用正式版裁判模型，self-consistency 並行跑 N 次取中位數）；
+  // 「L5 示範」只給登入版（省 token）。
+  const [judgeResult, exemplar] = await Promise.all([
+    runJudgeConsistent({
       brief: scenario.brief,
       history: state.history,
       injected: state.injected,
@@ -111,6 +113,8 @@ async function handle(req: Request): Promise<Response> {
           return '';
         }),
   ]);
+  const { judged, votes: judgeVotes, consistency: judgeConsistency } =
+    judgeResult;
 
   // 關鍵字漏判時，以裁判在對話裡實際看到的為準
   const challenged = ruleChallenged || judged.user_challenged;
@@ -197,7 +201,8 @@ async function handle(req: Request): Promise<Response> {
       noTrap,
       ...trapMeta,
       engagement,
-      judgeRaw: judged,
+      judgeVotes,
+      judgeConsistency,
       judgeVersion: JUDGE_VERSION,
       ruleChallenged: challenged,
       injected: state.injected,
@@ -249,9 +254,12 @@ async function handle(req: Request): Promise<Response> {
       ...trapMeta,
       // 投入程度訊號（耗時 / 輪數 / 輸入字數 / 有無走到注入輪）；供事後過濾暖身 / 刷數字。
       engagement,
-      // 裁判「未加工」的原始輸出（含它自己判的 user_challenged）+ 裁判版本標記；
-      // 上面的 report.user_challenged / suggested_level 是後端加工過的，這裡留原話供稽核。
-      judge_raw: judged,
+      // self-consistency N 次「未加工」的原始輸出（每個都含它自己判的 user_challenged）
+      // + 一致性摘要（每維度 sd、標準差偏高的維度）+ 裁判版本標記；
+      // 上面的 report.scores / user_challenged / suggested_level 是後端合成 / 加工過的，
+      // 這裡留每一次的原話供稽核，之後也能拿 flaggedDimensions 篩「送人工複審」的場次。
+      judge_votes: judgeVotes,
+      judge_consistency: judgeConsistency,
       judge_version: JUDGE_VERSION,
       ...(debug ? { debug } : {}),
     },

@@ -202,6 +202,19 @@ export interface Engagement {
 }
 
 /**
+ * 裁判 self-consistency 的一致性摘要（同一份對話並行跑 N 次、每個維度取中位數）。
+ * 存進 report jsonb 的 `judgeConsistency`。
+ */
+export interface JudgeConsistency {
+  /** 這場裁判實際跑了幾次（`JUDGE_CONSISTENCY_RUNS`）。 */
+  runs: number;
+  /** 每個維度在這 N 次之間的標準差；越大代表裁判自己越不確定。runs=1 時為 {}。 */
+  scoreSd: Record<string, number>;
+  /** 標準差偏高（> 12，信度測試觀察到的不穩門檻）的維度；之後可拿來篩「送人工複審」的場次。 */
+  flaggedDimensions: string[];
+}
+
+/**
  * 免登入試用場評分後、只放 Redis（key `anonrpt:{examId}`）的結果快照。
  * 登入後由 /api/exam/:id/claim 讀出、寫成正式 exam_reports 列。
  */
@@ -226,8 +239,10 @@ export interface AnonReportBlob {
   injectAtTurn: number;
   /** 這場的投入程度訊號（耗時 / 輪數 / 輸入字數 / 有無走到注入輪）。 */
   engagement: Engagement;
-  /** 裁判「未加工」的原始輸出（含它自己判的 user_challenged）；給稽核 / 訓練用。 */
-  judgeRaw: Judged;
+  /** 裁判 N 次並行呼叫「未加工」的原始輸出（每個都含它自己判的 user_challenged）；給稽核 / 訓練用。 */
+  judgeVotes: Judged[];
+  /** 這 N 次的一致性摘要。 */
+  judgeConsistency: JudgeConsistency;
   /** 產出這份評分的裁判版本標記（`模型·準則版本`）。 */
   judgeVersion: string;
   ruleChallenged: boolean;

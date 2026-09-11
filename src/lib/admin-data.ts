@@ -2,12 +2,15 @@
  * 檔案：src/lib/admin-data.ts
  * 角色：領域層 — 後台用的唯讀彙總 / 查詢（P1：可見性）
  * 功能：getAdminOverview()（總覽數字）、listAdminExams()（測驗查詢列表）、
- *       getAdminExamDetail()（單場完整資料）、getScenarioHealth()（題庫健檢）。
+ *       getAdminExamDetail()（單場完整資料）、getScenarioHealth()（題庫健檢）、
+ *       getAppSettings() / setAppSetting()（後台可調參數，如裁判 self-consistency 次數）。
  *       全走 service_role，呼叫端（API 路由）負責用 requireAdmin() 把關。
  */
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { getTrialStats, type TrialStats } from '@/lib/public-pool';
 import { getScenarioVariant } from '@/lib/scenarios';
+import { setSetting } from '@/lib/app-settings';
+import { JUDGE_CONSISTENCY_RUNS } from '@/config/constants';
 import {
   CATEGORY_IDS,
   CATEGORY_LABEL,
@@ -827,5 +830,95 @@ export async function saveJudgeLabel(
   if (error) throw new Error(`儲存標註失敗：${error.message}`);
   const saved = await getJudgeLabel(examId, reviewerEmail);
   if (!saved) throw new Error('儲存後讀不回標註');
+  return saved;
+}
+
+/* ── 後台可調參數（app_settings） ───────────────────────── */
+
+/** 一筆設定的定義：預設值 + 給後台顯示用的說明。新增可調參數只要在這裡加一筆。 */
+export interface SettingDef {
+  key: string;
+  label: string;
+  description: string;
+  default: number;
+  min: number;
+  max: number;
+}
+
+export const KNOWN_SETTINGS: SettingDef[] = [
+  {
+    key: 'judge_consistency_runs',
+    label: '裁判 self-consistency 次數',
+    description:
+      '同一份對話並行問裁判幾次、每個維度取中位數，降低單次跑分飄動。1 = 關閉。' +
+      '建議維持奇數，避免 user_challenged 多數決平手。每加 1，該場評分的裁判 API 成本乘 1 倍。',
+    default: JUDGE_CONSISTENCY_RUNS,
+    min: 1,
+    max: 7,
+  },
+];
+
+export interface AppSettingRow extends SettingDef {
+  /** 目前生效的值：有存過就用存的，沒存過就是 default。 */
+  value: number;
+  /** 有沒有被後台改過（false = 目前吃 default）。 */
+  overridden: boolean;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+/** 後台「設定」頁列表：已知設定 + 目前實際生效的值（DB 有存就用存的，沒有就用預設）。 */
+export async function getAppSettings(): Promise<AppSettingRow[]> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('app_settings')
+    .select('key, value, updated_at, updated_by');
+  if (error) throw new Error(`app_settings 讀取失敗：${error.message}`);
+  const stored = new Map(
+    (data ?? []).map((r) => [
+      r.key as string,
+      r as { value: unknown; updated_at: string; updated_by: string | null },
+    ]),
+  );
+  return KNOWN_SETTINGS.map((def) => {
+    const row = stored.get(def.key);
+    return {
+      ...def,
+      value: row ? Number(row.value) : def.default,
+      overridden: Boolean(row),
+      updatedAt: row?.updated_at ?? null,
+      updatedBy: row?.updated_by ?? null,
+    };
+  });
+}
+
+/** 後台寫入一筆設定；呼叫端負責用 requireAdmin() 把關。value 會 clamp 進該設定的 min/max。 */
+export async function setAppSetting(
+  key: string,
+  value: number,
+  updatedBy: string,
+): Promise<AppSettingRow> {
+  const def = KNOWN_SETTINGS.find((s) => s.key === key);
+  if (!def) throw new Error(`未知的設定 key：${key}`);
+  if (!Number.isFinite(value)) throw new Error('值必須是數字');
+  const clamped = Math.min(def.max, Math.max(def.min, Math.round(value)));
+  await setSetting(key, clamped, updatedBy);
+  const rows = await getAppSettings();
+  const saved = rows.find((r) => r.key === key);
+  if (!saved) throw new Error('儲存後讀不回設定');
+  return saved;
+}
+
+/** 後台「還原成預設值」：直接刪掉那一列，下次讀取就會落回 KNOWN_SETTINGS 的 default。 */
+export async function resetAppSetting(key: string): Promise<AppSettingRow> {
+  const def = KNOWN_SETTINGS.find((s) => s.key === key);
+  if (!def) throw new Error(`未知的設定 key：${key}`);
+  const { error } = await getSupabaseAdmin()
+    .from('app_settings')
+    .delete()
+    .eq('key', key);
+  if (error) throw new Error(`app_settings 刪除失敗：${error.message}`);
+  const rows = await getAppSettings();
+  const saved = rows.find((r) => r.key === key);
+  if (!saved) throw new Error('還原後讀不回設定');
   return saved;
 }

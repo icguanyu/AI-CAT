@@ -21,6 +21,7 @@ import type {
   VerifyDifficulty,
   Judged,
   Engagement,
+  JudgeConsistency,
 } from '@/types/exam';
 
 export type { ExamListItem };
@@ -47,8 +48,12 @@ interface StoredReport extends Report {
   injectAtTurn?: number | null;
   /** 投入程度訊號（耗時 / 輪數 / 輸入字數 / 有無走到注入輪）。舊報告可能沒有。 */
   engagement?: Engagement | null;
-  /** 裁判未加工的原始輸出（含它自己判的 user_challenged）+ 裁判版本標記。舊報告可能沒有。 */
-  judge_raw?: Judged | null;
+  /**
+   * self-consistency N 次「未加工」的原始輸出 + 一致性摘要（sd / 標準差偏高的維度）
+   * + 裁判版本標記。舊報告可能沒有，或（更早期）只有單次的 `judge_raw`（已淘汰）。
+   */
+  judge_votes?: Judged[] | null;
+  judge_consistency?: JudgeConsistency | null;
   judge_version?: string;
   /** 僅本地開發寫入；型別留寬鬆，前端 client-api 有精確型別。 */
   debug?: unknown;

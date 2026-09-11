@@ -73,7 +73,8 @@ async function handle(
       injectAtTurn: blob.injectAtTurn ?? null,
       // 投入程度訊號 / 裁判未加工原始輸出 + 版本標記（舊 blob 沒有 → null）。
       engagement: blob.engagement ?? null,
-      judge_raw: blob.judgeRaw ?? null,
+      judge_votes: blob.judgeVotes ?? null,
+      judge_consistency: blob.judgeConsistency ?? null,
       judge_version: blob.judgeVersion ?? null,
       // 來源標記：免登入試用認領而來（不佔配額）。
       origin: 'public_trial',
