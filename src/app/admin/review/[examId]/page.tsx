@@ -234,7 +234,7 @@ export default function AdminReviewItemPage() {
 
         <div className={styles.reviewSidebar}>
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>你的標註 —— 每個維度選一桶（已預設同意 AI）</div>
+            <div className={styles.sectionTitle}>你的標註 —— 每個維度選一個程度（已預設同意 AI）</div>
             {scoreKeys.map((k) => (
               <div key={k} style={{ marginBottom: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
