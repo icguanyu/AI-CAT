@@ -13,6 +13,7 @@ import {
   type ReviewQueueRow,
 } from '@/lib/admin-client';
 import { CATEGORY_LABEL } from '@/types/exam';
+import ReviewGuide from './ReviewGuide';
 import styles from '../admin.module.css';
 
 const PAGE = 20;
@@ -59,7 +60,9 @@ export default function AdminReviewQueuePage() {
 
   return (
     <div>
-      <h1 className={styles.h1}>標註審核</h1>
+      <h1 className={styles.h1}>
+        標註審核 <ReviewGuide />
+      </h1>
       <p style={{ fontSize: 12.5, color: '#56534b', marginBottom: 14 }}>
         每個維度先看 AI 打的分，同意就直接送出（預設已幫你選最接近的桶）；
         不同意才手動改。這批標註是評估裁判準不準、以後訓練專屬裁判的原始資料。

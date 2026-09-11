@@ -32,6 +32,7 @@ import {
   type ScoreBucket,
   type ScoreKey,
 } from '@/types/label';
+import ReviewGuide from '../ReviewGuide';
 import styles from '../../admin.module.css';
 
 export default function AdminReviewItemPage() {
@@ -112,7 +113,8 @@ export default function AdminReviewItemPage() {
       <p style={{ marginBottom: 12 }}>
         <Link className={styles.rowLink} href="/admin/review">
           ← 回審核佇列
-        </Link>
+        </Link>{' '}
+        <ReviewGuide />
         {myLabel && (
           <span className={`${styles.pill} ${styles.ok}`} style={{ marginLeft: 10 }}>
             你標過了（{new Date(myLabel.updatedAt).toLocaleDateString('zh-TW')}）
