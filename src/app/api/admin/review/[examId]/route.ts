@@ -1,13 +1,16 @@
 /**
  * 檔案：src/app/api/admin/review/[examId]/route.ts
- * 角色：API 層 — 單場的審核資料（P3）
- * 功能：GET 回 { exam, label }（label 沒標過就是 null）；
- *       POST 存一筆標註（body: scores 五維桶值 + challengedCorrect + note）。
+ * 角色：API 層 — 單場的審核資料（P3，支援多人各自複查）
+ * 功能：GET 回 { exam, myLabel, otherLabels }——myLabel 是目前這個管理員自己標過的
+ *       那份（沒有就 null），otherLabels 是其他人標過的（用來比對一致率）；
+ *       POST 存「我」這份標註（body: scores 五維桶值 + challengedCorrect + note），
+ *       不會動到別人已經存的。
  */
 import { requireAdmin } from '@/lib/admin';
 import {
   getAdminExamDetail,
   getJudgeLabel,
+  getJudgeLabelsForExam,
   saveJudgeLabel,
 } from '@/lib/admin-data';
 import { SCORE_KEYS, isScoreBucket, type ScoreBucket, type ScoreKey } from '@/types/label';
@@ -37,12 +40,14 @@ async function handleGet(
     return Response.json({ error: auth.error }, { status: auth.status });
   }
   const { examId } = await params;
-  const [exam, label] = await Promise.all([
+  const [exam, myLabel, allLabels] = await Promise.all([
     getAdminExamDetail(examId),
-    getJudgeLabel(examId),
+    getJudgeLabel(examId, auth.email),
+    getJudgeLabelsForExam(examId),
   ]);
   if (!exam) return Response.json({ error: '找不到這場測驗' }, { status: 404 });
-  return Response.json({ exam, label });
+  const otherLabels = allLabels.filter((l) => l.reviewerEmail !== auth.email);
+  return Response.json({ exam, myLabel, otherLabels });
 }
 
 async function handlePost(

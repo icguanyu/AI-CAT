@@ -74,7 +74,7 @@ export default function AdminReviewQueuePage() {
             setOnlyUnlabeled(e.target.checked);
           }}
         />
-        只看尚未標註
+        只看我尚未標註（可能已有其他人標過）
       </label>
 
       {!rows ? (
@@ -95,7 +95,8 @@ export default function AdminReviewQueuePage() {
                 <th>AI 分數</th>
                 <th>有陷阱</th>
                 <th>質疑</th>
-                <th>標註狀態</th>
+                <th>我標了嗎</th>
+                <th>標註人數</th>
               </tr>
             </thead>
             <tbody>
@@ -113,10 +114,11 @@ export default function AdminReviewQueuePage() {
                   <td>{r.noTrap ? '無陷阱題' : r.hasTrap ? '有生效' : '未生效'}</td>
                   <td>{r.hasTrap ? (r.challenged ? '✓' : '') : '—'}</td>
                   <td>
-                    <span className={`${styles.pill} ${r.labeled ? styles.ok : styles.warn}`}>
-                      {r.labeled ? '已標註' : '未標註'}
+                    <span className={`${styles.pill} ${r.labeledByMe ? styles.ok : styles.warn}`}>
+                      {r.labeledByMe ? '已標註' : '未標註'}
                     </span>
                   </td>
+                  <td>{r.reviewerCount}</td>
                 </tr>
               ))}
             </tbody>

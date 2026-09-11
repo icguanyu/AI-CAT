@@ -241,7 +241,10 @@ export interface ReviewQueueRow {
   noTrap: boolean;
   hasTrap: boolean;
   excludedFromTraining: boolean;
-  labeled: boolean;
+  /** 目前這個管理員自己標過這題（跟別人有沒有標過無關）。 */
+  labeledByMe: boolean;
+  /** 這題目前總共有幾個人標過。 */
+  reviewerCount: number;
 }
 
 export function getReviewQueue(params: {
@@ -268,7 +271,11 @@ export interface JudgeLabel {
 
 export function getReviewItem(
   examId: string,
-): Promise<{ exam: AdminExamDetail; label: JudgeLabel | null }> {
+): Promise<{
+  exam: AdminExamDetail;
+  myLabel: JudgeLabel | null;
+  otherLabels: JudgeLabel[];
+}> {
   return get(`/api/admin/review/${examId}`);
 }
 

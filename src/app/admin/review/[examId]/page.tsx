@@ -39,7 +39,8 @@ export default function AdminReviewItemPage() {
   const router = useRouter();
 
   const [exam, setExam] = useState<AdminExamDetail | null>(null);
-  const [existingLabel, setExistingLabel] = useState<JudgeLabel | null>(null);
+  const [myLabel, setMyLabel] = useState<JudgeLabel | null>(null);
+  const [otherLabels, setOtherLabels] = useState<JudgeLabel[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [scores, setScores] = useState<Record<ScoreKey, ScoreBucket> | null>(null);
@@ -51,10 +52,11 @@ export default function AdminReviewItemPage() {
   useEffect(() => {
     let alive = true;
     getReviewItem(params.examId)
-      .then(({ exam: e, label }) => {
+      .then(({ exam: e, myLabel: label, otherLabels: others }) => {
         if (!alive) return;
         setExam(e);
-        setExistingLabel(label);
+        setMyLabel(label);
+        setOtherLabels(others);
         setScores(
           label?.scores ??
             (Object.fromEntries(
@@ -111,9 +113,14 @@ export default function AdminReviewItemPage() {
         <Link className={styles.rowLink} href="/admin/review">
           ← 回審核佇列
         </Link>
-        {existingLabel && (
+        {myLabel && (
           <span className={`${styles.pill} ${styles.ok}`} style={{ marginLeft: 10 }}>
-            已由 {existingLabel.reviewerEmail} 標註過
+            你標過了（{new Date(myLabel.updatedAt).toLocaleDateString('zh-TW')}）
+          </span>
+        )}
+        {otherLabels.length > 0 && (
+          <span className={`${styles.pill} ${styles.warn}`} style={{ marginLeft: 10 }}>
+            另有 {otherLabels.length} 人標過
           </span>
         )}
       </p>
@@ -206,11 +213,20 @@ export default function AdminReviewItemPage() {
         <div className={styles.sectionTitle}>你的標註 —— 每個維度選一桶（已預設同意 AI）</div>
         {scoreKeys.map((k) => (
           <div key={k} style={{ marginBottom: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
               <strong style={{ fontSize: 13 }}>{SCORE_KEY_LABEL[k]}</strong>
               <span style={{ fontSize: 11, color: '#56534b' }}>
                 AI 給 {exam.report.scores[k]} 分（最接近「{SCORE_BUCKET_LABEL[nearestBucket(exam.report.scores[k])]}」）
               </span>
+              {otherLabels.map((l) => (
+                <span
+                  key={l.reviewerEmail}
+                  className={`${styles.pill} ${l.scores[k] === scores[k] ? styles.ok : styles.warn}`}
+                  title={l.reviewerEmail}
+                >
+                  {l.reviewerEmail.split('@')[0]}：{SCORE_BUCKET_LABEL[l.scores[k]]}
+                </span>
+              ))}
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               {SCORE_BUCKETS.map((b) => (

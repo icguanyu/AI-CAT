@@ -20,6 +20,7 @@ async function handle(req: Request): Promise<Response> {
   }
   const url = new URL(req.url);
   const result = await getReviewQueue({
+    reviewerEmail: auth.email,
     onlyUnlabeled: url.searchParams.get('onlyUnlabeled') === '1',
     limit: Number(url.searchParams.get('limit')) || 20,
     offset: Number(url.searchParams.get('offset')) || 0,

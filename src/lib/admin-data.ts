@@ -573,7 +573,10 @@ export interface ReviewQueueRow {
   noTrap: boolean;
   hasTrap: boolean;
   excludedFromTraining: boolean;
-  labeled: boolean;
+  /** 目前這個管理員自己標過這題（同一題其他人標過與否不算）。 */
+  labeledByMe: boolean;
+  /** 這題目前總共有幾個人標過（>1 才有機會算一致率）。 */
+  reviewerCount: number;
 }
 
 /** examId 只可能是我們自己 insert 的 uuid；仍過濾掉非 [a-f0-9-] 字元防呆。 */
@@ -581,6 +584,8 @@ const safeIdList = (ids: string[]) =>
   ids.map((id) => id.replace(/[^a-f0-9-]/gi, '')).filter(Boolean);
 
 export async function getReviewQueue(opts: {
+  /** 「只看未標註」是指這個人自己還沒標過，不是全站都沒人標過。 */
+  reviewerEmail: string;
   onlyUnlabeled?: boolean;
   limit?: number;
   offset?: number;
@@ -591,10 +596,18 @@ export async function getReviewQueue(opts: {
 
   const { data: labelRows } = await admin
     .from('judge_labels')
-    .select('exam_id')
+    .select('exam_id, reviewer_email')
     .limit(20000);
-  const labeledIds = new Set(
-    ((labelRows ?? []) as { exam_id: string }[]).map((r) => r.exam_id),
+  const reviewersByExam = new Map<string, Set<string>>();
+  for (const r of (labelRows ?? []) as { exam_id: string; reviewer_email: string }[]) {
+    const s = reviewersByExam.get(r.exam_id) ?? new Set<string>();
+    s.add(r.reviewer_email);
+    reviewersByExam.set(r.exam_id, s);
+  }
+  const myLabeledIds = new Set(
+    [...reviewersByExam.entries()]
+      .filter(([, reviewers]) => reviewers.has(opts.reviewerEmail))
+      .map(([examId]) => examId),
   );
 
   let query = admin
@@ -617,8 +630,8 @@ export async function getReviewQueue(opts: {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (opts.onlyUnlabeled && labeledIds.size > 0) {
-    const idList = safeIdList([...labeledIds]);
+  if (opts.onlyUnlabeled && myLabeledIds.size > 0) {
+    const idList = safeIdList([...myLabeledIds]);
     if (idList.length > 0) query = query.not('exam_id', 'in', `(${idList.join(',')})`);
   }
 
@@ -651,7 +664,8 @@ export async function getReviewQueue(opts: {
       noTrap: Boolean(r.noTrap),
       hasTrap: r.trap != null,
       excludedFromTraining: Boolean(r.excluded_from_training),
-      labeled: labeledIds.has(r.exam_id),
+      labeledByMe: myLabeledIds.has(r.exam_id),
+      reviewerCount: reviewersByExam.get(r.exam_id)?.size ?? 0,
     })),
   };
 }
@@ -697,16 +711,35 @@ function mapLabelRow(r: RawLabelRow): JudgeLabel {
   };
 }
 
-export async function getJudgeLabel(examId: string): Promise<JudgeLabel | null> {
+/** 「我」對這題標過的那一份（沒有就 null）。 */
+export async function getJudgeLabel(
+  examId: string,
+  reviewerEmail: string,
+): Promise<JudgeLabel | null> {
   const { data } = await getSupabaseAdmin()
     .from('judge_labels')
     .select('*')
     .eq('exam_id', examId)
+    .eq('reviewer_email', reviewerEmail)
     .maybeSingle();
   if (!data) return null;
   return mapLabelRow(data as RawLabelRow);
 }
 
+/** 這題目前所有人標過的全部（含我自己），新到舊。用來比對多人一致率。 */
+export async function getJudgeLabelsForExam(examId: string): Promise<JudgeLabel[]> {
+  const { data } = await getSupabaseAdmin()
+    .from('judge_labels')
+    .select('*')
+    .eq('exam_id', examId)
+    .order('updated_at', { ascending: false });
+  return ((data ?? []) as RawLabelRow[]).map(mapLabelRow);
+}
+
+/**
+ * 存「我」對這題的標註。同一個人重存 = 覆寫自己那份（改判斷）；
+ * 不同人存的是各自獨立的一列，不會互相覆蓋（見 (exam_id, reviewer_email) 唯一鍵）。
+ */
 export async function saveJudgeLabel(
   examId: string,
   reviewerEmail: string,
@@ -735,9 +768,9 @@ export async function saveJudgeLabel(
   };
   const { error } = await getSupabaseAdmin()
     .from('judge_labels')
-    .upsert(row, { onConflict: 'exam_id' });
+    .upsert(row, { onConflict: 'exam_id,reviewer_email' });
   if (error) throw new Error(`儲存標註失敗：${error.message}`);
-  const saved = await getJudgeLabel(examId);
+  const saved = await getJudgeLabel(examId, reviewerEmail);
   if (!saved) throw new Error('儲存後讀不回標註');
   return saved;
 }
