@@ -18,6 +18,7 @@ import type {
   TrapType,
   VerifyDifficulty,
 } from '@/types/exam';
+import type { ScoreBucket, ScoreKey } from '@/types/label';
 
 export class AdminApiError extends Error {
   readonly status: number;
@@ -225,4 +226,59 @@ export function updateAdminUserQuota(
   patch: { freeLimit?: number; used?: number; dayUsed?: number },
 ): Promise<AdminUserRow> {
   return post(`/api/admin/users/${userId}/quota`, patch);
+}
+
+/* ── 標註審核（P3） ───────────────────────────────────── */
+
+export interface ReviewQueueRow {
+  examId: string;
+  createdAt: string;
+  titleZh: string | null;
+  category: Category | null;
+  level: LevelCode;
+  weightedAverage: number;
+  challenged: boolean;
+  noTrap: boolean;
+  hasTrap: boolean;
+  excludedFromTraining: boolean;
+  labeled: boolean;
+}
+
+export function getReviewQueue(params: {
+  onlyUnlabeled?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<{ rows: ReviewQueueRow[]; total: number }> {
+  const sp = new URLSearchParams();
+  if (params.onlyUnlabeled) sp.set('onlyUnlabeled', '1');
+  sp.set('limit', String(params.limit ?? 20));
+  sp.set('offset', String(params.offset ?? 0));
+  return get(`/api/admin/review?${sp.toString()}`);
+}
+
+export interface JudgeLabel {
+  examId: string;
+  reviewerEmail: string;
+  scores: Record<ScoreKey, ScoreBucket>;
+  challengedCorrect: boolean | null;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function getReviewItem(
+  examId: string,
+): Promise<{ exam: AdminExamDetail; label: JudgeLabel | null }> {
+  return get(`/api/admin/review/${examId}`);
+}
+
+export function saveReviewLabel(
+  examId: string,
+  input: {
+    scores: Record<ScoreKey, ScoreBucket>;
+    challengedCorrect: boolean | null;
+    note: string | null;
+  },
+): Promise<JudgeLabel> {
+  return post(`/api/admin/review/${examId}`, input);
 }

@@ -21,6 +21,7 @@ import {
   type TrapType,
   type VerifyDifficulty,
 } from '@/types/exam';
+import { SCORE_KEYS, isScoreBucket, type ScoreBucket, type ScoreKey } from '@/types/label';
 
 const DAY_MS = 86_400_000;
 
@@ -557,4 +558,186 @@ export async function updateAdminUserQuota(
     if (error) throw new Error(`更新配額失敗：${error.message}`);
   }
   return getAdminUser(userId);
+}
+
+/* ── 標註審核（P3）────────────────────────────────────── */
+
+export interface ReviewQueueRow {
+  examId: string;
+  createdAt: string;
+  titleZh: string | null;
+  category: Category | null;
+  level: LevelCode;
+  weightedAverage: number;
+  challenged: boolean;
+  noTrap: boolean;
+  hasTrap: boolean;
+  excludedFromTraining: boolean;
+  labeled: boolean;
+}
+
+/** examId 只可能是我們自己 insert 的 uuid；仍過濾掉非 [a-f0-9-] 字元防呆。 */
+const safeIdList = (ids: string[]) =>
+  ids.map((id) => id.replace(/[^a-f0-9-]/gi, '')).filter(Boolean);
+
+export async function getReviewQueue(opts: {
+  onlyUnlabeled?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<{ rows: ReviewQueueRow[]; total: number }> {
+  const admin = getSupabaseAdmin();
+  const limit = Math.min(Math.max(opts.limit ?? 20, 1), 100);
+  const offset = Math.max(opts.offset ?? 0, 0);
+
+  const { data: labelRows } = await admin
+    .from('judge_labels')
+    .select('exam_id')
+    .limit(20000);
+  const labeledIds = new Set(
+    ((labelRows ?? []) as { exam_id: string }[]).map((r) => r.exam_id),
+  );
+
+  let query = admin
+    .from('exam_reports')
+    .select(
+      [
+        'exam_id',
+        'created_at',
+        'excluded_from_training',
+        'titleZh:report->titleZh',
+        'category:report->category',
+        'level:report->suggested_level',
+        'score:report->weighted_average',
+        'challenged:report->user_challenged',
+        'noTrap:report->noTrap',
+        'trap:report->trap',
+      ].join(', '),
+      { count: 'exact' },
+    )
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (opts.onlyUnlabeled && labeledIds.size > 0) {
+    const idList = safeIdList([...labeledIds]);
+    if (idList.length > 0) query = query.not('exam_id', 'in', `(${idList.join(',')})`);
+  }
+
+  const { data, error, count } = await query;
+  if (error) throw new Error(`讀取審核佇列失敗：${error.message}`);
+
+  const rows = (data ?? []) as unknown as {
+    exam_id: string;
+    created_at: string;
+    excluded_from_training: boolean | null;
+    titleZh: string | null;
+    category: Category | null;
+    level: LevelCode;
+    score: number | null;
+    challenged: boolean | null;
+    noTrap: boolean | null;
+    trap: TrapReveal | null;
+  }[];
+
+  return {
+    total: count ?? rows.length,
+    rows: rows.map((r) => ({
+      examId: r.exam_id,
+      createdAt: r.created_at,
+      titleZh: r.titleZh,
+      category: r.category,
+      level: r.level,
+      weightedAverage: r.score ?? 0,
+      challenged: Boolean(r.challenged),
+      noTrap: Boolean(r.noTrap),
+      hasTrap: r.trap != null,
+      excludedFromTraining: Boolean(r.excluded_from_training),
+      labeled: labeledIds.has(r.exam_id),
+    })),
+  };
+}
+
+export interface JudgeLabel {
+  examId: string;
+  reviewerEmail: string;
+  scores: Record<ScoreKey, ScoreBucket>;
+  challengedCorrect: boolean | null;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface RawLabelRow {
+  exam_id: string;
+  reviewer_email: string;
+  prompt_structure: string;
+  decomposition: string;
+  efficiency: string;
+  critical_thinking: string;
+  task_completion: string;
+  challenged_correct: boolean | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapLabelRow(r: RawLabelRow): JudgeLabel {
+  const scores = {} as Record<ScoreKey, ScoreBucket>;
+  for (const k of SCORE_KEYS) {
+    const v = r[k];
+    scores[k] = isScoreBucket(v) ? v : 'basic';
+  }
+  return {
+    examId: r.exam_id,
+    reviewerEmail: r.reviewer_email,
+    scores,
+    challengedCorrect: r.challenged_correct,
+    note: r.note,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getJudgeLabel(examId: string): Promise<JudgeLabel | null> {
+  const { data } = await getSupabaseAdmin()
+    .from('judge_labels')
+    .select('*')
+    .eq('exam_id', examId)
+    .maybeSingle();
+  if (!data) return null;
+  return mapLabelRow(data as RawLabelRow);
+}
+
+export async function saveJudgeLabel(
+  examId: string,
+  reviewerEmail: string,
+  input: {
+    scores: Record<ScoreKey, ScoreBucket>;
+    challengedCorrect: boolean | null;
+    note: string | null;
+  },
+): Promise<JudgeLabel> {
+  for (const k of SCORE_KEYS) {
+    if (!isScoreBucket(input.scores[k])) {
+      throw new Error(`維度 ${k} 缺少合法的標註值`);
+    }
+  }
+  const row = {
+    exam_id: examId,
+    reviewer_email: reviewerEmail,
+    prompt_structure: input.scores.prompt_structure,
+    decomposition: input.scores.decomposition,
+    efficiency: input.scores.efficiency,
+    critical_thinking: input.scores.critical_thinking,
+    task_completion: input.scores.task_completion,
+    challenged_correct: input.challengedCorrect,
+    note: input.note,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await getSupabaseAdmin()
+    .from('judge_labels')
+    .upsert(row, { onConflict: 'exam_id' });
+  if (error) throw new Error(`儲存標註失敗：${error.message}`);
+  const saved = await getJudgeLabel(examId);
+  if (!saved) throw new Error('儲存後讀不回標註');
+  return saved;
 }
