@@ -5,8 +5,9 @@
  */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   listAdminExams,
   AdminApiError,
@@ -30,8 +31,18 @@ function fmt(iso: string): string {
 }
 
 export default function AdminExamsPage() {
-  const [q, setQ] = useState('');
-  const [qInput, setQInput] = useState('');
+  return (
+    <Suspense fallback={<p className={styles.state}>載入中…</p>}>
+      <AdminExamsPageInner />
+    </Suspense>
+  );
+}
+
+function AdminExamsPageInner() {
+  const searchParams = useSearchParams();
+  const initialQ = searchParams.get('q') ?? '';
+  const [q, setQ] = useState(initialQ);
+  const [qInput, setQInput] = useState(initialQ);
   const [category, setCategory] = useState<Category | ''>('');
   const [level, setLevel] = useState<LevelCode | ''>('');
   const [offset, setOffset] = useState(0);
@@ -140,6 +151,7 @@ export default function AdminExamsPage() {
                 <th>已分享</th>
                 <th>裁判版本</th>
                 <th>輪次</th>
+                <th>訓練集</th>
               </tr>
             </thead>
             <tbody>
@@ -159,6 +171,11 @@ export default function AdminExamsPage() {
                   <td>{r.shared ? '✓' : ''}</td>
                   <td>{r.judgeVersion ?? '—'}</td>
                   <td>{r.turns ?? '—'}</td>
+                  <td>
+                    {r.excludedFromTraining && (
+                      <span className={`${styles.pill} ${styles.warn}`}>已排除</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

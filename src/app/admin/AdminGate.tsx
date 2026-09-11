@@ -87,6 +87,9 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
         <Link className={styles.navLink} href="/admin/exams">
           測驗查詢
         </Link>
+        <Link className={styles.navLink} href="/admin/users">
+          帳號查詢
+        </Link>
         <Link className={styles.navLink} href="/admin/scenarios">
           題庫健檢
         </Link>

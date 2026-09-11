@@ -10,6 +10,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   getAdminExamDetail,
+  setExamExcluded,
   AdminApiError,
   type AdminExamDetail,
 } from '@/lib/admin-client';
@@ -33,6 +34,7 @@ export default function AdminExamDetailPage() {
   const params = useParams<{ examId: string }>();
   const [data, setData] = useState<AdminExamDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [excludeBusy, setExcludeBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -56,12 +58,38 @@ export default function AdminExamDetailPage() {
 
   const scoreKeys = Object.keys(METRIC_LABELS) as (keyof typeof data.report.scores)[];
 
+  const toggleExclude = async () => {
+    setExcludeBusy(true);
+    try {
+      await setExamExcluded(data.examId, !data.excludedFromTraining);
+      setData({ ...data, excludedFromTraining: !data.excludedFromTraining });
+    } catch {
+      /* 失敗就維持原狀 */
+    } finally {
+      setExcludeBusy(false);
+    }
+  };
+
   return (
     <div>
-      <p style={{ marginBottom: 12 }}>
+      <p style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between' }}>
         <Link className={styles.rowLink} href="/admin/exams">
           ← 回測驗查詢
         </Link>
+        <button
+          type="button"
+          className={`${styles.pill} ${data.excludedFromTraining ? styles.warn : styles.ok}`}
+          style={{ cursor: 'pointer', background: 'none' }}
+          disabled={excludeBusy}
+          onClick={toggleExclude}
+          title="標記後，日後匯出訓練資料會跳過這筆；不影響評分或使用者看到的報告"
+        >
+          {excludeBusy
+            ? '處理中…'
+            : data.excludedFromTraining
+              ? '已排除訓練集（點擊取消）'
+              : '納入訓練集（點擊排除）'}
+        </button>
       </p>
       <h1 className={styles.h1}>
         {data.titleZh ?? data.examId} · {data.report.suggested_level} ·{' '}
@@ -71,7 +99,11 @@ export default function AdminExamDetailPage() {
       <div className={styles.detailGrid}>
         <div className={styles.kv}>
           <span className={styles.kvLabel}>使用者</span>
-          <span>{data.email ?? data.userId}</span>
+          <span>
+            <Link className={styles.rowLink} href={`/admin/users/${data.userId}`}>
+              {data.email ?? data.userId}
+            </Link>
+          </span>
         </div>
         <div className={styles.kv}>
           <span className={styles.kvLabel}>提交時間</span>

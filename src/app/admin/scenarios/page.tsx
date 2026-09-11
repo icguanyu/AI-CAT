@@ -1,14 +1,16 @@
 /**
  * 檔案：src/app/admin/scenarios/page.tsx  →  /admin/scenarios
- * 角色：前端層 — 題庫健檢（P1）
- * 功能：每題被抽中次數、平均加權分、陷阱出現/被識破次數——抓「壞掉的題目」。
- *       只讀，題目內容仍在 scenarios.local.json / Supabase Table Editor 維護。
+ * 角色：前端層 — 題庫健檢 + 上線開關（P1 可見性 + P2 輕量操作）
+ * 功能：每題被抽中次數、平均加權分、陷阱出現/被識破次數——抓「壞掉的題目」；
+ *       狀態欄可直接點擊切換 active（不刪資料，隨時能切回來）。
+ *       題目內容仍在 scenarios.local.json / Supabase Table Editor 維護。
  */
 'use client';
 
 import { useEffect, useState } from 'react';
 import {
   getScenarioHealth,
+  setScenarioActive,
   AdminApiError,
   type ScenarioHealthRow,
 } from '@/lib/admin-client';
@@ -18,6 +20,7 @@ import styles from '../admin.module.css';
 export default function AdminScenariosPage() {
   const [rows, setRows] = useState<ScenarioHealthRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -36,6 +39,22 @@ export default function AdminScenariosPage() {
     };
   }, []);
 
+  const toggle = async (row: ScenarioHealthRow) => {
+    setBusyId(row.id);
+    try {
+      await setScenarioActive(row.id, !row.active);
+      setRows((prev) =>
+        prev
+          ? prev.map((r) => (r.id === row.id ? { ...r, active: !r.active } : r))
+          : prev,
+      );
+    } catch {
+      /* 失敗就維持原狀，使用者可再點一次 */
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (error) return <p className={styles.state}>{error}</p>;
   if (!rows) return <p className={styles.state}>載入中…</p>;
 
@@ -44,7 +63,7 @@ export default function AdminScenariosPage() {
       <h1 className={styles.h1}>題庫健檢</h1>
       <p style={{ fontSize: 12.5, color: '#56534b', marginBottom: 14 }}>
         統計取近 20000 場提交紀錄。「陷阱出現」= 陷阱有真的說出口；「被識破」= 受測者有質疑。
-        識破率長期是 0% 的題，代表陷阱可能太隱晦、或根本沒錯，值得重看。
+        識破率長期是 0% 的題，代表陷阱可能太隱晦、或根本沒錯，值得重看。點狀態欄可直接開關上線。
       </p>
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -69,9 +88,16 @@ export default function AdminScenariosPage() {
                   <td>{r.titleZh}</td>
                   <td>{r.category ? CATEGORY_LABEL[r.category] : '—'}</td>
                   <td>
-                    <span className={`${styles.pill} ${r.active ? styles.ok : styles.warn}`}>
-                      {r.active ? '上線中' : '已停用'}
-                    </span>
+                    <button
+                      type="button"
+                      className={`${styles.pill} ${r.active ? styles.ok : styles.warn}`}
+                      style={{ cursor: 'pointer', background: 'none' }}
+                      disabled={busyId === r.id}
+                      onClick={() => toggle(r)}
+                      title="點擊切換上線 / 停用"
+                    >
+                      {busyId === r.id ? '處理中…' : r.active ? '上線中' : '已停用'}
+                    </button>
                   </td>
                   <td>{r.served}</td>
                   <td>{r.avgScore ?? '—'}</td>

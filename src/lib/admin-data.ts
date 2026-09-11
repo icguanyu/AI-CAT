@@ -128,6 +128,7 @@ export interface AdminExamRow {
   shared: boolean;
   judgeVersion: string | null;
   turns: number | null;
+  excludedFromTraining: boolean;
 }
 
 interface ListExamsOpts {
@@ -144,6 +145,7 @@ interface RawExamRow {
   created_at: string;
   user_id: string;
   shared: boolean;
+  excluded_from_training: boolean | null;
   titleZh: string | null;
   category: Category | null;
   level: LevelCode;
@@ -168,6 +170,7 @@ export async function listAdminExams(
         'created_at',
         'user_id',
         'shared',
+        'excluded_from_training',
         'titleZh:report->titleZh',
         'category:report->category',
         'level:report->suggested_level',
@@ -230,6 +233,7 @@ export async function listAdminExams(
       shared: Boolean(r.shared),
       judgeVersion: r.judgeVersion ?? null,
       turns: r.engagement?.userTurns ?? null,
+      excludedFromTraining: Boolean(r.excluded_from_training),
     })),
   };
 }
@@ -260,6 +264,7 @@ export interface AdminExamDetail {
   transcript: ChatMessage[] | null;
   shared: boolean;
   weightedAverage: number;
+  excludedFromTraining: boolean;
 }
 
 /** report jsonb 的寬鬆形狀，只取後台要用的欄位。 */
@@ -286,7 +291,9 @@ export async function getAdminExamDetail(
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
     .from('exam_reports')
-    .select('exam_id, created_at, user_id, shared, transcript, report')
+    .select(
+      'exam_id, created_at, user_id, shared, excluded_from_training, transcript, report',
+    )
     .eq('exam_id', examId)
     .maybeSingle();
   if (error || !data) return null;
@@ -329,7 +336,20 @@ export async function getAdminExamDetail(
     transcript: (data.transcript as ChatMessage[] | null) ?? null,
     shared: Boolean(data.shared),
     weightedAverage: r.weighted_average ?? 0,
+    excludedFromTraining: Boolean(data.excluded_from_training),
   };
+}
+
+/** 標記 / 取消標記「排除訓練集」；不影響評分或使用者看到的報告。 */
+export async function setExamExcluded(
+  examId: string,
+  excluded: boolean,
+): Promise<void> {
+  const { error } = await getSupabaseAdmin()
+    .from('exam_reports')
+    .update({ excluded_from_training: excluded })
+    .eq('exam_id', examId);
+  if (error) throw new Error(`更新排除標記失敗：${error.message}`);
 }
 
 /* ── 題庫健檢 ─────────────────────────────────────────── */
@@ -407,4 +427,134 @@ export async function getScenarioHealth(): Promise<ScenarioHealthRow[]> {
       trapCaught: s?.trapCaught ?? 0,
     };
   });
+}
+
+/** 開關某題是否會被抽中（scenarios.active）；不刪資料，隨時可切回來。 */
+export async function setScenarioActive(
+  id: string,
+  active: boolean,
+): Promise<void> {
+  const { error } = await getSupabaseAdmin()
+    .from('scenarios')
+    .update({ active })
+    .eq('id', id);
+  if (error) throw new Error(`切換題目狀態失敗：${error.message}`);
+}
+
+/* ── 使用者查詢 / 配額調整 ────────────────────────────── */
+
+export interface AdminUserRow {
+  userId: string;
+  email: string | null;
+  fullName: string | null;
+  /** 生涯已用 / 生涯上限 */
+  used: number;
+  freeLimit: number;
+  /** 今日已用；dayDate 非今天時視覺上會過期，數字本身仍是最後一次寫入的值。 */
+  dayUsed: number;
+  dayDate: string | null;
+  ageBand: string | null;
+  education: string | null;
+  gender: string | null;
+}
+
+interface RawProfileRow {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  age_band: string | null;
+  education: string | null;
+  gender: string | null;
+}
+interface RawQuotaRow {
+  user_id: string;
+  used: number;
+  free_limit: number;
+  day_used: number;
+  day_date: string | null;
+}
+
+function mergeUserRow(p: RawProfileRow, q: RawQuotaRow | undefined): AdminUserRow {
+  return {
+    userId: p.id,
+    email: p.email,
+    fullName: p.full_name,
+    used: q?.used ?? 0,
+    freeLimit: q?.free_limit ?? 0,
+    dayUsed: q?.day_used ?? 0,
+    dayDate: q?.day_date ?? null,
+    ageBand: p.age_band,
+    education: p.education,
+    gender: p.gender,
+  };
+}
+
+/** 依 email 片段搜尋帳號（空字串 = 依 email 排序回前 50 筆）。 */
+export async function searchAdminUsers(q: string): Promise<AdminUserRow[]> {
+  const admin = getSupabaseAdmin();
+  let query = admin
+    .from('profiles')
+    .select('id, email, full_name, age_band, education, gender')
+    .order('email', { ascending: true })
+    .limit(50);
+  const trimmed = q.trim();
+  if (trimmed) query = query.ilike('email', `%${trimmed}%`);
+
+  const { data: profs, error } = await query;
+  if (error) throw new Error(`搜尋使用者失敗：${error.message}`);
+  const rows = (profs ?? []) as RawProfileRow[];
+  if (rows.length === 0) return [];
+
+  const ids = rows.map((r) => r.id);
+  const { data: quotas } = await admin
+    .from('user_quota')
+    .select('user_id, used, free_limit, day_used, day_date')
+    .in('user_id', ids);
+  const qMap = new Map(
+    ((quotas ?? []) as RawQuotaRow[]).map((r) => [r.user_id, r]),
+  );
+
+  return rows.map((p) => mergeUserRow(p, qMap.get(p.id)));
+}
+
+export async function getAdminUser(userId: string): Promise<AdminUserRow | null> {
+  const admin = getSupabaseAdmin();
+  const [{ data: p }, { data: q }] = await Promise.all([
+    admin
+      .from('profiles')
+      .select('id, email, full_name, age_band, education, gender')
+      .eq('id', userId)
+      .maybeSingle(),
+    admin
+      .from('user_quota')
+      .select('user_id, used, free_limit, day_used, day_date')
+      .eq('user_id', userId)
+      .maybeSingle(),
+  ]);
+  if (!p) return null;
+  return mergeUserRow(p as RawProfileRow, (q as RawQuotaRow) ?? undefined);
+}
+
+/** 手動調整某帳號的配額；只送有給的欄位，其餘不動。用於 comp / 客訴處理。 */
+export async function updateAdminUserQuota(
+  userId: string,
+  patch: { freeLimit?: number; used?: number; dayUsed?: number },
+): Promise<AdminUserRow | null> {
+  const set: Record<string, number> = {};
+  if (Number.isFinite(patch.freeLimit)) {
+    set.free_limit = Math.max(0, Math.floor(patch.freeLimit as number));
+  }
+  if (Number.isFinite(patch.used)) {
+    set.used = Math.max(0, Math.floor(patch.used as number));
+  }
+  if (Number.isFinite(patch.dayUsed)) {
+    set.day_used = Math.max(0, Math.floor(patch.dayUsed as number));
+  }
+  if (Object.keys(set).length > 0) {
+    const { error } = await getSupabaseAdmin()
+      .from('user_quota')
+      .upsert({ user_id: userId, ...set }, { onConflict: 'user_id' });
+    if (error) throw new Error(`更新配額失敗：${error.message}`);
+  }
+  return getAdminUser(userId);
 }

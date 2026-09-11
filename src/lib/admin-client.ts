@@ -53,6 +53,23 @@ async function get<T>(path: string): Promise<T> {
   return json as T;
 }
 
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${await bearer()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body ?? {}),
+  });
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : {};
+  if (!res.ok) {
+    throw new AdminApiError(json.error ?? `伺服器錯誤（${res.status}）`, res.status);
+  }
+  return json as T;
+}
+
 export interface QuotaBucket {
   label: string;
   count: number;
@@ -94,6 +111,7 @@ export interface AdminExamRow {
   shared: boolean;
   judgeVersion: string | null;
   turns: number | null;
+  excludedFromTraining: boolean;
 }
 
 export function listAdminExams(params: {
@@ -141,10 +159,18 @@ export interface AdminExamDetail {
   transcript: ChatMessage[] | null;
   shared: boolean;
   weightedAverage: number;
+  excludedFromTraining: boolean;
 }
 
 export function getAdminExamDetail(examId: string): Promise<AdminExamDetail> {
   return get(`/api/admin/exams/${examId}`);
+}
+
+export function setExamExcluded(
+  examId: string,
+  excluded: boolean,
+): Promise<{ ok: true }> {
+  return post(`/api/admin/exams/${examId}/exclude`, { excluded });
 }
 
 export interface ScenarioHealthRow {
@@ -160,4 +186,43 @@ export interface ScenarioHealthRow {
 
 export function getScenarioHealth(): Promise<ScenarioHealthRow[]> {
   return get('/api/admin/scenarios');
+}
+
+export function setScenarioActive(
+  id: string,
+  active: boolean,
+): Promise<{ ok: true }> {
+  return post(`/api/admin/scenarios/${id}/toggle`, { active });
+}
+
+/* ── 使用者查詢 / 配額調整 ────────────────────────────── */
+
+export interface AdminUserRow {
+  userId: string;
+  email: string | null;
+  fullName: string | null;
+  used: number;
+  freeLimit: number;
+  dayUsed: number;
+  dayDate: string | null;
+  ageBand: string | null;
+  education: string | null;
+  gender: string | null;
+}
+
+export function searchAdminUsers(q: string): Promise<AdminUserRow[]> {
+  const sp = new URLSearchParams();
+  if (q) sp.set('q', q);
+  return get(`/api/admin/users?${sp.toString()}`);
+}
+
+export function getAdminUser(userId: string): Promise<AdminUserRow> {
+  return get(`/api/admin/users/${userId}`);
+}
+
+export function updateAdminUserQuota(
+  userId: string,
+  patch: { freeLimit?: number; used?: number; dayUsed?: number },
+): Promise<AdminUserRow> {
+  return post(`/api/admin/users/${userId}/quota`, patch);
 }
