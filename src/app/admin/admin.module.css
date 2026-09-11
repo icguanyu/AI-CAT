@@ -278,6 +278,21 @@
   padding: 12px 14px;
 }
 
+/* AI 裁判的總評只是「待驗證的假設」，不是事實——用顏色跟位置逼審核者去逐字稿核對，
+   不要看到總評順眼就直接同意分數。 */
+.hypothesis {
+  border-left: 3px solid #b23b3b;
+  background: #fbeceb;
+  padding: 14px 16px;
+}
+.hypothesis .sectionTitle {
+  color: #b23b3b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* 手機：維持原本上下堆疊順序。桌機（≥900px）：左邊主內容（題目/逐字稿），
    右邊標註表單 sticky 固定，捲動逐字稿時標記區維持在視野內。 */
 .reviewGrid {

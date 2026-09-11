@@ -164,43 +164,13 @@ export default function AdminReviewItemPage() {
             )}
           </div>
 
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>對話逐字稿</div>
-            {!exam.transcript || exam.transcript.length === 0 ? (
-              <p className={styles.state} style={{ padding: 0 }}>沒有逐字稿。</p>
-            ) : (
-              <div className={styles.transcript}>
-                {exam.transcript.map((m, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.msg} ${m.role === 'user' ? styles.user : styles.assistant}`}
-                  >
-                    <span className={styles.msgRole}>{m.role === 'user' ? '使用者' : 'AI'}</span>
-                    {m.content}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {exam.trap && (
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>植入的陷阱</div>
-              <div className={styles.kv}>
-                <span className={styles.kvLabel}>錯誤敘述</span>
-                <span>{exam.trap.injectionText}</span>
-              </div>
-              {exam.trap.correction && (
-                <div className={styles.kv}>
-                  <span className={styles.kvLabel}>正確資訊</span>
-                  <span>{exam.trap.correction}</span>
-                </div>
-              )}
+          <div className={`${styles.section} ${styles.hypothesis}`}>
+            <div className={styles.sectionTitle}>
+              AI 裁判的總評 / 回饋
+              <span className={`${styles.pill} ${styles.warn}`}>
+                只是假設，去逐字稿核對
+              </span>
             </div>
-          )}
-
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>AI 裁判的總評 / 回饋</div>
             <p style={{ fontSize: 12.5 }}>{exam.report.overall_summary}</p>
             {exam.report.did_well.length > 0 && (
               <>
@@ -221,6 +191,41 @@ export default function AdminReviewItemPage() {
                   ))}
                 </ul>
               </>
+            )}
+          </div>
+
+          {exam.trap && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>植入的陷阱</div>
+              <div className={styles.kv}>
+                <span className={styles.kvLabel}>錯誤敘述</span>
+                <span>{exam.trap.injectionText}</span>
+              </div>
+              {exam.trap.correction && (
+                <div className={styles.kv}>
+                  <span className={styles.kvLabel}>正確資訊</span>
+                  <span>{exam.trap.correction}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>對話逐字稿</div>
+            {!exam.transcript || exam.transcript.length === 0 ? (
+              <p className={styles.state} style={{ padding: 0 }}>沒有逐字稿。</p>
+            ) : (
+              <div className={styles.transcript}>
+                {exam.transcript.map((m, i) => (
+                  <div
+                    key={i}
+                    className={`${styles.msg} ${m.role === 'user' ? styles.user : styles.assistant}`}
+                  >
+                    <span className={styles.msgRole}>{m.role === 'user' ? '使用者' : 'AI'}</span>
+                    {m.content}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
