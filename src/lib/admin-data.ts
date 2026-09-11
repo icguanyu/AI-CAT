@@ -11,6 +11,7 @@ import { getTrialStats, type TrialStats } from '@/lib/public-pool';
 import { getScenarioVariant } from '@/lib/scenarios';
 import { setSetting } from '@/lib/app-settings';
 import { JUDGE_CONSISTENCY_RUNS } from '@/config/constants';
+import { charTrigramJaccard } from '@/lib/text-similarity';
 import {
   CATEGORY_IDS,
   CATEGORY_LABEL,
@@ -285,6 +286,69 @@ export interface AdminExamDetail {
   shared: boolean;
   weightedAverage: number;
   excludedFromTraining: boolean;
+  /**
+   * 同一使用者在「其他」場次裡，開場訊息跟這場明顯雷同的紀錄（依相似度由高到低，最多 5 筆）。
+   * 純粹是提示訊號給人工複審參考「疑似套用外部工具產生的固定腳本」，不影響分數、不自動處理。
+   */
+  openingOverlap: OpeningOverlapRow[];
+}
+
+/**
+ * 判定「開場訊息雷同」的相似度門檻（0–1，charTrigramJaccard）。純提示用，非證據。
+ * 用真實案例（見對話紀錄那份 PDF）校準過：同一套「高分模板」套三個不同題目，
+ * 彼此相似度落在 0.19–0.24；真受測者認真寫、不同題目沒套模板，相似度 < 0.01。
+ * 中間留了很大的餘裕，0.15 能抓到套模板案例、又不會誤標正常的認真作答。
+ */
+const OPENING_OVERLAP_THRESHOLD = 0.15;
+
+export interface OpeningOverlapRow {
+  examId: string;
+  scenarioId: string;
+  titleZh: string | null;
+  createdAt: string;
+  /** 0–1，字元三連詞 Jaccard 相似度；越高代表開場訊息文字重疊越多。 */
+  similarity: number;
+}
+
+/**
+ * 同一使用者「其他」場次裡，開場訊息（第一則 user 訊息）跟給定文字相似度 ≥ 門檻的場次。
+ * 只比對最近 50 場（避免帳號測驗數很大時整表掃描），依相似度排序取前 5 筆。
+ * 純字串比對，不叫外部服務、不用斷詞——中文用字元 trigram 已經夠穩。
+ */
+export async function getUserOpeningMessageOverlap(
+  userId: string,
+  excludeExamId: string,
+  openingMessage: string,
+): Promise<OpeningOverlapRow[]> {
+  if (!openingMessage.trim()) return [];
+  const { data, error } = await getSupabaseAdmin()
+    .from('exam_reports')
+    .select('exam_id, scenario_id, created_at, transcript, report')
+    .eq('user_id', userId)
+    .neq('exam_id', excludeExamId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error || !data) return [];
+
+  const rows: OpeningOverlapRow[] = [];
+  for (const row of data) {
+    const transcript = row.transcript as ChatMessage[] | null;
+    const firstUserMsg =
+      transcript?.find((m) => m.role === 'user')?.content ?? '';
+    if (!firstUserMsg.trim()) continue;
+    const similarity = charTrigramJaccard(openingMessage, firstUserMsg);
+    if (similarity >= OPENING_OVERLAP_THRESHOLD) {
+      const r = row.report as StoredReportLoose;
+      rows.push({
+        examId: row.exam_id as string,
+        scenarioId: row.scenario_id as string,
+        titleZh: r.titleZh ?? null,
+        createdAt: row.created_at as string,
+        similarity: Math.round(similarity * 100) / 100,
+      });
+    }
+  }
+  return rows.sort((a, b) => b.similarity - a.similarity).slice(0, 5);
 }
 
 /** report jsonb 的寬鬆形狀，只取後台要用的欄位。 */
@@ -340,6 +404,14 @@ export async function getAdminExamDetail(
     brief = null;
   }
 
+  const transcript = (data.transcript as ChatMessage[] | null) ?? null;
+  const firstUserMsg = transcript?.find((m) => m.role === 'user')?.content ?? '';
+  const openingOverlap = await getUserOpeningMessageOverlap(
+    data.user_id as string,
+    examId,
+    firstUserMsg,
+  ).catch(() => []); // 這個偵測失敗不該讓整個後台頁面掛掉
+
   return {
     examId: data.exam_id as string,
     createdAt: data.created_at as string,
@@ -371,10 +443,11 @@ export async function getAdminExamDetail(
     tokenUsage: r.token_usage ?? null,
     judgeVersion: r.judge_version ?? null,
     exemplar: r.exemplar ?? '',
-    transcript: (data.transcript as ChatMessage[] | null) ?? null,
+    transcript,
     shared: Boolean(data.shared),
     weightedAverage: r.weighted_average ?? 0,
     excludedFromTraining: Boolean(data.excluded_from_training),
+    openingOverlap,
   };
 }
 

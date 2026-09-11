@@ -168,6 +168,10 @@ export interface AdminExamDetail {
     userTurns: number;
     userCharsTotal: number;
     reachedInjection: boolean | null;
+    /** 開場訊息是不是用貼上的（不是逐字打的）。前端 onPaste 事件記錄，純提示訊號。 */
+    firstTurnPasted: boolean;
+    /** 這場總共有幾則使用者訊息是貼上的。 */
+    pastedTurnCount: number;
   } | null;
   judgeVotes: Judged[] | null;
   judgeConsistency: JudgeConsistency | null;
@@ -178,6 +182,16 @@ export interface AdminExamDetail {
   shared: boolean;
   weightedAverage: number;
   excludedFromTraining: boolean;
+  /** 同一使用者「其他」場次裡，開場訊息明顯雷同的紀錄；純提示訊號，不代表判定。 */
+  openingOverlap: OpeningOverlapRow[];
+}
+
+export interface OpeningOverlapRow {
+  examId: string;
+  scenarioId: string;
+  titleZh: string | null;
+  createdAt: string;
+  similarity: number;
 }
 
 export function getAdminExamDetail(examId: string): Promise<AdminExamDetail> {

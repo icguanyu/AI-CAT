@@ -115,15 +115,23 @@ export async function startExam(turnstileToken?: string): Promise<StartResult> {
   return json as unknown as StartResult;
 }
 
-/** 回傳串流 Response，交給 readTextStream 逐段讀取。 */
-export async function sendChat(examId: string, message: string): Promise<Response> {
+/**
+ * 回傳串流 Response，交給 readTextStream 逐段讀取。
+ * wasPasted：這則訊息送出前輸入框有沒有發生過貼上事件（純觀察訊號，不影響評分，
+ * 給後台複審用——見 types/exam.ts pastedTurns）。
+ */
+export async function sendChat(
+  examId: string,
+  message: string,
+  wasPasted = false,
+): Promise<Response> {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: {
       ...(await authHeader()),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ examId, message }),
+    body: JSON.stringify({ examId, message, wasPasted }),
   });
   if (!res.ok) fail(await parseBody(res), res, '對話失敗');
   return res;

@@ -176,6 +176,8 @@ async function handle(req: Request): Promise<Response> {
       (state.injectAtTurn ?? 0) > 0
         ? userTurns >= (state.injectAtTurn ?? 0)
         : null,
+    firstTurnPasted: state.pastedTurns?.[0] === true,
+    pastedTurnCount: (state.pastedTurns ?? []).filter(Boolean).length,
   };
 
   // ── 免登入試用：不寫 DB、不扣次數，結果只放 Redis（TTL），登入後由 /claim 認領 ──

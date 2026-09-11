@@ -70,9 +70,11 @@ async function handle(req: Request): Promise<Response> {
   );
   if (!rl.ok) return rateLimitResponse(rl);
 
-  const { examId, message } = (await req.json()) as {
+  const { examId, message, wasPasted } = (await req.json()) as {
     examId?: string;
     message?: string;
+    /** 這則訊息送出前，輸入框有沒有發生過貼上事件；純觀察訊號，見 types/exam.ts pastedTurns。 */
+    wasPasted?: boolean;
   };
 
   if (!examId) {
@@ -106,6 +108,7 @@ async function handle(req: Request): Promise<Response> {
   }
 
   state.history.push({ role: 'user', content: message });
+  (state.pastedTurns ??= []).push(wasPasted === true);
   const currentTurn = userTurns + 1;
   const scenario = await getScenarioVariant(
     state.scenarioId,

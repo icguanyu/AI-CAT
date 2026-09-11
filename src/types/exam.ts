@@ -199,6 +199,14 @@ export interface Engagement {
   userCharsTotal: number;
   /** 對話是否長到走到「排定的注入輪次」；injectAtTurn = 0（no-trap / 跳過）時為 null。 */
   reachedInjection: boolean | null;
+  /**
+   * 開場（第一則）訊息送出前，輸入框有沒有發生過貼上事件。不是「作弊證據」——
+   * 有人習慣先在別處打草稿很正常，純粹是給後台複審多一個可以交叉比對的訊號
+   * （尤其搭配「開場訊息跟其他場次雷同」一起看）。
+   */
+  firstTurnPasted: boolean;
+  /** 這場總共有幾則使用者訊息，送出前有發生過貼上事件。 */
+  pastedTurnCount: number;
 }
 
 /** 一次模型呼叫的 token 用量（對應 AI SDK 的 LanguageModelUsage）。 */
@@ -311,6 +319,11 @@ export interface ExamState {
   injectionText: string;
   /** 這場對話至今累加的 token 用量（每輪 streamText 的 onFinish 累加）；舊場次（欄位加入前）沒有這欄。 */
   chatTokens?: TokenUsage;
+  /**
+   * 每一則使用者訊息送出前，輸入框有沒有發生過貼上事件；跟 history 裡的 user 訊息同順序。
+   * 前端 onPaste 事件回報，純觀察訊號，不影響評分。
+   */
+  pastedTurns?: boolean[];
   createdAt: number;
 }
 

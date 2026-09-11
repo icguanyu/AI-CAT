@@ -132,6 +132,31 @@ export default function AdminReviewItemPage() {
         {exam.weightedAverage} 分
       </h1>
 
+      {(exam.openingOverlap.length > 0 || exam.engagement?.firstTurnPasted) && (
+        <p
+          className={styles.state}
+          style={{
+            padding: '8px 12px',
+            marginBottom: 14,
+            background: '#f6ecd9',
+            border: '1px solid #e0c98f',
+            fontSize: 12.5,
+          }}
+        >
+          ⚠{' '}
+          {exam.engagement?.firstTurnPasted && '開場訊息是貼上的。'}
+          {exam.openingOverlap.length > 0 &&
+            `開場訊息跟這位使用者另外 ${exam.openingOverlap.length} 場（最高 ${Math.round(
+              exam.openingOverlap[0].similarity * 100,
+            )}% 相似）明顯雷同。`}{' '}
+          純訊號不是判定，可能是好習慣也可能是套用外部腳本，標註時自行判斷；詳情見{' '}
+          <Link className={styles.rowLink} href={`/admin/exams/${exam.examId}`}>
+            測驗詳情頁
+          </Link>
+          。
+        </p>
+      )}
+
       <div className={styles.reviewGrid}>
         <div className={styles.reviewMain}>
           <div className={styles.detailGrid}>

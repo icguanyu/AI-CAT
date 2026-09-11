@@ -124,6 +124,8 @@ function ExamPageInner() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // 語音輸入：按下麥克風時先記住現有內容，辨識結果接在後面
   const voiceBaseRef = useRef('');
+  // 這則還沒送出的訊息，輸入框有沒有發生過貼上事件（純觀察訊號，不影響評分，見 sendChat）
+  const pastedRef = useRef(false);
   const maxInputChars = exam?.limits.maxInputChars ?? 4000;
   const {
     supported: voiceSupported,
@@ -286,13 +288,15 @@ function ExamPageInner() {
     setError(null);
     setBusy(true);
     setInput('');
+    const wasPasted = pastedRef.current;
+    pastedRef.current = false;
     setMessages((m) => [
       ...m,
       { role: 'user', content: text },
       { role: 'assistant', content: '' },
     ]);
     try {
-      const res = await sendChat(exam.examId, text);
+      const res = await sendChat(exam.examId, text, wasPasted);
       for await (const chunk of readTextStream(res)) {
         setMessages((m) => {
           const copy = m.slice();
@@ -677,6 +681,9 @@ function ExamPageInner() {
                     : '已達輪次上限，請提交評分'
                 }
                 onChange={(e) => setInput(e.target.value)}
+                onPaste={() => {
+                  pastedRef.current = true;
+                }}
                 onKeyDown={(e) => {
                   // 手機一律換行；輸入法選字（IME composing）中按 Enter 不送出
                   if (

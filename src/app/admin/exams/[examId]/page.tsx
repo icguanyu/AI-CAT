@@ -254,6 +254,51 @@ export default function AdminExamDetailPage() {
                     : '否'}
               </span>
             </div>
+            <div className={styles.kv}>
+              <span className={styles.kvLabel}>開場訊息是貼上的</span>
+              <span>{data.engagement.firstTurnPasted ? '是' : '否'}</span>
+            </div>
+            <div className={styles.kv}>
+              <span className={styles.kvLabel}>貼上的訊息則數</span>
+              <span>{data.engagement.pastedTurnCount}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {data.openingOverlap.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.sectionTitle}>
+            ⚠ 開場訊息跟這個使用者的其他場次雷同
+          </div>
+          <p style={{ fontSize: 12.5, color: '#56534b', marginBottom: 10 }}>
+            純文字比對訊號，不是判定——可能是這個人養成了固定的好習慣，也可能是套用外部工具產生的固定腳本，交由人工判斷。
+          </p>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>相似度</th>
+                  <th>那一場的題目</th>
+                  <th>提交時間</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.openingOverlap.map((row) => (
+                  <tr key={row.examId}>
+                    <td>{Math.round(row.similarity * 100)}%</td>
+                    <td>{row.titleZh ?? row.scenarioId}</td>
+                    <td>{new Date(row.createdAt).toLocaleString('zh-TW')}</td>
+                    <td>
+                      <Link className={styles.rowLink} href={`/admin/exams/${row.examId}`}>
+                        查看 →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
