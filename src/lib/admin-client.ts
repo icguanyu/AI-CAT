@@ -16,6 +16,7 @@ import type {
   JudgeConsistency,
   LevelCode,
   Report,
+  ScenarioVariant,
   TrapReveal,
   TrapType,
   VerifyDifficulty,
@@ -225,6 +226,22 @@ export function setScenarioActive(
   active: boolean,
 ): Promise<{ ok: true }> {
   return post(`/api/admin/scenarios/${id}/toggle`, { active });
+}
+
+/** 單題完整內容（含機密欄位：system、每個變體的 injectionText/correction/verifyHint）。 */
+export interface ScenarioDetail {
+  id: string;
+  titleZh: string;
+  category: Category | null;
+  active: boolean;
+  note: string | null;
+  brief: string;
+  system: string;
+  variants: ScenarioVariant[];
+}
+
+export function getScenarioDetail(id: string): Promise<ScenarioDetail> {
+  return get(`/api/admin/scenarios/${id}`);
 }
 
 /* ── 使用者查詢 / 配額調整 ────────────────────────────── */

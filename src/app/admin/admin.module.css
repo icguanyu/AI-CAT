@@ -366,6 +366,11 @@
   font-weight: 400;
   color: #16181a;
 }
+/* 跟 .helpModal 同一套彈窗骨架，只是內容比小抄長很多（brief/system/多個變體）；
+   用法：className={`${styles.helpModal} ${styles.wideModal}`}，蓋掉 max-width。 */
+.wideModal {
+  max-width: 760px;
+}
 .helpModal h2 {
   font-size: 15px;
   font-weight: 800;

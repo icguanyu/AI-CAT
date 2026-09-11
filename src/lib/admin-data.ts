@@ -22,6 +22,7 @@ import {
   type Familiarity,
   type Judged,
   type JudgeConsistency,
+  type ScenarioVariant,
   type LevelCode,
   type Report,
   type TrapReveal,
@@ -550,6 +551,44 @@ export async function setScenarioActive(
     .update({ active })
     .eq('id', id);
   if (error) throw new Error(`切換題目狀態失敗：${error.message}`);
+}
+
+export interface ScenarioDetail {
+  id: string;
+  titleZh: string;
+  category: Category | null;
+  active: boolean;
+  note: string | null;
+  brief: string;
+  /** 沙盒 AI 的 system 指令（機密）。 */
+  system: string;
+  variants: ScenarioVariant[];
+}
+
+/**
+ * 單題完整內容（含機密欄位：system、每個變體的 injectionText / correction / verifyHint）。
+ * 直接讀正式環境的 Supabase scenarios 表（跟 getScenarioHealth 一致），不是本機的
+ * scenarios.local.json——後台看到的要是「線上實際在跑的那份」。
+ */
+export async function getScenarioDetail(
+  id: string,
+): Promise<ScenarioDetail | null> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('scenarios')
+    .select('id, title_zh, category, active, note, brief, system, variants')
+    .eq('id', id)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    id: data.id as string,
+    titleZh: (data.title_zh as string | null) ?? data.id,
+    category: data.category as Category | null,
+    active: Boolean(data.active),
+    note: (data.note as string | null) ?? null,
+    brief: data.brief as string,
+    system: data.system as string,
+    variants: (data.variants as ScenarioVariant[] | null) ?? [],
+  };
 }
 
 /* ── 使用者查詢 / 配額調整 ────────────────────────────── */
