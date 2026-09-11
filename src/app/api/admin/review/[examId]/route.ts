@@ -6,7 +6,7 @@
  *       POST 存「我」這份標註（body: scores 五維桶值 + challengedCorrect + note），
  *       不會動到別人已經存的。
  */
-import { requireAdmin } from '@/lib/admin';
+import { requireReviewer } from '@/lib/admin';
 import {
   getAdminExamDetail,
   getJudgeLabel,
@@ -35,7 +35,7 @@ async function handleGet(
   req: Request,
   { params }: { params: Promise<{ examId: string }> },
 ): Promise<Response> {
-  const auth = await requireAdmin(req);
+  const auth = await requireReviewer(req);
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
@@ -47,14 +47,19 @@ async function handleGet(
   ]);
   if (!exam) return Response.json({ error: '找不到這場測驗' }, { status: 404 });
   const otherLabels = allLabels.filter((l) => l.reviewerEmail !== auth.email);
-  return Response.json({ exam, myLabel, otherLabels });
+  // 標註員（非完整管理員）不需要也不該看到受測者的真實 email／自填人口資訊。
+  const examOut =
+    auth.role === 'reviewer'
+      ? { ...exam, email: null, ageBand: null, education: null, gender: null }
+      : exam;
+  return Response.json({ exam: examOut, myLabel, otherLabels });
 }
 
 async function handlePost(
   req: Request,
   { params }: { params: Promise<{ examId: string }> },
 ): Promise<Response> {
-  const auth = await requireAdmin(req);
+  const auth = await requireReviewer(req);
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });
   }

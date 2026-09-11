@@ -71,6 +71,17 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return json as T;
 }
 
+/* ── 身分（完整管理員 / 標註員） ──────────────────────── */
+
+export interface WhoAmI {
+  email: string;
+  role: 'admin' | 'reviewer';
+}
+
+export function getWhoAmI(): Promise<WhoAmI> {
+  return get('/api/admin/whoami');
+}
+
 export interface QuotaBucket {
   label: string;
   count: number;
