@@ -2981,11 +2981,6 @@ footer {
   .report-divider {
     display: none;
   }
-  /* dev fixture 按鈕擺回左欄下方 */
-  .report-view > .btn.ghost {
-    grid-column: 1;
-  }
-
   .report-summary {
     font-size: 1rem;
   }

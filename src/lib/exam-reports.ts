@@ -55,8 +55,6 @@ interface StoredReport extends Report {
   judge_votes?: Judged[] | null;
   judge_consistency?: JudgeConsistency | null;
   judge_version?: string;
-  /** 僅本地開發寫入；型別留寬鬆，前端 client-api 有精確型別。 */
-  debug?: unknown;
 }
 
 export interface OwnerReport {
@@ -65,7 +63,6 @@ export interface OwnerReport {
   familiarity: Familiarity | null;
   trap: TrapReveal | null;
   exemplar: string;
-  debug: unknown | null;
   shared: boolean;
   /** 完整對話逐字稿；舊報告（此欄上線前）為 null。 */
   transcript: ChatMessage[] | null;
@@ -104,7 +101,6 @@ export async function getOwnerReport(
       familiarity: r.familiarity ?? null,
       trap: r.trap ?? null,
       exemplar: r.exemplar ?? '',
-      debug: r.debug ?? null,
       shared: Boolean(data.shared),
       transcript: (data.transcript as ChatMessage[] | null) ?? null,
     },

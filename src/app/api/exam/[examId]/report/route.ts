@@ -5,7 +5,6 @@
  *   - 帶 Bearer：本人（登入）從 exam_reports 撈完整報告（重新整理不消失）。
  *   - 不帶 Bearer：免登入試用者，用簽章 anon cookie 從 Redis 取回試用結果快照
  *     （TTL 內有效；trial=true / persisted=false，前端據此顯示「登入才會保存」）。
- *   debug 僅本地開發回傳。
  */
 import { resolveActor } from '@/lib/actor';
 import { getOwnerReport } from '@/lib/exam-reports';
@@ -30,7 +29,6 @@ async function handle(
     return Response.json({ error: actor.error }, { status: actor.status });
   }
   const { examId } = await params;
-  const dev = process.env.NODE_ENV !== 'production';
 
   // ── 免登入試用：從 Redis 取快照 ──
   if (actor.kind === 'anon') {
@@ -44,7 +42,6 @@ async function handle(
       familiarity: blob.familiarity,
       trap: blob.trap,
       exemplar: '',
-      debug: null,
       shared: false,
       transcript: blob.history ?? null,
       trial: true,
@@ -66,7 +63,6 @@ async function handle(
     familiarity: res.data.familiarity,
     trap: res.data.trap,
     exemplar: res.data.exemplar,
-    debug: dev ? res.data.debug : null,
     shared: res.data.shared,
     transcript: res.data.transcript,
     trial: false,

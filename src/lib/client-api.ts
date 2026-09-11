@@ -129,31 +129,11 @@ export async function sendChat(examId: string, message: string): Promise<Respons
   return res;
 }
 
-/**
- * 開發用：一場測驗攤平成 judge:reliability 腳本吃的 fixture 形狀。
- * 只有 NODE_ENV !== 'production' 時後端才會回傳（見 /api/evaluate）。
- */
-export interface FixtureDebug {
-  label: string;
-  scenarioId: string;
-  category: import('@/types/exam').Category;
-  brief: string;
-  injected: boolean;
-  injectionLanded: boolean;
-  injectionText: string;
-  injectAtTurn: number;
-  verifyHint: string;
-  familiarity: import('@/types/exam').Familiarity;
-  history: ChatMessage[];
-}
-
 export interface EvalResult {
   report: Report;
   trap: TrapReveal | null;
   /** 「L5 高手會怎麼做」的教學示範（Markdown）；試用場 / 產生失敗時為空字串。 */
   exemplar: string;
-  /** 僅本地開發：可下載成 fixture 的完整場次資料；正式環境為 null。 */
-  debug: FixtureDebug | null;
   /** false = 免登入試用，結果只在 Redis（登入才會保存）。 */
   persisted: boolean;
 }
@@ -176,7 +156,6 @@ export async function evaluateExam(
     report: json.report as Report,
     trap: (json.trap as TrapReveal | null) ?? null,
     exemplar: (json.exemplar as string) ?? '',
-    debug: (json.debug as FixtureDebug | undefined) ?? null,
     persisted: json.persisted !== false,
   };
 }
@@ -208,7 +187,6 @@ export async function getExamReport(examId: string): Promise<ReportBundle> {
       (json.familiarity as ReportBundle['familiarity'] | undefined) ?? null,
     trap: (json.trap as TrapReveal | null) ?? null,
     exemplar: (json.exemplar as string) ?? '',
-    debug: (json.debug as FixtureDebug | undefined) ?? null,
     shared: Boolean(json.shared),
     trial: json.trial === true,
     persisted: json.persisted !== false,

@@ -184,7 +184,6 @@ function ExamPageInner() {
           report: b.report,
           trap: b.trap,
           exemplar: b.exemplar,
-          debug: b.debug,
           persisted: false,
           familiarity: b.familiarity ?? 'mid',
           transcript: b.transcript,
@@ -404,7 +403,6 @@ function ExamPageInner() {
           trap={trialResult.trap}
           exemplar={trialResult.exemplar}
           familiarity={trialResult.familiarity}
-          debug={trialResult.debug}
           transcript={trialResult.transcript}
           trial
         />

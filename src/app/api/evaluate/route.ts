@@ -149,30 +149,6 @@ async function handle(req: Request): Promise<Response> {
     suggested_level: level,
   };
 
-  // 僅本地開發回傳：把這場攤平成 judge:reliability 腳本吃的 fixture 形狀，
-  // 讓報告頁能直接「下載 fixture JSON」。正式環境 NODE_ENV==='production'，一律 undefined，不外流。
-  const debug =
-    process.env.NODE_ENV !== 'production'
-      ? {
-          label: `${scenario.titleZh} · 變體#${state.variantIndex} · ${level} · ${new Date()
-            .toISOString()
-            .slice(0, 16)}`,
-          scenarioId: state.scenarioId,
-          category: state.category ?? scenario.category,
-          brief: scenario.brief,
-          injected: state.injected,
-          injectionLanded: state.injectionLanded,
-          injectionText: state.injectionText,
-          injectAtTurn: state.injectAtTurn ?? 2,
-          verifyHint: scenario.verifyHint,
-          trapType: scenario.trapType,
-          verifyDifficulty: scenario.verifyDifficulty,
-          noTrap,
-          familiarity,
-          history: state.history,
-        }
-      : undefined;
-
   // 提交後才揭露：陷阱生效時給「錯誤 vs 正確」對照
   const trap: TrapReveal | null = trapEffective
     ? {
@@ -234,7 +210,6 @@ async function handle(req: Request): Promise<Response> {
       report,
       trap,
       exemplar: '',
-      debug,
       persisted: false,
     });
   }
@@ -281,7 +256,6 @@ async function handle(req: Request): Promise<Response> {
       // 評估 self-consistency 的實際代價都靠這欄。
       token_usage: tokenUsage,
       judge_version: JUDGE_VERSION,
-      ...(debug ? { debug } : {}),
     },
     rule_challenged: challenged,
     injected: state.injected,
@@ -294,7 +268,6 @@ async function handle(req: Request): Promise<Response> {
       report,
       trap,
       exemplar,
-      debug,
       duplicate: true,
     });
   }
@@ -309,5 +282,5 @@ async function handle(req: Request): Promise<Response> {
   // 這場已結束，清掉 Redis session
   await deleteExam(examId).catch(() => {});
 
-  return Response.json({ success: true, report, trap, exemplar, debug });
+  return Response.json({ success: true, report, trap, exemplar });
 }

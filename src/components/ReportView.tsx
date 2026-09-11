@@ -18,7 +18,6 @@ import {
   type Familiarity,
   type ChatMessage,
 } from '@/types/exam';
-import type { FixtureDebug } from '@/lib/client-api';
 
 const METRIC_LABELS: Record<keyof Report['scores'], string> = {
   prompt_structure: '提示詞結構',
@@ -27,20 +26,6 @@ const METRIC_LABELS: Record<keyof Report['scores'], string> = {
   critical_thinking: '批判思考',
   task_completion: '任務達成率',
 };
-
-const DEV = process.env.NODE_ENV !== 'production';
-
-function downloadFixture(dbg: FixtureDebug) {
-  const blob = new Blob([JSON.stringify(dbg, null, 2)], {
-    type: 'application/json',
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `fixture-${dbg.scenarioId}-${Date.now()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 export interface ShareControls {
   shared: boolean;
@@ -56,7 +41,6 @@ export function ReportView({
   exemplar,
   name = null,
   familiarity = null,
-  debug = null,
   share,
   trial = false,
   transcript = null,
@@ -68,7 +52,6 @@ export function ReportView({
   name?: string | null;
   /** 開場自評的領域熟悉度；顯示為分數的脈絡。 */
   familiarity?: Familiarity | null;
-  debug?: FixtureDebug | null;
   share?: ShareControls;
   /** 免登入試用：隱藏「截圖分享」提示（改由外層的登入卡承擔訊息）。 */
   trial?: boolean;
@@ -296,16 +279,6 @@ export function ReportView({
         )}
       </section>
 
-      {DEV && debug && (
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={() => downloadFixture(debug)}
-          title="存到 scripts/fixtures/ 給 npm run judge:reliability 用"
-        >
-          ⬇ 下載 fixture JSON（本地開發）
-        </button>
-      )}
     </div>
   );
 }
