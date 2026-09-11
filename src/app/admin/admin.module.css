@@ -246,11 +246,13 @@
   white-space: pre-wrap;
 }
 .msgRole {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #56534b;
-  display: block;
   margin-bottom: 4px;
 }
 .msg.user {

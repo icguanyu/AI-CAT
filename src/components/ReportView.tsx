@@ -10,6 +10,7 @@
 import { useState } from 'react';
 import { Markdown } from '@/components/Markdown';
 import { ResultCard } from '@/components/ResultCard';
+import { AiCatMark } from '@/components/AiCatMark';
 import {
   FAMILIARITY_LABEL,
   type Report,
@@ -277,7 +278,10 @@ export function ReportView({
             <div className="transcript-body">
               {transcript.map((m, i) => (
                 <div key={i} className={`tr-msg tr-${m.role}`}>
-                  <span className="tr-role">{m.role === 'user' ? '你' : 'AI'}</span>
+                  <span className="tr-role">
+                    {m.role === 'assistant' && <AiCatMark size={12} />}
+                    {m.role === 'user' ? '你' : 'AI'}
+                  </span>
                   {m.role === 'assistant' ? (
                     <div className="tr-content">
                       <Markdown>{m.content}</Markdown>

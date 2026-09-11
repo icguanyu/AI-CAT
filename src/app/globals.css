@@ -2605,10 +2605,16 @@ footer {
   gap: 4px;
 }
 .tr-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.1em;
   color: var(--fg-faint);
+}
+.tr-role svg {
+  color: var(--accent-ink);
 }
 .tr-msg.tr-user .tr-role {
   color: var(--accent-ink);

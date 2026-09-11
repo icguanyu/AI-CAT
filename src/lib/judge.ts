@@ -26,9 +26,10 @@ const EXEMPLAR_MODEL = process.env.EXEMPLAR_MODEL || JUDGE_MODEL;
 /**
  * 評分準則版本標記。改動 rubricSystem() / criticalThinkingRule() / difficultyRule()
  * 這類會影響裁判打分的文字時，往上 bump（r3 → r4 …）。
- * r1 原始；r2 接上 trapType / verifyDifficulty；r3 task_completion 植入值視為對的 + noTrap 過度懷疑扣分。
+ * r1 原始；r2 接上 trapType / verifyDifficulty；r3 task_completion 植入值視為對的 + noTrap 過度懷疑扣分；
+ * r4 decomposition 跟「開場訊息是否複製 brief」解耦，只看整段對話有沒有分階段。
  */
-export const RUBRIC_VERSION = 'r3';
+export const RUBRIC_VERSION = 'r4';
 
 /** 存進每份報告，之後稽核 / 訓練時能區分「哪個版本的裁判產出這個分數」。 */
 export const JUDGE_VERSION = `${JUDGE_MODEL}·${RUBRIC_VERSION}`;
@@ -95,8 +96,12 @@ export function rubricSystem(): string {
     '',
     '== 核心原則 ==',
     '1. 受測者看得到「任務說明」（下方會附上）。如果他的提示詞主要是把任務說明整段複製或輕微改寫，',
-    '   那不算提示能力：prompt_structure 與 decomposition 一律 ≤ 30。分數只來自他「額外」提供的',
-    '   角色設定、背景脈絡、分步引導、明確格式/長度要求。',
+    '   那不算「提示詞結構」能力：prompt_structure ≤ 30。分數只來自他在任務說明「之外」另外提供的',
+    '   角色設定、背景脈絡、分步引導、明確格式/長度要求——這一項測的是「有沒有多加東西」，',
+    '   不是「有沒有把任務講清楚」；brief 本身限制條件已經很完整時，這題對所有人的上限本來就低，不是針對這個人。',
+    '   **decomposition 不要因為開場訊息是複製 brief 就連坐扣分**——decomposition 只看「整段對話」',
+    '   有沒有分階段、先確認再動手，跟第一則訊息的措辭無關。貼原文但接著要求「先給大綱、我確認過',
+    '   沒漏限制再細寫」＝有拆解；重新打字敘述任務但一次全丟、從沒追問＝沒拆解。兩者互相獨立判。',
     '2. task_completion 評的是「整段對話裡最完整的一版成品」——它可能在中間某一則助手回覆，',
     '   也可能要把幾則拼起來。**不要只看最後一則**。若某一輪使用者只是請 AI 複核 / 驗證某件事，',
     '   那一輪不代表「成品變差」，請仍以先前最完整的版本評分。',
@@ -110,6 +115,7 @@ export function rubricSystem(): string {
     'prompt_structure：在任務說明之外，另有明確角色 + 完整脈絡 + 清楚輸出格式/長度限制 → 90+；',
     '  只補其中一項 → 約 50；只是複製任務說明或一句籠統要求 → ≤ 30。',
     'decomposition：主動把任務拆成可驗證的小步驟並逐步確認 → ≥ 80；一次丟出全部且無任何追問 → ≤ 40。',
+    '  只看對話「有沒有分階段」，跟開場訊息是不是複製 brief 無關（見上方核心原則 1）。',
     'efficiency：見上。',
     'critical_thinking：見下方「注入結果」欄位，依指示給分。',
     'task_completion：以「對話中最完整的一版成品」對照任務說明的每一項限制條件，缺一項 −20；',

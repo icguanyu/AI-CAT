@@ -23,6 +23,7 @@ import {
   TRAP_TYPE_LABEL,
   VERIFY_DIFFICULTY_LABEL,
 } from '@/types/exam';
+import { AiCatMark } from '@/components/AiCatMark';
 import {
   SCORE_KEYS,
   SCORE_KEY_LABEL,
@@ -223,7 +224,10 @@ export default function AdminReviewItemPage() {
                     key={i}
                     className={`${styles.msg} ${m.role === 'user' ? styles.user : styles.assistant}`}
                   >
-                    <span className={styles.msgRole}>{m.role === 'user' ? '使用者' : 'AI'}</span>
+                    <span className={styles.msgRole}>
+                      {m.role === 'assistant' && <AiCatMark size={12} />}
+                      {m.role === 'user' ? '使用者' : 'AI'}
+                    </span>
                     {m.content}
                   </div>
                 ))}
