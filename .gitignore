@@ -12,6 +12,8 @@ judge-system-issues.md
 scenario-bank-audit.md
 # 裁判信度測試用的真實 fixture（含真實題庫內容）
 /scripts/fixtures/
+# AI 生成的題目候選稿（含未審核的陷阱內容，跟題庫本身一樣機密）
+/scripts/generated/
 # 信度測試 / 開發過程的暫存輸出（含題庫機密內容）
 /scratch/
 

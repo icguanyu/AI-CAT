@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "judge:reliability": "tsx scripts/judge-reliability.ts",
-    "scenarios:import": "tsx scripts/import-scenarios.ts"
+    "scenarios:import": "tsx scripts/import-scenarios.ts",
+    "scenarios:generate": "tsx scripts/generate-scenarios.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",

@@ -251,7 +251,7 @@ function criticalThinkingRule(i: JudgeInput): string {
   return lines.join('\n  ');
 }
 
-function toTokenUsage(u: { promptTokens: number; completionTokens: number; totalTokens: number }): TokenUsage {
+export function toTokenUsage(u: { promptTokens: number; completionTokens: number; totalTokens: number }): TokenUsage {
   return {
     promptTokens: u.promptTokens || 0,
     completionTokens: u.completionTokens || 0,
