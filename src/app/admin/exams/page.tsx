@@ -151,6 +151,7 @@ function AdminExamsPageInner() {
                 <th>已分享</th>
                 <th>裁判版本</th>
                 <th>輪次</th>
+                <th>Token</th>
                 <th>訓練集</th>
               </tr>
             </thead>
@@ -171,6 +172,7 @@ function AdminExamsPageInner() {
                   <td>{r.shared ? '✓' : ''}</td>
                   <td>{r.judgeVersion ?? '—'}</td>
                   <td>{r.turns ?? '—'}</td>
+                  <td>{r.tokenTotal != null ? r.tokenTotal.toLocaleString() : '—'}</td>
                   <td>
                     {r.excludedFromTraining && (
                       <span className={`${styles.pill} ${styles.warn}`}>已排除</span>

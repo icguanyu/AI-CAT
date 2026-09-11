@@ -126,6 +126,7 @@ export interface AdminExamRow {
   judgeVersion: string | null;
   turns: number | null;
   excludedFromTraining: boolean;
+  tokenTotal: number | null;
 }
 
 export function listAdminExams(params: {

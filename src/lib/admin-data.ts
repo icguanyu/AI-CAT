@@ -136,6 +136,8 @@ export interface AdminExamRow {
   judgeVersion: string | null;
   turns: number | null;
   excludedFromTraining: boolean;
+  /** 這場總共花的 token（對話+裁判+示範加總）；上線前的舊資料為 null。 */
+  tokenTotal: number | null;
 }
 
 interface ListExamsOpts {
@@ -160,6 +162,8 @@ interface RawExamRow {
   challenged: boolean | null;
   judgeVersion: string | null;
   engagement: Engagement | null;
+  /** jsonb 深層路徑取到最後一步用 ->>，PostgREST 回字串；null 為舊資料沒有這欄。 */
+  tokenTotal: string | null;
 }
 
 export async function listAdminExams(
@@ -185,6 +189,7 @@ export async function listAdminExams(
         'challenged:report->user_challenged',
         'judgeVersion:report->judge_version',
         'engagement:report->engagement',
+        'tokenTotal:report->token_usage->total->>totalTokens',
       ].join(', '),
       { count: 'exact' },
     )
@@ -241,6 +246,7 @@ export async function listAdminExams(
       judgeVersion: r.judgeVersion ?? null,
       turns: r.engagement?.userTurns ?? null,
       excludedFromTraining: Boolean(r.excluded_from_training),
+      tokenTotal: r.tokenTotal != null ? Number(r.tokenTotal) : null,
     })),
   };
 }
