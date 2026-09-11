@@ -97,6 +97,10 @@ export default function AdminUserDetailPage() {
           <span>{user.dayDate ?? '—'}</span>
         </div>
         <div className={styles.kv}>
+          <span className={styles.kvLabel}>協助標註（複查）</span>
+          <span>{user.reviewCount > 0 ? `${user.reviewCount} 筆` : '尚未標註過'}</span>
+        </div>
+        <div className={styles.kv}>
           <span className={styles.kvLabel}>測驗紀錄</span>
           <span>
             {user.email && (

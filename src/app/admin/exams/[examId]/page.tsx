@@ -134,6 +134,17 @@ export default function AdminExamDetailPage() {
       </div>
 
       <div className={styles.section}>
+        <div className={styles.sectionTitle}>題目內容（受測者當時看到的任務與限制）</div>
+        {data.brief ? (
+          <p className={styles.brief}>{data.brief}</p>
+        ) : (
+          <p className={styles.state} style={{ padding: 0 }}>
+            還原不到原題目（題庫可能已異動或刪除這個變體）。
+          </p>
+        )}
+      </div>
+
+      <div className={styles.section}>
         <div className={styles.sectionTitle}>五維分數</div>
         {scoreKeys.map((k) => (
           <div className={styles.barRow} key={k}>

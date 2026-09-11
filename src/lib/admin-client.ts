@@ -151,6 +151,7 @@ export interface AdminExamDetail {
   education: string | null;
   gender: string | null;
   report: Report;
+  brief: string | null;
   titleZh: string | null;
   category: Category | null;
   familiarity: Familiarity | null;
@@ -220,6 +221,7 @@ export interface AdminUserRow {
   ageBand: string | null;
   education: string | null;
   gender: string | null;
+  reviewCount: number;
 }
 
 export function searchAdminUsers(q: string): Promise<AdminUserRow[]> {

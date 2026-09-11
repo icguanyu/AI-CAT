@@ -268,3 +268,37 @@
   padding: 10px;
   border: 1px solid #ddd9cc;
 }
+
+.brief {
+  font-size: 12.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  background: #fff;
+  border: 1px solid #e4e0d3;
+  padding: 12px 14px;
+}
+
+/* 手機：維持原本上下堆疊順序。桌機（≥900px）：左邊主內容（題目/逐字稿），
+   右邊標註表單 sticky 固定，捲動逐字稿時標記區維持在視野內。 */
+.reviewGrid {
+  display: block;
+}
+.reviewMain,
+.reviewSidebar {
+  min-width: 0;
+}
+@media (min-width: 900px) {
+  .reviewGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 28px;
+    align-items: start;
+  }
+  .reviewSidebar {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+}

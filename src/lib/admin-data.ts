@@ -7,6 +7,7 @@
  */
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { getTrialStats, type TrialStats } from '@/lib/public-pool';
+import { getScenarioVariant } from '@/lib/scenarios';
 import {
   CATEGORY_IDS,
   CATEGORY_LABEL,
@@ -250,6 +251,8 @@ export interface AdminExamDetail {
   education: string | null;
   gender: string | null;
   report: Report;
+  /** 受測者當時看到的題目內容與限制（依 scenario_id + variant_index 還原）；題庫異動後可能對不上，此時為 null。 */
+  brief: string | null;
   titleZh: string | null;
   category: Category | null;
   familiarity: Familiarity | null;
@@ -284,6 +287,7 @@ interface StoredReportLoose extends Report {
   judge_version?: string;
   exemplar?: string;
   user_name?: string | null;
+  variant_index?: number;
 }
 
 export async function getAdminExamDetail(
@@ -293,7 +297,7 @@ export async function getAdminExamDetail(
   const { data, error } = await admin
     .from('exam_reports')
     .select(
-      'exam_id, created_at, user_id, shared, excluded_from_training, transcript, report',
+      'exam_id, created_at, user_id, scenario_id, shared, excluded_from_training, transcript, report',
     )
     .eq('exam_id', examId)
     .maybeSingle();
@@ -306,6 +310,18 @@ export async function getAdminExamDetail(
     .eq('id', data.user_id)
     .maybeSingle();
 
+  let brief: string | null = null;
+  try {
+    const variant = await getScenarioVariant(
+      data.scenario_id as string,
+      r.variant_index ?? 0,
+    );
+    brief = variant.brief;
+  } catch {
+    // 題庫可能已刪除/改版對不上這個 scenario_id+variant_index，看不到原題目就顯示為 null。
+    brief = null;
+  }
+
   return {
     examId: data.exam_id as string,
     createdAt: data.created_at as string,
@@ -314,6 +330,7 @@ export async function getAdminExamDetail(
     ageBand: (prof?.age_band as string | undefined) ?? null,
     education: (prof?.education as string | undefined) ?? null,
     gender: (prof?.gender as string | undefined) ?? null,
+    brief,
     report: {
       scores: r.scores,
       overall_summary: r.overall_summary,
@@ -457,6 +474,8 @@ export interface AdminUserRow {
   ageBand: string | null;
   education: string | null;
   gender: string | null;
+  /** 這個帳號在 judge_labels 裡標註（複查）過幾筆——標註員或身兼標註的管理員都算。 */
+  reviewCount: number;
 }
 
 interface RawProfileRow {
@@ -475,7 +494,11 @@ interface RawQuotaRow {
   day_date: string | null;
 }
 
-function mergeUserRow(p: RawProfileRow, q: RawQuotaRow | undefined): AdminUserRow {
+function mergeUserRow(
+  p: RawProfileRow,
+  q: RawQuotaRow | undefined,
+  reviewCount: number,
+): AdminUserRow {
   return {
     userId: p.id,
     email: p.email,
@@ -487,7 +510,23 @@ function mergeUserRow(p: RawProfileRow, q: RawQuotaRow | undefined): AdminUserRo
     ageBand: p.age_band,
     education: p.education,
     gender: p.gender,
+    reviewCount,
   };
+}
+
+/** 一次查一批 email 各自標註過幾筆；資料量小，直接抓 reviewer_email 欄位在 JS 裡算。 */
+async function countReviewsByEmails(emails: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (emails.length === 0) return counts;
+  const { data } = await getSupabaseAdmin()
+    .from('judge_labels')
+    .select('reviewer_email')
+    .in('reviewer_email', emails);
+  for (const row of (data ?? []) as { reviewer_email: string }[]) {
+    const key = row.reviewer_email.toLowerCase();
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
 }
 
 /** 依 email 片段搜尋帳號（空字串 = 依 email 排序回前 50 筆）。 */
@@ -507,15 +546,25 @@ export async function searchAdminUsers(q: string): Promise<AdminUserRow[]> {
   if (rows.length === 0) return [];
 
   const ids = rows.map((r) => r.id);
-  const { data: quotas } = await admin
-    .from('user_quota')
-    .select('user_id, used, free_limit, day_used, day_date')
-    .in('user_id', ids);
+  const emails = rows.map((r) => r.email).filter((e): e is string => Boolean(e));
+  const [{ data: quotas }, reviewCounts] = await Promise.all([
+    admin
+      .from('user_quota')
+      .select('user_id, used, free_limit, day_used, day_date')
+      .in('user_id', ids),
+    countReviewsByEmails(emails),
+  ]);
   const qMap = new Map(
     ((quotas ?? []) as RawQuotaRow[]).map((r) => [r.user_id, r]),
   );
 
-  return rows.map((p) => mergeUserRow(p, qMap.get(p.id)));
+  return rows.map((p) =>
+    mergeUserRow(
+      p,
+      qMap.get(p.id),
+      p.email ? (reviewCounts.get(p.email.toLowerCase()) ?? 0) : 0,
+    ),
+  );
 }
 
 export async function getAdminUser(userId: string): Promise<AdminUserRow | null> {
@@ -533,7 +582,13 @@ export async function getAdminUser(userId: string): Promise<AdminUserRow | null>
       .maybeSingle(),
   ]);
   if (!p) return null;
-  return mergeUserRow(p as RawProfileRow, (q as RawQuotaRow) ?? undefined);
+  const prof = p as RawProfileRow;
+  const reviewCounts = prof.email ? await countReviewsByEmails([prof.email]) : new Map();
+  return mergeUserRow(
+    prof,
+    (q as RawQuotaRow) ?? undefined,
+    prof.email ? (reviewCounts.get(prof.email.toLowerCase()) ?? 0) : 0,
+  );
 }
 
 /** 手動調整某帳號的配額；只送有給的欄位，其餘不動。用於 comp / 客訴處理。 */

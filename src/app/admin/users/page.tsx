@@ -77,6 +77,7 @@ export default function AdminUsersPage() {
                 <th>生涯已用/上限</th>
                 <th>今日已用</th>
                 <th>年齡/學歷/性別</th>
+                <th>協助標註</th>
               </tr>
             </thead>
             <tbody>
@@ -100,6 +101,7 @@ export default function AdminUsersPage() {
                   <td>
                     {r.ageBand ?? '—'} / {r.education ?? '—'} / {r.gender ?? '—'}
                   </td>
+                  <td>{r.reviewCount > 0 ? `${r.reviewCount} 筆` : '—'}</td>
                 </tr>
               ))}
             </tbody>
