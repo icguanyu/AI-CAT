@@ -167,14 +167,14 @@ export default function AdminReviewItemPage() {
           <div className={`${styles.section} ${styles.hypothesis}`}>
             <div className={styles.sectionTitle}>
               AI 裁判的總評 / 回饋
-              <span className={`${styles.pill} ${styles.warn}`}>
-                只是假設，去逐字稿核對
-              </span>
+              <span className={styles.pill}>僅供參考</span>
             </div>
             <p style={{ fontSize: 12.5 }}>{exam.report.overall_summary}</p>
             {exam.report.did_well.length > 0 && (
               <>
-                <p style={{ fontSize: 11, color: '#56534b', marginTop: 8 }}>做得好</p>
+                <p style={{ fontSize: 11, color: '#1e874b', marginTop: 8, fontWeight: 700 }}>
+                  做得好
+                </p>
                 <ul style={{ fontSize: 12.5, paddingLeft: 18 }}>
                   {exam.report.did_well.map((s, i) => (
                     <li key={i}>{s}</li>
@@ -184,7 +184,9 @@ export default function AdminReviewItemPage() {
             )}
             {exam.report.to_improve.length > 0 && (
               <>
-                <p style={{ fontSize: 11, color: '#56534b', marginTop: 8 }}>可以更好</p>
+                <p style={{ fontSize: 11, color: '#b23b3b', marginTop: 8, fontWeight: 700 }}>
+                  可以更好
+                </p>
                 <ul style={{ fontSize: 12.5, paddingLeft: 18 }}>
                   {exam.report.to_improve.map((s, i) => (
                     <li key={i}>{s}</li>

@@ -16,6 +16,11 @@ import { createSupabaseBrowser } from '@/lib/supabase-browser';
 import { getWhoAmI, AdminApiError, type WhoAmI } from '@/lib/admin-client';
 import styles from './admin.module.css';
 
+const FONT_SCALE_KEY = 'ai_cat_admin_font_scale';
+const FONT_SCALE_MIN = 0.8;
+const FONT_SCALE_MAX = 1.6;
+const FONT_SCALE_STEP = 0.1;
+
 export default function AdminGate({ children }: { children: React.ReactNode }) {
   const sbRef = useRef<SupabaseClient | null>(null);
   const getSb = useCallback(() => {
@@ -28,6 +33,31 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
   const [configError, setConfigError] = useState<string | null>(null);
   const [who, setWho] = useState<WhoAmI | null | undefined>(undefined);
   const [whoError, setWhoError] = useState<string | null>(null);
+  const [fontScale, setFontScale] = useState(1);
+
+  useEffect(() => {
+    try {
+      const saved = Number(localStorage.getItem(FONT_SCALE_KEY));
+      if (Number.isFinite(saved) && saved >= FONT_SCALE_MIN && saved <= FONT_SCALE_MAX) {
+        setFontScale(saved);
+      }
+    } catch {
+      // 無痕視窗等拿不到 localStorage 就用預設 100%
+    }
+  }, []);
+
+  const adjustFontScale = useCallback((delta: number) => {
+    setFontScale((prev) => {
+      const next =
+        Math.round(Math.min(FONT_SCALE_MAX, Math.max(FONT_SCALE_MIN, prev + delta)) * 100) / 100;
+      try {
+        localStorage.setItem(FONT_SCALE_KEY, String(next));
+      } catch {
+        // 存不了就只在這次瀏覽有效
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     let sb: SupabaseClient;
@@ -81,9 +111,12 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
     });
   }, [getSb]);
 
+  // zoom 縮放整個後台（不會像 transform 那樣打斷 sticky／fixed 定位）。
+  const wrapStyle: React.CSSProperties = { zoom: fontScale };
+
   if (configError) {
     return (
-      <div className={styles.wrap}>
+      <div className={styles.wrap} style={wrapStyle}>
         <p className={styles.state}>設定尚未完成：{configError}</p>
       </div>
     );
@@ -91,7 +124,7 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
 
   if (session === undefined) {
     return (
-      <div className={styles.wrap}>
+      <div className={styles.wrap} style={wrapStyle}>
         <p className={styles.state}>載入中…</p>
       </div>
     );
@@ -99,7 +132,7 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
 
   if (session === null) {
     return (
-      <div className={styles.wrap}>
+      <div className={styles.wrap} style={wrapStyle}>
         <p className={styles.state}>
           這是後台，需要登入且在管理員名單內。
           <button
@@ -117,7 +150,7 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
 
   if (who === undefined) {
     return (
-      <div className={styles.wrap}>
+      <div className={styles.wrap} style={wrapStyle}>
         <p className={styles.state}>載入中…</p>
       </div>
     );
@@ -125,7 +158,7 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
 
   if (who === null) {
     return (
-      <div className={styles.wrap}>
+      <div className={styles.wrap} style={wrapStyle}>
         <p className={styles.state}>{whoError}</p>
       </div>
     );
@@ -134,7 +167,7 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
   const isReviewerOnly = who.role === 'reviewer';
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.wrap} style={wrapStyle}>
       <nav className={styles.nav}>
         <span className={styles.brand}>AI-CAT ADMIN</span>
         {!isReviewerOnly && (
@@ -157,6 +190,31 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
           標註審核
         </Link>
         <span className={styles.navSpacer} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button
+            type="button"
+            className={styles.btn}
+            style={{ padding: '3px 8px' }}
+            aria-label="縮小字體"
+            title="縮小字體"
+            onClick={() => adjustFontScale(-FONT_SCALE_STEP)}
+          >
+            A-
+          </button>
+          <span style={{ fontSize: 11, color: '#56534b', minWidth: 34, textAlign: 'center' }}>
+            {Math.round(fontScale * 100)}%
+          </span>
+          <button
+            type="button"
+            className={styles.btn}
+            style={{ padding: '3px 8px' }}
+            aria-label="放大字體"
+            title="放大字體"
+            onClick={() => adjustFontScale(FONT_SCALE_STEP)}
+          >
+            A+
+          </button>
+        </div>
         <Link className={styles.navLink} href="/">
           回前台
         </Link>
