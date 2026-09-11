@@ -75,34 +75,9 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme="dark"]) {
-    color-scheme: dark;
-    --bg: #0b0c0d;
-    --card: #17191c;
-    --bg-alt: #1f2225;
-    --fg: #f4f4f1;
-    --fg-sub: #8d9398;
-    --fg-muted: #b4b9bd;
-    --fg-faint: #979ca1;
-    --border: #33373c;
-    --grid: #3a3f45;
-    --accent-ink: #d8ff4f;
-    --cta-bg: #d8ff4f;
-    --cta-fg: #0b0c0d;
-    --hl-bg: transparent;
-    --hl-fg: #d8ff4f;
-    --radar-base: transparent;
-    --radar-fill: rgba(216, 255, 79, 0.19);
-    --radar-stroke: #d8ff4f;
-    --card-inset: #191c1f;
-    --radius: 6px;
-    --panel-radius: 10px;
-    --ok: #4ade80;
-    --danger: #ff6b6b;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
-  }
-}
+/* 沒有存過偏好時一律預設亮色（見 layout.tsx 的免閃爍 script）——
+ * 這裡刻意不放 @media (prefers-color-scheme: dark) 的無 JS 備援，
+ * 避免系統深色模式在使用者還沒手動切換前就把站台變暗。 */
 
 * {
   box-sizing: border-box;
