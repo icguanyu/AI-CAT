@@ -60,9 +60,12 @@ export default function AdminReviewQueuePage() {
 
   return (
     <div>
-      <h1 className={styles.h1}>
-        標註審核 <ReviewGuide />
-      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <h1 className={styles.h1} style={{ margin: 0 }}>
+          標註審核
+        </h1>
+        <ReviewGuide />
+      </div>
       <p style={{ fontSize: 12.5, color: '#56534b', marginBottom: 14 }}>
         每個維度先看 AI 打的分，同意就直接送出（預設已幫你選最接近的程度）；
         不同意才手動改。這批標註是評估裁判準不準、以後訓練專屬裁判的原始資料。

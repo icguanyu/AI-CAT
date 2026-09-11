@@ -361,6 +361,10 @@
   max-height: 82vh;
   overflow-y: auto;
   padding: 22px 24px;
+  /* 獨立設好字重基準，不依賴掛載處的祖先元素（例如曾被塞進 <h1> 底下，
+     內文透過繼承整段變粗、無法再用 <strong> 做出對比）。 */
+  font-weight: 400;
+  color: #16181a;
 }
 .helpModal h2 {
   font-size: 15px;
@@ -381,7 +385,11 @@
 .helpModal p,
 .helpModal li {
   font-size: 12.5px;
+  font-weight: 400;
   line-height: 1.7;
+}
+.helpModal strong {
+  font-weight: 700;
 }
 .helpModal ul {
   margin: 0;
