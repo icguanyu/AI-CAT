@@ -29,6 +29,7 @@ import {
 } from '@/lib/client-api';
 import { readTextStream } from '@/lib/data-stream';
 import { useVoiceInput } from '@/lib/use-voice-input';
+import { trackExamStart, trackExamComplete } from '@/lib/analytics';
 import {
   FAMILIARITY_LABEL,
   FAMILIARITY_DESC,
@@ -267,6 +268,7 @@ function ExamPageInner() {
       setUserTurns(0);
       setFamiliarity('mid');
       setPhase('brief'); // 先看題目 → 自評熟悉度 → 開始對話
+      trackExamStart(r.category);
     } catch (e) {
       if (e instanceof ApiError && e.code) setStartCode(e.code);
       handleErr(e);
@@ -328,6 +330,11 @@ function ExamPageInner() {
     setPhase('evaluating');
     try {
       const res = await evaluateExam(exam.examId, familiarity);
+      trackExamComplete({
+        category: exam.category,
+        level: res.report.suggested_level,
+        trial: !res.persisted,
+      });
       if (res.persisted) {
         // 登入版：報告已寫入 Supabase，轉結果頁（重新整理不消失）
         router.push(`/exam/result/${exam.examId}`);

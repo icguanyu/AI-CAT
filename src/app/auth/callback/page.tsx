@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { createSupabaseBrowser } from '@/lib/supabase-browser';
 import { claimTrial } from '@/lib/client-api';
 import { CLAIM_KEY } from '@/components/LoginToSaveCard';
+import { trackTrialClaim } from '@/lib/analytics';
 
 /** 只允許站內相對路徑，擋開放重導。 */
 function safeNext(): string {
@@ -53,6 +54,7 @@ export default function AuthCallbackPage() {
         }
         try {
           await claimTrial(claimId);
+          trackTrialClaim();
           window.location.replace(`/exam/result/${claimId}`);
           return;
         } catch {

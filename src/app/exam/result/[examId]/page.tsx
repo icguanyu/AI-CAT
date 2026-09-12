@@ -21,6 +21,7 @@ import {
 import { ReportView } from '@/components/ReportView';
 import { AccountMenu } from '@/components/AccountMenu';
 import { AiCatMark } from '@/components/AiCatMark';
+import { trackShareResult } from '@/lib/analytics';
 
 export default function ResultPage() {
   const params = useParams<{ examId: string }>();
@@ -95,6 +96,7 @@ export default function ResultPage() {
     try {
       const r = await setExamShared(examId, !bundle.shared);
       setBundle({ ...bundle, shared: r.shared });
+      if (r.shared) trackShareResult();
     } catch (e) {
       setError(e instanceof Error ? e.message : '變更分享狀態失敗');
     } finally {
