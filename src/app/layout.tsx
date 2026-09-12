@@ -4,10 +4,12 @@
  * 功能：載入字體（Archivo / IBM Plex Mono / Noto Sans TC）與全域樣式，
  *       在 <head> 塞免閃爍的主題 script（讀 localStorage → 設 <html data-theme>；
  *       使用者沒存過偏好時一律預設亮色，不跟系統深色模式），設定預設 <title> / description。
+ *       全站（含 /admin）都會載入 Google Analytics；未設 NEXT_PUBLIC_GA_ID 時完全不載入。
  */
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono, Noto_Sans_TC } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { GoogleAnalytics } from '@next/third-parties/google';
 import { siteConfig } from '@/config/site';
 import './globals.css';
 
@@ -95,6 +97,9 @@ export default function RootLayout({
       <body>
         {children}
         <SpeedInsights />
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+        )}
       </body>
     </html>
   );
