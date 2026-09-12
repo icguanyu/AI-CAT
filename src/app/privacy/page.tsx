@@ -32,7 +32,7 @@ export default function PrivacyPage() {
         </Link>
       </div>
       <h1>隱私政策</h1>
-      <p className="updated">最後更新：2026-09-10</p>
+      <p className="updated">最後更新：2026-09-12</p>
 
       <p>
         AI-CAT（以下稱「本服務」）是一個 AI 能力檢測工具。使用本服務即表示你已閱讀並同意本政策。
@@ -79,7 +79,8 @@ export default function PrivacyPage() {
       <p>為提供服務，資料會經由下列第三方處理：</p>
       <ul>
         <li>
-          <strong>Google</strong>：第三方登入（OAuth）。
+          <strong>Google</strong>：第三方登入（OAuth）；以及 Google Analytics 網站流量分析
+          （頁面瀏覽、來源、裝置等統計，不含你的對話內容）。
         </li>
         <li>
           <strong>Supabase</strong>：使用者驗證與資料庫（帳號、報告、次數）。
@@ -95,7 +96,7 @@ export default function PrivacyPage() {
           以產生 AI 回覆與評分。請勿在對話中輸入個人機密、營業秘密或他人隱私資訊。
         </li>
         <li>
-          <strong>Vercel</strong>：網站與 API 的代管與日誌。
+          <strong>Vercel</strong>：網站與 API 的代管與日誌，以及 Speed Insights 效能監測。
         </li>
       </ul>
 

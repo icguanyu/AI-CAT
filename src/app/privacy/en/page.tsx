@@ -33,7 +33,7 @@ export default function PrivacyEnPage() {
         </Link>
       </div>
       <h1>Privacy Policy</h1>
-      <p className="updated">Last updated: 2026-09-10</p>
+      <p className="updated">Last updated: 2026-09-12</p>
 
       <p>
         AI-CAT (the &ldquo;Service&rdquo;) is an AI competency assessment tool. By
@@ -100,7 +100,9 @@ export default function PrivacyEnPage() {
       <p>To provide the Service, data is processed by the following parties:</p>
       <ul>
         <li>
-          <strong>Google</strong>: third-party sign-in (OAuth).
+          <strong>Google</strong>: third-party sign-in (OAuth); and Google
+          Analytics for site traffic analysis (page views, referrers, device
+          type, etc. — does not include your conversation content).
         </li>
         <li>
           <strong>Supabase</strong>: user authentication and database (accounts,
@@ -121,7 +123,8 @@ export default function PrivacyEnPage() {
           information into the conversation.
         </li>
         <li>
-          <strong>Vercel</strong>: hosting and logging for the website and API.
+          <strong>Vercel</strong>: hosting and logging for the website and
+          API, plus Speed Insights performance monitoring.
         </li>
       </ul>
 
