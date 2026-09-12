@@ -9,6 +9,7 @@ import { siteConfig } from '@/config/site';
 /** 內容實際更新日；改版時再動，別用 new Date()（每次請求都變會被搜尋引擎打折）。 */
 const HOME_UPDATED = new Date('2026-09-09');
 const LEGAL_UPDATED = new Date('2026-09-08');
+const ABOUT_UPDATED = new Date('2026-09-11');
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteConfig.url;
@@ -19,6 +20,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: HOME_UPDATED,
       changeFrequency: 'weekly',
       priority: 1,
+    },
+    {
+      url: `${base}/about`,
+      lastModified: ABOUT_UPDATED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
     },
     {
       url: `${base}/privacy`,

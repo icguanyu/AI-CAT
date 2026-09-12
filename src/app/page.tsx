@@ -95,7 +95,8 @@ const AFTER = [
 ];
 
 const FEATURES = [
-  '真實職場情境的動態沙盒對話（非選擇題）',
+  '真實職場情境的生成式 AI 動態沙盒對話（非選擇題）',
+  '免安裝、免跑考場，線上免登入即可先試用一場',
   '開場自評領域熟悉度，校準評分公平性',
   '高階 AI 裁判盲審，輸出五維度分數與 L1–L5 分級',
   '幻覺陷阱：檢驗你是否照單全收 AI 的說法',
@@ -234,6 +235,9 @@ export default async function HomePage() {
               <p>
                 五個維度、一次檢測全部覆蓋。由高階裁判模型依 rubric 盲審評分。
               </p>
+              <Link className="cta-link" href="/about#scoring">
+                完整計分規則與分級門檻 →
+              </Link>
             </div>
             <div className="dim-list">
               {DIMENSIONS.map((m) => (
@@ -346,6 +350,8 @@ export default async function HomePage() {
         <footer>
           <CatDecor className="cat-foot" />
           <p className="footer-links">
+            <Link href="/about">檢測與計分說明</Link>
+            <span>·</span>
             <Link href="/privacy">隱私政策</Link>
             <span>·</span>
             <Link href="/ip">智慧財產權宣告</Link>

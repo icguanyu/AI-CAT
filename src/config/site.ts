@@ -27,20 +27,20 @@ export const siteConfig = {
   name: 'AI-CAT',
   title: 'AI-CAT｜AI 能力檢測工具',
   shortDescription:
-    'AI 能力檢測工具 — 動態沙盒實作 + AI 裁判盲審，量化你駕馭 AI 的能力，並追蹤每次進步。',
+    'AI 能力檢測工具 — 免安裝、線上就能測：用生成式 AI 動態沙盒實作 + AI 裁判盲審，量化你「用 AI」的實作能力，並追蹤每次進步。',
   description:
-    'AI Competency Assessment Tool — 捨棄選擇題，用真實職場情境的動態沙盒實作與 AI 裁判盲審，量化你與 AI 協作的效率與思辨能力。5–10 分鐘一場，產出五維度能力雷達圖與 L1–L5 分級；歷次紀錄自動留存，跨情境彙總出綜合分級與分數趨勢，並可一鍵產生公開分享連結。',
+    'AI Competency Assessment Tool — 免安裝、免跑考場，線上就能測。捨棄選擇題，用真實職場情境的生成式 AI 動態沙盒實作與 AI 裁判盲審，量化你與 AI 協作的效率與思辨能力。5–10 分鐘一場，產出五維度能力雷達圖與 L1–L5 分級，歷次紀錄自動留存、跨情境彙總分級與分數趨勢，並可一鍵產生公開分享連結。',
   keywords: [
     'AI 能力檢測',
+    '生成式AI能力評測',
     'AI 素養',
-    'AI 能力評測',
+    'AI 自我評測',
+    '線上 AI 測驗',
     'prompt engineering',
     '提示詞工程',
     'AI competency assessment',
     'AI 協作能力',
-    '能力成長追蹤',
     '批判思考',
-    'LLM',
     'AI-CAT',
   ],
   // OG 用的 locale 需是 Facebook 支援值；台灣正體中文用 zh_TW。
